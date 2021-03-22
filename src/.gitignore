@@ -1,3 +1,4 @@
 config.ini
 config.*.ini
 *.sw*
+__pycache__/*
