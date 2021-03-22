@@ -1,7 +1,7 @@
 ##### Begin by configuring databases
 ###### MySQL
-- Copy the _example.config.ini_ file into _config.ini_ in the same dir
-> src/libs/example.config.ini
+- Copy the _router.example.config.ini_ file into _config.router.ini_ in the same dir
+
 ##### How to Run
 
 ###### Create venv
