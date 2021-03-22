@@ -3,14 +3,13 @@
 import configparser
 CONFIGS = configparser.ConfigParser(interpolation=None)
 
-CONFIGS.read("config.ini")
-from ldatastore import Datastore
-from libs.lmodems import Modems
+CONFIGS.read("config.router.ini")
+# from ldatastore import Datastore
 
 from flask import Flask, request, jsonify
 app = Flask(__name__)
 
-datastore = Datastore(configs_filepath="libs/config.ini")
+#datastore = Datastore(configs_filepath="libs/config.ini")
 # datastore.get_datastore()
 # datastore = Datastore(config=CONFIGS)
 
@@ -36,12 +35,12 @@ def new_messages():
         discharge_timestamp = request_body["discharge_timestamp"]
         
         # TODO: put logger in here to log everything
-        print(f"[+] New message...
+        print(f'''[+] New message...
                 \n\t-text>> {text}
                 \n\t-phonenumber>> {phonenumber}
                 \n\t-isp>> {isp}
                 \n\t-timestamp>> {timestamp}
-                \n\t-discharge_timestamp>> {timestamp}")
+                \n\t-discharge_timestamp>> {timestamp}''')
 
         return_json = {"status" :"", "tstate":""}
         try: 
