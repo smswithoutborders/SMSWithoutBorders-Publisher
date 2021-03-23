@@ -22,6 +22,7 @@ def daemon_state():
 def new_messages():
     if request.method == 'POST':
         request_body = request.json
+        print(request_body)
         if not 'text' in request_body:
             return jsonify({"status":400, "message":"missing text"})
 
@@ -42,7 +43,7 @@ def new_messages():
                 \n\t-text>> {text}
                 \n\t-phonenumber>> {phonenumber}
                 \n\t-timestamp>> {timestamp}
-                \n\t-discharge_timestamp>> {timestamp}''')
+                \n\t-discharge_timestamp>> {discharge_timestamp}''')
 
         return_json = {"status" :"", "tstate":""}
         try: 
@@ -66,7 +67,6 @@ def new_messages():
         except Exception as err:
             print( f"[err]: {err}" )
     '''
-
 
     return jsonify(return_json)
 

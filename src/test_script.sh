@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-url="http://127.0.0.1:4000"
+url="http://127.0.0.1:6969"
 d_command=$1
 phonenumber=$2
 
