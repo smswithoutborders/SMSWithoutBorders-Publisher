@@ -28,23 +28,26 @@ def new_messages():
         if not 'phonenumber' in request_body:
             return jsonify({"status":400, "message":"missing phonenumber"})
 
-        isp = request_body["isp"]
         text = request_body["text"]
-        timestamp = request_body["timestamp"]
         phonenumber = request_body["phonenumber"]
-        discharge_timestamp = request_body["discharge_timestamp"]
+        timestamp=""
+        discharge_timestamp=""
+        if "timestamp" in request_body:
+            timestamp = request_body["timestamp"]
+        if "discharge_timestamp" in request_body:
+            discharge_timestamp = request_body["discharge_timestamp"]
         
         # TODO: put logger in here to log everything
         print(f'''[+] New message...
                 \n\t-text>> {text}
                 \n\t-phonenumber>> {phonenumber}
-                \n\t-isp>> {isp}
                 \n\t-timestamp>> {timestamp}
                 \n\t-discharge_timestamp>> {timestamp}''')
 
         return_json = {"status" :"", "tstate":""}
         try: 
             # TODO: Determine ISP before sending messages
+            messageID=None
             # messageID = datastore.new_message(text=text, phonenumber=phonenumber, isp="MTN", _type="sending")
             return_json["status"] = 200
             return_json["messageID"] = messageID
