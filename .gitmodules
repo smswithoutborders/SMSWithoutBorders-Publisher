@@ -1,0 +1,3 @@
+[submodule "src/src/Platforms"]
+	path = src/src/Platforms
+	url = git@github.com:SMSwithoutBorders/Third-Party-Platforms.git
