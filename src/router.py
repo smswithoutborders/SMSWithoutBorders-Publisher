@@ -2,6 +2,8 @@
 
 import configparser
 import cloudfunctions
+import routerfunctions
+
 from platforms import Platforms
 
 CONFIGS = configparser.ConfigParser(interpolation=None)
@@ -55,15 +57,11 @@ def new_messages():
             # messageID = datastore.new_message(text=text, phonenumber=phonenumber, isp="MTN", _type="sending")
 
             # parse the contents of the SMS message
-            '''
             parsedText = routerfunctions.routerParseText(text)
-            '''
+            print(f">> ParsedText: {parsedText}")
 
             # check for a valid protocol being returned
-            '''
-            if protocol in parsedText:
-            '''
-            if True:
+            if "protocol" in parsedText:
 
                 # Authenticate acquire stored stoken information for users
                 '''
@@ -73,11 +71,9 @@ def new_messages():
 
                 if userDetails is not None:
                     try:
-                        platform = Platforms("gmail")
-                        '''
+                        # platform = Platforms("gmail")
                         platform = Platforms(platform=parsedText["platform"])
                         results = platform.execute(parsedText["protocol"], parsedText["body"], userDetails)
-                        '''
                     except Exception as error:
                         raise Exception(error)
                     else:

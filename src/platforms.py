@@ -14,21 +14,21 @@ class Platforms:
             for _dir in dirs:
                 providers[_dir] = []
                 for root, dirs, files in os.walk( self.DEFAULT_PROVIDERS_PATH+"/"+_dir ):
-                    print(f"Files: {files}")
+                    # print(f"Files: {files}")
                     for _file in files:
                         if _file.split('_')[0] == _dir:
                             splitted_filename = _file.split('.')[:-1]
                             merged_filename = '_'.join(splitted_filename)
-                            print("MF:>>", merged_filename)
+                            # print("MF:>>", merged_filename)
                             providers[_dir].append(merged_filename)
                             break
                     break
             break
-        print( providers )
+        # print( providers )
 
         for provider in providers:
             def_platform = f"{provider}_{platform}"
-            print("def_platform:", def_platform)
+            # print("def_platform:", def_platform)
 
             if not def_platform in providers[provider]:
                 raise Exception("Unknown platform:", def_platform)
@@ -40,7 +40,7 @@ class Platforms:
                 
                 LIB_NAME = f"{self.DEFAULT_PROVIDERS_PATH}.{provider}"
                 LIB = f".{def_platform}"
-                print(f"({LIB},{LIB_NAME})")
+                # print(f"({LIB},{LIB_NAME})")
                 self.platform = importlib.import_module(LIB, LIB_NAME)
 
     def execute(self, protocol, body, userDetails):
