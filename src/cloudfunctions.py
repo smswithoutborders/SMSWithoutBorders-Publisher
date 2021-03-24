@@ -21,4 +21,4 @@ def cloudAuthUser(platform, protocol, phonenumber):
     else:
         return request.json()
     '''
-    return True
+    return {}
