@@ -1,6 +1,9 @@
 #!/bin/python
 
 import configparser
+import cloudfunctions
+from platforms import Platforms
+
 CONFIGS = configparser.ConfigParser(interpolation=None)
 
 CONFIGS.read("config.router.ini")
@@ -52,18 +55,29 @@ def new_messages():
             # messageID = datastore.new_message(text=text, phonenumber=phonenumber, isp="MTN", _type="sending")
 
             # parse the contents of the SMS message
+            '''
             parsedText = routerfunctions.routerParseText(text)
+            '''
 
             # check for a valid protocol being returned
+            '''
             if protocol in parsedText:
+            '''
+            if True:
 
                 # Authenticate acquire stored stoken information for users
+                '''
                 userDetails = cloudfunctions.cloudAuthUser(phonenumber=phonenumber, protocol=parsedText["protocol"], platform=parsedText["platform"])
+                '''
+                userDetails = cloudfunctions.cloudAuthUser("gmail", "send", phonenumber)
 
                 if userDetails is not None:
                     try:
-                        platform = Platform(platform=parsedText["platform"])
+                        platform = Platforms("gmail")
+                        '''
+                        platform = Platforms(platform=parsedText["platform"])
                         results = platform.execute(parsedText["protocol"], parsedText["body"], userDetails)
+                        '''
                     except Exception as error:
                         raise Exception(error)
                     else:

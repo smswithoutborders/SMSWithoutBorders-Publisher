@@ -1,17 +1,29 @@
 #!/bin/python
 
 import importlib
+import os
 
 class Platforms:
 
     # TODO: this are created in a dir called platforms and would be parsed to get them
-    currentPlatforms = {
-            "google" : ["gmail"],
-        }
-
     def __init__(self, platform):
-        for providers in currentPlatforms:
-            if not platform in currentPlatforms[providers]:
+        self.DEFAULT_PROVIDERS_PATH = "platforms/"
+        # scan for all submodules
+        providers = {}
+        for root, dirs, files in os.walk( self.DEFAULT_PROVIDERS_PATH ):
+            for _dir in dirs:
+                providers[_dir] = []
+                for root, dirs, files in os.walk( self.DEFAULT_PROVIDERS_PATH + _dir ):
+                    for _file in files:
+                        if _file.split('.')[0] == _dir:
+                            providers[_dir].append( _file )
+                    break
+                
+            break
+        print( providers )
+
+        for provider in providers:
+            if not platform in providers[provider]:
                 raise Exception(f"Unknown platform: {platform}")
             else:
                 self.platform_name = platform
