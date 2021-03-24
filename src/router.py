@@ -45,29 +45,41 @@ def new_messages():
                 \n\t-timestamp>> {timestamp}
                 \n\t-discharge_timestamp>> {discharge_timestamp}''')
 
-        return_json = {"status" :"", "tstate":""}
+        return_json = {"status" :"", "body":""}
         try: 
             # TODO: Determine ISP before sending messages
             messageID=None
             # messageID = datastore.new_message(text=text, phonenumber=phonenumber, isp="MTN", _type="sending")
-            return_json["status"] = 200
-            return_json["messageID"] = messageID
+
+            # parse the contents of the SMS message
+            parsedText = routerfunctions.routerParseText(text)
+
+            # check for a valid protocol being returned
+            if protocol in parsedText:
+
+                # Authenticate acquire stored stoken information for users
+                userDetails = cloudfunctions.cloudAuthUser(phonenumber=phonenumber, protocol=parsedText["protocol"], platform=parsedText["platform"])
+
+                if userDetails is not None:
+                    try:
+                        platform = Platform(platform=parsedText["platform"])
+                        results = platform.execute(parsedText["protocol"], parsedText["body"], userDetails)
+                    except Exception as error:
+                        raise Exception(error)
+                    else:
+                        print("[+] Successfully executed for platform - {results}")
+                        return_json["status"] = 200
+                        return_json["body"] = results
+                else:
+                    raise Exception(f"Failed to authenticate user/request...")
+            else:
+                raise Exception(f"Could not determine protocol in parsedText: {parsedText}")
+                    
         except Exception as err:
-            print( f"[err]: {err}" )
+                return_json["status"] = request.status_code
+                return_json["body"] = request
+                return_json["error"] = err
     
-
-    '''
-    elif request.method == 'GET':
-        print("[?] Fetching messages....")
-        return_json = {"status" :"", "tstate":""}
-        try:
-            # messages = datastore.get_all_received_messages()
-            return_json["status"] = 200
-            return_json["messages"] = messages
-        except Exception as err:
-            print( f"[err]: {err}" )
-    '''
-
     return jsonify(return_json)
 
 if CONFIGS["API"]["DEBUG"] == "1":
