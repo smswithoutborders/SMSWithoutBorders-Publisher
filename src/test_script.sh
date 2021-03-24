@@ -11,7 +11,8 @@ if [ "$d_command" == "--send" ] ; then
 	else
 		echo ">> Sending..."
 		# date=$(date)
-		curl -X POST -H "Content-Type: application/json" -d "{\"text\":\"gmail:send:$(date)\",\"phonenumber\":\"${phonenumber}\"}" "${url}/messages"
+		# platform:protocol:<body>
+		curl -X POST -H "Content-Type: application/json" -d "{\"text\":\"gmail:send:New time found-$(date +%s):afkanerd@gmail.com:$(date)\nBest,\nWisdom\",\"phonenumber\":\"${phonenumber}\"}" "${url}/messages"
 	fi
 
 elif [ "$d_command" == "--received" ] ; then

@@ -45,7 +45,7 @@ class Platforms:
 
     def execute(self, protocol, body, userDetails):
         try:
-            print(">> Executing for platform: <{self.platform_name}:{protocol}>")
+            print(f">> Executing for platform: <{self.platform_name}:{protocol}>")
             results = self.platform.execute( protocol=protocol, body=body, userDetails=userDetails )
         except Exception as error:
             raise Exception(error)
