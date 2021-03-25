@@ -61,7 +61,7 @@ def new_messages():
             print(f">> ParsedText: {parsedText}")
 
             # check for a valid protocol being returned
-            if "protocol" in parsedText:
+            if parsedText is not None and "protocol" in parsedText:
 
                 # Authenticate acquire stored stoken information for users
                 userDetails = cloudfunctions.cloudAuthUser(phonenumber=phonenumber, protocol=parsedText["protocol"], platform=parsedText["platform"])
