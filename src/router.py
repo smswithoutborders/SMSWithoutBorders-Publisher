@@ -64,10 +64,8 @@ def new_messages():
             if "protocol" in parsedText:
 
                 # Authenticate acquire stored stoken information for users
-                '''
                 userDetails = cloudfunctions.cloudAuthUser(phonenumber=phonenumber, protocol=parsedText["protocol"], platform=parsedText["platform"])
-                '''
-                userDetails = cloudfunctions.cloudAuthUser("gmail", "send", phonenumber)
+                # userDetails = cloudfunctions.cloudAuthUser("gmail", "send", phonenumber)
                 print( userDetails )
 
                 '''
