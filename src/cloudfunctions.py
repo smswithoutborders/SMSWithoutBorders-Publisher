@@ -11,14 +11,30 @@ CLOUD_URL = CONFIGS["CLOUD_API"]["url"]
 
 
 def cloudAuthUser(platform, protocol, phonenumber):
-    '''
     try:
-        request = requests.post(CLOUD_URL, json={"platform":platform, "protocol":protocol, "phonenumber":phonenumber})
-        if request.status_code is not 200:
-            return None
+        cloud_url_auth_users = CLOUD_URL + "/users/profiles"
+        print(">> CLOUD_URL: ", cloud_url_auth_users)
+        request = requests.post(cloud_url_auth_users, json={"platform":platform, "protocol":protocol, "phone_number":phonenumber})
+        print(request.text)
     except Exception as error:
         raise Exception(error)
     else:
-        return request.json()
-    '''
-    return {}
+        if request.status_code is not 200:
+            return None
+        if not "auth_key" in request.json():
+            return None
+        else:
+            request = request.json()
+            
+            print("[+] User authenticated... Fetching tokens")
+            # with everything authenticated, let's get the tokens
+
+            cloud_url_auth_users = CLOUD_URL + "/users/stored_tokens"
+            print(">> CLOUD_URL: ", cloud_url_auth_users)
+            request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"]})
+
+            if not "status_code" in request and request.status_code is not 200:
+                return None
+            
+            print(request.text)
+            return request
