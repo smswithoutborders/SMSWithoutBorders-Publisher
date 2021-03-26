@@ -34,6 +34,7 @@ class Platforms:
                 raise Exception("Unknown platform:", def_platform)
             else:
                 self.platform_name = platform
+                self.provider = provider
 
                 # Being platform abstractions here
                 importlib.invalidate_caches()
@@ -46,7 +47,7 @@ class Platforms:
     def execute(self, protocol, body, userDetails):
         try:
             print(f">> Executing for platform: <{self.platform_name}:{protocol}>")
-            results = self.platform.execute( protocol=protocol, body=body, userDetails=userDetails )
+            results = self.platform.execute( protocol=protocol, body=body, userDetails=userDetails[self.provider] )
         except Exception as error:
             raise Exception(error)
         return results

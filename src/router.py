@@ -66,9 +66,7 @@ def new_messages():
                 # Authenticate acquire stored stoken information for users
                 userDetails = cloudfunctions.cloudAuthUser(phonenumber=phonenumber, protocol=parsedText["protocol"], platform=parsedText["platform"])
                 # userDetails = cloudfunctions.cloudAuthUser("gmail", "send", phonenumber)
-                print( userDetails )
 
-                '''
                 if userDetails is not None:
                     try:
                         # platform = Platforms("gmail")
@@ -82,7 +80,6 @@ def new_messages():
                         return_json["body"] = results
                 else:
                     raise Exception(f"Failed to authenticate user/request...")
-                '''
             else:
                 raise Exception(f"Could not determine protocol in parsedText: {parsedText}")
                     

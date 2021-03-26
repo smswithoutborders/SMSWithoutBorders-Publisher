@@ -31,10 +31,11 @@ def cloudAuthUser(platform, protocol, phonenumber):
 
             cloud_url_auth_users = CLOUD_URL + "/users/stored_tokens"
             print(">> CLOUD_URL: ", cloud_url_auth_users)
-            request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"]})
+            # request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"]})
+            request = requests.post(cloud_url_auth_users, json={"user_id": "1", "auth_key":request["auth_key"]})
 
             if not "status_code" in request and request.status_code is not 200:
                 return None
             
             print(request.text)
-            return request
+            return request.json()
