@@ -1,6 +1,15 @@
 #!/bin/python
 
 
+# gmail = subject:to:message
+# format = platform:protocol:body
+
+# sms = platform:protocol:body{subject:to:message}
+'''
+example:
+    gmail:send:Hello world:afkanerd@gmail.com:This is a test message! Hello
+'''
+
 def routerParseText(text):
     '''
     header=(platform:protocol)
