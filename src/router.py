@@ -14,15 +14,6 @@ CONFIGS.read("config.router.ini")
 from flask import Flask, request, jsonify
 app = Flask(__name__)
 
-#datastore = Datastore(configs_filepath="libs/config.ini")
-# datastore.get_datastore()
-# datastore = Datastore(config=CONFIGS)
-
-# Get current state of the daemon [idle, busy, help]
-@app.route('/state')
-def daemon_state():
-    return "development"
-
 @app.route('/messages', methods=['POST', 'GET'])
 def new_messages():
     if request.method == 'POST':
