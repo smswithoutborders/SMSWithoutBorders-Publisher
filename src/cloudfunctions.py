@@ -26,7 +26,7 @@ def cloudAuthUser(platform, protocol, phonenumber):
         else:
             request = request.json()
             
-            print("[+] User authenticated... Fetching tokens")
+            print("[+] User authenticated... Fetching tokens:", platform)
             # with everything authenticated, let's get the tokens
 
             cloud_url_auth_users = CLOUD_URL + "/users/stored_tokens"

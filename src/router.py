@@ -75,9 +75,14 @@ def new_messages():
                     except Exception as error:
                         raise Exception(error)
                     else:
-                        print("[+] Successfully executed for platform - {results}")
-                        return_json["status"] = 200
-                        return_json["body"] = results
+                        if results:
+                            print(f"[+] Successfully executed for platform - {results}")
+                            return_json["status"] = 200
+                            return_json["body"] = f"successfully executed for platform - {results}"
+                        else:
+                            print(f"[+] Failed to execute for platform - {results}")
+                            return_json["status"] = 500
+                            return_json["body"] = results
                 else:
                     return_json["status"] = 403
                     raise Exception(f"Failed to authenticate user/request...")
@@ -89,6 +94,7 @@ def new_messages():
             # return_json["status"] = request.status_code
             # return_json["status"] = 500
             # return_json["body"] = request
+            print(err)
             return_json["body"] = str(err)
     
     return jsonify(return_json)
