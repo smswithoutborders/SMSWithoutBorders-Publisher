@@ -79,14 +79,17 @@ def new_messages():
                         return_json["status"] = 200
                         return_json["body"] = results
                 else:
+                    return_json["status"] = 403
                     raise Exception(f"Failed to authenticate user/request...")
             else:
+                return_json["status"] = 400
                 raise Exception(f"Could not determine protocol in parsedText: {parsedText}")
                     
         except Exception as err:
-                return_json["status"] = request.status_code
-                return_json["body"] = request
-                return_json["error"] = err
+            # return_json["status"] = request.status_code
+            # return_json["status"] = 500
+            # return_json["body"] = request
+            return_json["body"] = str(err)
     
     return jsonify(return_json)
 
