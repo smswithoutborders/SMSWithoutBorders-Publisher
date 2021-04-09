@@ -14,7 +14,7 @@ CLOUD_URL = CONFIGS["CLOUD_API"]["url"]
 
 def check_ssl():
     print( "[+]:", CONFIGS["SSL"]["PEM"] )
-    return os.path.isfile( CONFIGS["SSL"]["PEM"] )
+    return os.path.isfile( CONFIGS["SSL"]["KEY"] ) and os.path.isfile(CONFIGS["SSL"]["CRT"])
 
 
 def cloudAuthUser(platform, protocol, phonenumber):
@@ -48,7 +48,7 @@ def cloudAuthUser(platform, protocol, phonenumber):
             cloud_url_auth_users = CLOUD_URL + "/users/stored_tokens"
             print(">> CLOUD_URL: ", cloud_url_auth_users)
             # request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"]})
-            if chek_ssl():
+            if check_ssl():
                 request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"], "platform":platform}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
             else:
                 request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"], "platform":platform})
