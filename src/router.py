@@ -3,6 +3,7 @@
 import configparser
 import cloudfunctions
 import routerfunctions
+import deduce_isp as isp
 
 from platforms import Platforms
 
@@ -37,6 +38,7 @@ def new_messages():
 
         text = request_body["text"]
         phonenumber = request_body["phonenumber"]
+        phonenumber = isp.rm_country_code(phonenumber)
         timestamp=""
         discharge_timestamp=""
         if "timestamp" in request_body:
