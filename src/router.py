@@ -27,7 +27,8 @@ def daemon_state():
 def new_messages():
     if request.method == 'POST':
         request_body = request.json
-        print(request_body)
+        if request_body is None:
+            return jsonify({"status":401, "message":"invalid request, missing body"})
         if not 'text' in request_body:
             return jsonify({"status":400, "message":"missing text"})
 
