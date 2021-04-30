@@ -41,13 +41,15 @@ class Platforms:
                 
                 LIB_NAME = f"{self.DEFAULT_PROVIDERS_PATH}.{provider}"
                 LIB = f".{def_platform}"
-                # print(f"({LIB},{LIB_NAME})")
+                print(f"({LIB},{LIB_NAME})")
                 self.platform = importlib.import_module(LIB, LIB_NAME)
 
     def execute(self, protocol, body, userDetails):
         try:
-            print(f">> Executing for platform: <{self.platform_name}:{protocol}>")
-            results = self.platform.execute( protocol=protocol, body=body, userDetails=userDetails[self.provider] )
+            print(f">> Executing for platform: <{self.platform_name}:{protocol}:{body}:{userDetails}>")
+            # print(f">> Executing for platform: <{self.platform_name}:{protocol}:{body}:{userDetails[self.provider]}>")
+            results = self.platform.execute( protocol=protocol, body=body, userDetails=userDetails["user_token"][0])
+            print("[+] Results:", results)
         except Exception as error:
             raise Exception(error)
         return results

@@ -3,6 +3,7 @@
 import configparser
 import cloudfunctions
 import routerfunctions
+import deduce_isp as isp
 
 from platforms import Platforms
 
@@ -18,7 +19,8 @@ app = Flask(__name__)
 def new_messages():
     if request.method == 'POST':
         request_body = request.json
-        print(request_body)
+        if request_body is None:
+            return jsonify({"status":401, "message":"invalid request, missing body"})
         if not 'text' in request_body:
             return jsonify({"status":400, "message":"missing text"})
 
@@ -27,6 +29,7 @@ def new_messages():
 
         text = request_body["text"]
         phonenumber = request_body["phonenumber"]
+        phonenumber = isp.rm_country_code(phonenumber)
         timestamp=""
         discharge_timestamp=""
         if "timestamp" in request_body:
@@ -66,18 +69,27 @@ def new_messages():
                     except Exception as error:
                         raise Exception(error)
                     else:
-                        print("[+] Successfully executed for platform - {results}")
-                        return_json["status"] = 200
-                        return_json["body"] = results
+                        if results:
+                            print(f"[+] Successfully executed for platform - {results}")
+                            return_json["status"] = 200
+                            return_json["body"] = f"successfully executed for platform - {results}"
+                        else:
+                            print(f"[+] Failed to execute for platform - {results}")
+                            return_json["status"] = 500
+                            return_json["body"] = results
                 else:
+                    return_json["status"] = 403
                     raise Exception(f"Failed to authenticate user/request...")
             else:
+                return_json["status"] = 400
                 raise Exception(f"Could not determine protocol in parsedText: {parsedText}")
                     
         except Exception as err:
-                return_json["status"] = request.status_code
-                return_json["body"] = request
-                return_json["error"] = err
+            # return_json["status"] = request.status_code
+            # return_json["status"] = 500
+            # return_json["body"] = request
+            print(err)
+            return_json["body"] = str(err)
     
     return jsonify(return_json)
 
