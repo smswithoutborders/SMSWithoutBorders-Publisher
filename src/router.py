@@ -24,19 +24,29 @@ def handshake():
         if request_body is None:
             return jsonify({"status":401, "message":"no request made"})
 
-        elif not 'public_key' in request_body:
-            # TODO: check for the right error codes
-            return jsonify({"status":401, "message":"no public key found"})
+
+        # ask
+        # provide
+
+        if 'ask' in request_body:
+            if 'public_key' in request_body['ask']:
+                with open(CONFIGS['SSH']['public_key']) as public_key_file:
+                    public_key = public_key_file.read().replace('\n', '')
+
+                    # print(public_key)
+                    # TODO send and wait for responses from server
+
+                    session_id = datastore.new_session(public_key)
+                    session_id = rsa_encrypt(session_id=session_id, public_key=public_key)
+                    return jsonify({"public_key":public_key})
+            elif 'shared_key' in request_body['ask']:
+                if not 'session_id' in request_body['ask']:
+                    return jsonify({"status":"403", "message":"missing session id"})
+                session_id = rsa_decrypt(request_body['ask']['session_id'])
+                datastore.request
 
         # TODO store public key and transmit receipt
-        return jsonify({"status":200, "message":"ack publick key"})
-
-    if request.method == 'GET':
-       # get the queries here 
-        with open(CONFIGS['SSH']['public_key']) as public_key_file:
-            public_key = public_key_file.read().replace('\n', '')
-            print(public_key)
-            return jsonify({"public_key":public_key})
+        return jsonify({"status":200, "message":"ack public key", "session_id":session_id})
 
 @app.route('/messages', methods=['POST', 'GET'])
 def new_messages():
