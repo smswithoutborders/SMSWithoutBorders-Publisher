@@ -15,6 +15,29 @@ CONFIGS.read("config.router.ini")
 from flask import Flask, request, jsonify
 app = Flask(__name__)
 
+@app.route('/sync', methods=['POST', 'GET'])
+def handshake():
+    # should return the users password hash
+    if request.method == 'POST':
+        # acquire public key
+        request_body = request.json
+        if request_body is None:
+            return jsonify({"status":401, "message":"no request made"})
+
+        elif not 'public_key' in request_body:
+            # TODO: check for the right error codes
+            return jsonify({"status":401, "message":"no public key found"})
+
+        # TODO store public key and transmit receipt
+        return jsonify({"status":200, "message":"ack publick key"})
+
+    if request.method == 'GET':
+       # get the queries here 
+        with open(CONFIGS['SSH']['public_key']) as public_key_file:
+            public_key = public_key_file.read().replace('\n', '')
+            print(public_key)
+            return jsonify({"public_key":public_key})
+
 @app.route('/messages', methods=['POST', 'GET'])
 def new_messages():
     if request.method == 'POST':
@@ -93,8 +116,18 @@ def new_messages():
     
     return jsonify(return_json)
 
+def print_ip():
+    import socket
+    h_name = socket.gethostname()
+    IP_addres = socket.gethostbyname(h_name)
+    print("Host Name is:" + h_name)
+    print("Computer IP Address is:" + IP_addres)
+
+
+
 if CONFIGS["API"]["DEBUG"] == "1":
     # Allows server reload once code changes
     app.debug = True
 
+print_ip()
 app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug )
