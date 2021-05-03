@@ -17,14 +17,15 @@ app = Flask(__name__)
 
 @app.route('/sync/sessions/<session_id>', methods=['POST'])
 def sync(session_id):
-    user_publicKey = request.args.get('public_key')
+    request_body = request.json
+    user_publicKey = request_body['public_key']
 
     gateway_publicKey = securityLayer.get_public_key()
     sharedKey = securityLayer.generate_sharedKey()
-    enc_sharedKey = securityLayer.encrypt(sharedKey, user_publicKey)
+    data, iv = securityLayer.encrypt(data=sharedKey, key=user_publicKey)
     passwd = datastore.get_password(session_id)
 
-    return jsonify({"public_key":gateway_publicKey, "shared_key":enc_sharedKey, "passwd":passwd})
+    return jsonify({"public_key":gateway_publicKey, "creds":{"shared_key":sharedkey, "iv":iv}, "passwd":passwd})
 
 @app.route('/messages', methods=['POST', 'GET'])
 def new_messages():
