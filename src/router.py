@@ -15,38 +15,16 @@ CONFIGS.read("config.router.ini")
 from flask import Flask, request, jsonify
 app = Flask(__name__)
 
-@app.route('/sync', methods=['POST', 'GET'])
-def handshake():
-    # should return the users password hash
-    if request.method == 'POST':
-        # acquire public key
-        request_body = request.json
-        if request_body is None:
-            return jsonify({"status":401, "message":"no request made"})
+@app.route('/sync/sessions/<session_id>', methods=['POST'])
+def sync(session_id):
+    user_publicKey = request.args.get('public_key')
 
+    gateway_publicKey = securityLayer.get_public_key()
+    sharedKey = securityLayer.generate_sharedKey()
+    enc_sharedKey = securityLayer.encrypt(sharedKey, user_publicKey)
+    passwd = datastore.get_password(session_id)
 
-        # ask
-        # provide
-
-        if 'ask' in request_body:
-            if 'public_key' in request_body['ask']:
-                with open(CONFIGS['SSH']['public_key']) as public_key_file:
-                    public_key = public_key_file.read().replace('\n', '')
-
-                    # print(public_key)
-                    # TODO send and wait for responses from server
-
-                    session_id = datastore.new_session(public_key)
-                    session_id = rsa_encrypt(session_id=session_id, public_key=public_key)
-                    return jsonify({"public_key":public_key})
-            elif 'shared_key' in request_body['ask']:
-                if not 'session_id' in request_body['ask']:
-                    return jsonify({"status":"403", "message":"missing session id"})
-                session_id = rsa_decrypt(request_body['ask']['session_id'])
-                datastore.request
-
-        # TODO store public key and transmit receipt
-        return jsonify({"status":200, "message":"ack public key", "session_id":session_id})
+    return jsonify({"public_key":gateway_publicKey, "shared_key":enc_sharedKey, "passwd":passwd})
 
 @app.route('/messages', methods=['POST', 'GET'])
 def new_messages():
