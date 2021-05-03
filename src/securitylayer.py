@@ -23,7 +23,8 @@ class SecurityLayer():
         key = b64decode(key)
         key = RSA.importKey(key)
         cipher_rsa = PKCS1_OAEP.new(key)
-        return b64encode(cipher_rsa.encrypt(data))
+        return cipher_rsa.encrypt(data)
+        # return b64encode(cipher_rsa.encrypt(data))
         # return b64decode(cipher_rsa.encrypt(data)).decode('utf-8')
 
     def __read_publickey(self):

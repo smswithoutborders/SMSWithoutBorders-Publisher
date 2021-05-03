@@ -7,6 +7,7 @@ import deduce_isp as isp
 
 from platforms import Platforms
 from securitylayer import SecurityLayer
+from base64 import b64decode,b64encode
 
 CONFIGS = configparser.ConfigParser(interpolation=None)
 
@@ -26,11 +27,14 @@ def sync(session_id):
     gateway_publicKey = securityLayer.get_public_key()
     sharedKey = securityLayer.get_shared_key()
     sharedKey = securityLayer.rsa_encrypt(data=sharedKey, key=user_publicKey)
+    sharedKey = b64encode(sharedKey)
     # passwd = datastore.get_password(session_id)
     passwd = "62BADBA41079EBB733A33124EDFE1F7947E798BC0C2715B60B3BB613A536F1813E0ED58042FBE60E8FE4D50D1C7D8E9C4518B07A97C764F9BB7808EB8C5002E3"
     passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
+    passwd = b64encode(passwd)
 
-    return jsonify({"public_key":gateway_publicKey, "shared_key":sharedKey.decode('utf-8'), "passwd":passwd.decode('utf-8')})
+    return jsonify({"public_key":gateway_publicKey, "shared_key":sharedKey, "passwd":passwd.decode('utf-8')})
+    # return jsonify({"public_key":gateway_publicKey, "shared_key":str(b64encode(sharedKey)), "passwd":str(b64encode(passwd))})
 
 @app.route('/messages', methods=['POST', 'GET'])
 def new_messages():
