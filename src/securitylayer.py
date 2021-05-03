@@ -7,15 +7,13 @@ from base64 import b64decode,b64encode
 
 
 class SecurityLayer():
-    '''
     def __init__(self):
-        # self.publicKey = __read_publickey()
-    '''
+        self.publicKey = self.__read_publickey()
 
     def get_public_key(self):
         return self.publicKey
 
-    def get_shared_key(self, publicKey):
+    def get_shared_key(self):
         # TODO: this is the idea
         # return encrypt(secrets.token_hex(32), publicKey)
         return secrets.token_hex(32)
