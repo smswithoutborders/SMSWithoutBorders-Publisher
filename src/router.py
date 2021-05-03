@@ -21,6 +21,7 @@ def sync(session_id):
     securityLayer = SecurityLayer()
     request_body = request.json
     user_publicKey = request_body['public_key']
+    print(f"[+] App Public Key: {user_publicKey}")
 
     gateway_publicKey = securityLayer.get_public_key()
     sharedKey = securityLayer.get_shared_key()
@@ -29,7 +30,7 @@ def sync(session_id):
     passwd = "62BADBA41079EBB733A33124EDFE1F7947E798BC0C2715B60B3BB613A536F1813E0ED58042FBE60E8FE4D50D1C7D8E9C4518B07A97C764F9BB7808EB8C5002E3"
     passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
 
-    return jsonify({"public_key":gateway_publicKey, "shared_key":str(sharedKey), "passwd":str(passwd)})
+    return jsonify({"public_key":gateway_publicKey, "shared_key":sharedKey.decode('utf-8'), "passwd":passwd.decode('utf-8')})
 
 @app.route('/messages', methods=['POST', 'GET'])
 def new_messages():
