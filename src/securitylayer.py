@@ -1,5 +1,6 @@
 #!/bin/python
 import secrets
+from Crypto.Hash import SHA512
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -22,7 +23,7 @@ class SecurityLayer():
         data = bytes(data, 'utf-8')
         key = b64decode(key)
         key = RSA.importKey(key)
-        cipher_rsa = PKCS1_OAEP.new(key)
+        cipher_rsa = PKCS1_OAEP.new(key=key, hashAlgo=SHA512.new())
         return cipher_rsa.encrypt(data)
         # return b64encode(cipher_rsa.encrypt(data))
         # return b64decode(cipher_rsa.encrypt(data)).decode('utf-8')
@@ -36,8 +37,9 @@ if __name__ == "__main__":
     securityLayer = SecurityLayer()
     
     key = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwo7R0xMsbmt88EMe9i5hRSC4pgOfcUsKO0b4R/X5TdTVqeuyoy2lyip1PYagcBajpC6oYjKgj2oRp3hRaYk1h0QyNw50l9fJGR7fAILN3CmUvLKOEtcHE8phvDeY4aOP8ivaVuj+imWk4MzLDisfVS7ybJXlmA/NWVoVuTyWKCTRyxXwk3NayTKOlytvXmjjWoknccCTlMwY1ILD6S3wt/qaDVQ3dm8Yf2gZhK/pLuIgOaer0dEaOK+wJYDbtg4FPlH9TXp2d9g7CfsssFnNLu3mZkisiVchDK8Kcu9ejY5yIaf8jlFrwVpKFfQLB4AO/cwdG+owVEPn0dkvLxp7eQIDAQAB"
-    en_msg=securityLayer.rsa_encrypt("Hello world", key)
+    data = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
+    en_msg=securityLayer.rsa_encrypt(data, key)
     print(type(en_msg))
     print(en_msg)
     print(type(str(en_msg)))
-    print(en_msg.decode('utf-8'))
+    # print(en_msg.decode('utf-8'))

@@ -8,6 +8,7 @@ import deduce_isp as isp
 from platforms import Platforms
 from securitylayer import SecurityLayer
 from base64 import b64decode,b64encode
+import json
 
 CONFIGS = configparser.ConfigParser(interpolation=None)
 
@@ -27,13 +28,15 @@ def sync(session_id):
     gateway_publicKey = securityLayer.get_public_key()
     sharedKey = securityLayer.get_shared_key()
     sharedKey = securityLayer.rsa_encrypt(data=sharedKey, key=user_publicKey)
-    sharedKey = b64encode(sharedKey)
+    sharedKey = str(b64encode(sharedKey), 'utf-8')
     # passwd = datastore.get_password(session_id)
-    passwd = "62BADBA41079EBB733A33124EDFE1F7947E798BC0C2715B60B3BB613A536F1813E0ED58042FBE60E8FE4D50D1C7D8E9C4518B07A97C764F9BB7808EB8C5002E3"
+    passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
     passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
-    passwd = b64encode(passwd)
+    passwd = str(b64encode(passwd), 'utf-8')
 
-    return jsonify({"public_key":gateway_publicKey, "shared_key":sharedKey, "passwd":passwd.decode('utf-8')})
+    ret_value = {"public_key":gateway_publicKey, "shared_key":sharedKey, "passwd":passwd}
+    print(ret_value)
+    return jsonify(ret_value)
     # return jsonify({"public_key":gateway_publicKey, "shared_key":str(b64encode(sharedKey)), "passwd":str(b64encode(passwd))})
 
 @app.route('/messages', methods=['POST', 'GET'])
