@@ -1,10 +1,11 @@
 #!/bin/python
 import secrets
-from Crypto.Hash import SHA512
-from Crypto.PublicKey import RSA
-from Crypto.Random import get_random_bytes
-from Crypto.Cipher import AES, PKCS1_OAEP
+from Cryptodome.Hash import SHA256, SHA1
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Random import get_random_bytes
+from Cryptodome.Cipher import PKCS1_OAEP
 from base64 import b64decode,b64encode
+from Cryptodome.Signature import pss
 
 
 class SecurityLayer():
@@ -23,7 +24,8 @@ class SecurityLayer():
         data = bytes(data, 'utf-8')
         key = b64decode(key)
         key = RSA.importKey(key)
-        cipher_rsa = PKCS1_OAEP.new(key=key, hashAlgo=SHA512.new())
+        cipher_rsa = PKCS1_OAEP.new(key=key, hashAlgo=SHA256.new(), mgfunc=lambda x,y: pss.MGF1(x,y, SHA1))
+        # cipher_rsa = PKCS1_v1_5.new(key=key)
         return cipher_rsa.encrypt(data)
         # return b64encode(cipher_rsa.encrypt(data))
         # return b64decode(cipher_rsa.encrypt(data)).decode('utf-8')
