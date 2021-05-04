@@ -18,7 +18,7 @@ class SecurityLayer():
     def get_shared_key(self):
         # TODO: this is the idea
         # return encrypt(secrets.token_hex(32), publicKey)
-        return secrets.token_hex(32)
+        return secrets.token_hex(16)
 
     def rsa_encrypt(self, data, key):
         data = bytes(data, 'utf-8')

@@ -26,14 +26,12 @@ def sync(session_id):
     print(f"[+] App Public Key: {user_publicKey}")
 
     gateway_publicKey = securityLayer.get_public_key()
-    # sharedKey = securityLayer.get_shared_key()
-    sharedKey = "Shared Key"
+    sharedKey = securityLayer.get_shared_key()
     sharedKey = securityLayer.rsa_encrypt(data=sharedKey, key=user_publicKey)
     sharedKey = str(b64encode(sharedKey), 'utf-8')
 
     # passwd = datastore.get_password(session_id)
-    # passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
-    passwd = "Password"
+    passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
     passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
     passwd = str(b64encode(passwd), 'utf-8')
 
