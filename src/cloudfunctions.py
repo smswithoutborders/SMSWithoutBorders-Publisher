@@ -16,6 +16,42 @@ def check_ssl():
     print( "[+]:", CONFIGS["SSL"]["PEM"] )
     return os.path.isfile( CONFIGS["SSL"]["KEY"] ) and os.path.isfile(CONFIGS["SSL"]["CRT"])
 
+def cloudAcquireGrantLevelHashes(sessionId):
+    datastore = Datastore()
+    userId = datastore.findUserBySessionId(sessionId)
+    try:
+        cloud_url_acquire_platforms = f"{CLOUD_URL}/users/grant-level/hashvalue"
+        print(">> CLOUD_URL: ", cloud_url_auth_users)
+        request=None
+
+        if check_ssl():
+            print("[+] going ssl...")
+            request = requests.post(cloud_url_auth_users, json={"user_id":userId}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
+
+        else:
+            request = requests.post(cloud_url_auth_users, json={"user_id":userId}))
+        print(request.text)
+    except Exception as error:
+        raise Exception(error)
+
+
+def cloudAcquireUserPlatforms(sessionId):
+    datastore = Datastore()
+    userId = datastore.findUserBySessionId(sessionId)
+    try:
+        cloud_url_acquire_platforms = f"{CLOUD_URL}/users/platforms"
+        print(">> CLOUD_URL: ", cloud_url_auth_users)
+        request=None
+
+        if check_ssl():
+            print("[+] going ssl...")
+            request = requests.post(cloud_url_auth_users, json={"user_id":userId}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
+
+        else:
+            request = requests.post(cloud_url_auth_users, json={"user_id":userId}))
+        print(request.text)
+    except Exception as error:
+        raise Exception(error)
 
 def cloudAuthUser(platform, protocol, phonenumber):
     try:

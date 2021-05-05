@@ -30,12 +30,16 @@ def sync(session_id):
     sharedKey = securityLayer.rsa_encrypt(data=sharedKey, key=user_publicKey)
     sharedKey = str(b64encode(sharedKey), 'utf-8')
 
-    # passwd = datastore.get_password(session_id)
-    passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
+    passwd = datastore.cloudAcquireGrantLevelHashes(session_id)
+    # sha512 asshole
+    # passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
     passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
     passwd = str(b64encode(passwd), 'utf-8')
 
-    ret_value = {"public_key":gateway_publicKey, "shared_key":sharedKey, "passwd":passwd}
+    platforms = cloudfunctions.cloudAcquireUserPlatforms(session_id)
+    platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
+
+    ret_value = {"public_key":gateway_publicKey, "shared_key":sharedKey, "passwd":passwd, "platforms":platforms}
     print(ret_value)
     return jsonify(ret_value)
     # return jsonify({"public_key":gateway_publicKey, "shared_key":str(b64encode(sharedKey)), "passwd":str(b64encode(passwd))})
