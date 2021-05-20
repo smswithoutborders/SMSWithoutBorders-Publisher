@@ -24,13 +24,15 @@ def cloudAcquireUserInfo(auth_key):
 
         if check_ssl():
             print("[+] going ssl...")
-            request = requests.post(cloud_url_auth_users, json={"auth_key":auth_key}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
+            request = requests.post(cloud_url_acquire_platforms, json={"auth_key":auth_key}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
 
         else:
-            request = requests.post(cloud_url_auth_users, json={"auth_key":auth_key})
+            request = requests.post(cloud_url_acquire_platforms, json={"auth_key":auth_key})
         print(request.text)
     except Exception as error:
         raise Exception(error)
+    else:
+        return request.json()
 
 def cloudAcquireGrantLevelHashes(sessionId):
     datastore = Datastore()

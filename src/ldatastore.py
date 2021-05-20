@@ -10,7 +10,7 @@ class Datastore(object):
         self.CONFIGS = configparser.ConfigParser(interpolation=None)
 
         if configs_filepath==None:
-            self.CONFIGS.read("libs/config.ini")
+            self.CONFIGS.read("config.mysql.ini")
         else:
             self.CONFIGS.read(configs_filepath)
 
@@ -23,8 +23,8 @@ class Datastore(object):
         # self.cursor = self.conn.cursor(buffered=True)
         self.cursor = self.conn.cursor()
 
-    def new_log(self, messageID):
-        query=f"INSERT INTO logs SET messageID={messageID}"
+    def new_session(self, phonenumber, _id):
+        query=f"INSERT INTO synced_accounts SET id='{_id}', phonenumber={phonenumber}"
         try:
             self.cursor.execute( query )
             self.conn.commit()

@@ -2,11 +2,14 @@
 
 import configparser
 import cloudfunctions
+import sync_accounts
 import routerfunctions
+import start_routines
 import deduce_isp as isp
 
 from platforms import Platforms
 from securitylayer import SecurityLayer
+
 from base64 import b64decode,b64encode
 import json
 
@@ -26,10 +29,11 @@ def sessions():
 
     user_authkey = request_body['auth_key']
     user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey)
-    session_details = sessions.new_session(user_details["phone_number"])
+    session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"])
 
-    origin_url = request.environ['HTTP_ORIGIN']
-    session_url = f"{origin_url}/sessions/{session_details['id']}"
+    print(request.environ)
+    origin_url = request.environ['REMOTE_ADDR']
+    session_url = f"{origin_url}/sync/sessions/{session_id}"
     return jsonify({"status": 200, "url":session_url})
 
     
@@ -155,4 +159,5 @@ if CONFIGS["API"]["DEBUG"] == "1":
     app.debug = True
 
 print_ip()
+start_routines.sr_database_checks()
 app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug )
