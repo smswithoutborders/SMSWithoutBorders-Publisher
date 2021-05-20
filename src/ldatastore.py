@@ -34,8 +34,8 @@ class Datastore(object):
         else:
             return self.cursor.lastrowid
 
-    def update_log(self, messageLogID:int, status:str, message:str):
-        query=f"UPDATE logs SET status='{status}', message=\"{message}\" WHERE id={messageLogID}"
+    def update_credentials(self, shared_key, public_key, session_id):
+        query=f"UPDATE synced_accounts SET shared_key='{shared_key}', public_key='{public_key}' WHERE id='{session_id}'"
         try:
             self.cursor.execute( query )
             self.conn.commit()

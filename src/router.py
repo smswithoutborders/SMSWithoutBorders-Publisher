@@ -32,7 +32,7 @@ def sessions():
     session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"])
 
     print(request.environ)
-    origin_url = request.environ['REMOTE_ADDR']
+    origin_url = request.environ['REMOTE_ADDR'] + ":" + request.environ['SERVER_PORT']
     session_url = f"{origin_url}/sync/sessions/{session_id}"
     return jsonify({"status": 200, "url":session_url})
 
@@ -42,11 +42,15 @@ def sessions():
 def sync(session_id):
     securityLayer = SecurityLayer()
     request_body = request.json
+    if not 'public_key' in request_body:
+        return jsonify({"status":403, "message":"No public key"})
+
     user_publicKey = request_body['public_key']
     print(f"[+] App Public Key: {user_publicKey}")
 
     gateway_publicKey = securityLayer.get_public_key()
     sharedKey = securityLayer.get_shared_key()
+    sync_accounts.store_credentials( shared_key=sharedKey, public_key=user_publicKey, session_id=session_id)
     sharedKey = securityLayer.rsa_encrypt(data=sharedKey, key=user_publicKey)
     sharedKey = str(b64encode(sharedKey), 'utf-8')
 
