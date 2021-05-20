@@ -18,6 +18,22 @@ CONFIGS.read("config.router.ini")
 from flask import Flask, request, jsonify
 app = Flask(__name__)
 
+@app.route('/sync/sessions/', methods=['POST'])
+def sessions():
+    request_body = request.json
+    if not 'auth_key' in request_body:
+        return jsonify({"status":403, "message":"No auth key"})
+
+    user_authkey = request_body['auth_key']
+    user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey)
+    session_details = sessions.new_session(user_details["phone_number"])
+
+    origin_url = request.environ['HTTP_ORIGIN']
+    session_url = f"{origin_url}/sessions/{session_details['id']}"
+    return jsonify({"status": 200, "url":session_url})
+
+    
+
 @app.route('/sync/sessions/<session_id>', methods=['POST'])
 def sync(session_id):
     securityLayer = SecurityLayer()
@@ -30,16 +46,19 @@ def sync(session_id):
     sharedKey = securityLayer.rsa_encrypt(data=sharedKey, key=user_publicKey)
     sharedKey = str(b64encode(sharedKey), 'utf-8')
 
-    passwd = datastore.cloudAcquireGrantLevelHashes(session_id)
+    # passwd = datastore.cloudAcquireGrantLevelHashes(session_id)
     # sha512 asshole
-    # passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
+    passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
     passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
     passwd = str(b64encode(passwd), 'utf-8')
 
+    '''
     platforms = cloudfunctions.cloudAcquireUserPlatforms(session_id)
     platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
+    '''
 
-    ret_value = {"public_key":gateway_publicKey, "shared_key":sharedKey, "passwd":passwd, "platforms":platforms}
+    # ret_value = {"public_key":gateway_publicKey, "shared_key":sharedKey, "passwd":passwd, "platforms":platforms}
+    ret_value = {"public_key":gateway_publicKey, "shared_key":sharedKey, "passwd":passwd}
     print(ret_value)
     return jsonify(ret_value)
     # return jsonify({"public_key":gateway_publicKey, "shared_key":str(b64encode(sharedKey)), "passwd":str(b64encode(passwd))})

@@ -16,6 +16,22 @@ def check_ssl():
     print( "[+]:", CONFIGS["SSL"]["PEM"] )
     return os.path.isfile( CONFIGS["SSL"]["KEY"] ) and os.path.isfile(CONFIGS["SSL"]["CRT"])
 
+
+def cloudAcquireUserInfo(auth_key):
+    try:
+        cloud_url_acquire_platforms = f"{CLOUD_URL}/users/profiles/info"
+        request=None
+
+        if check_ssl():
+            print("[+] going ssl...")
+            request = requests.post(cloud_url_auth_users, json={"auth_key":auth_key}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
+
+        else:
+            request = requests.post(cloud_url_auth_users, json={"auth_key":auth_key})
+        print(request.text)
+    except Exception as error:
+        raise Exception(error)
+
 def cloudAcquireGrantLevelHashes(sessionId):
     datastore = Datastore()
     userId = datastore.findUserBySessionId(sessionId)
@@ -29,7 +45,7 @@ def cloudAcquireGrantLevelHashes(sessionId):
             request = requests.post(cloud_url_auth_users, json={"user_id":userId}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
 
         else:
-            request = requests.post(cloud_url_auth_users, json={"user_id":userId}))
+            request = requests.post(cloud_url_auth_users, json={"user_id":userId})
         print(request.text)
     except Exception as error:
         raise Exception(error)
@@ -48,7 +64,7 @@ def cloudAcquireUserPlatforms(sessionId):
             request = requests.post(cloud_url_auth_users, json={"user_id":userId}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
 
         else:
-            request = requests.post(cloud_url_auth_users, json={"user_id":userId}))
+            request = requests.post(cloud_url_auth_users, json={"user_id":userId})
         print(request.text)
     except Exception as error:
         raise Exception(error)
@@ -71,7 +87,7 @@ def cloudAuthUser(platform, protocol, phonenumber):
     except Exception as error:
         raise Exception(error)
     else:
-        if not "status_code" in request and request.status_code is not 200:
+        if not "status_code" in request and request.status_code != 200:
             return None
         if not "auth_key" in request.json():
             return None
@@ -89,7 +105,7 @@ def cloudAuthUser(platform, protocol, phonenumber):
             else:
                 request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"], "platform":platform})
 
-            if not "status_code" in request and request.status_code is not 200:
+            if not "status_code" in request and request.status_code != 200:
                 return None
             
             req_json = request.json()
