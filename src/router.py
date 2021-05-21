@@ -67,7 +67,19 @@ def sync(session_id):
     platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
     '''
 
-    # platforms = [{"provider":"google", "platforms":["gmail"]}]
+    platforms = [
+            {
+                "provider":"google", 
+                "description":"Google Inc", 
+                "type":"email", 
+                "platforms":
+                [
+                    {
+                        "name":"gmail",
+                    }
+                ]
+            }
+    ]
     # pk = public key
     # sk = shared key
     # pd = password
