@@ -37,7 +37,7 @@ def cloudAcquireUserInfo(auth_key):
 
 def cloudAcquireGrantLevelHashes(sessionId):
     datastore = Datastore()
-    user_id = datastore.acquireUserPhonenumber(sessionId)
+    user_id = datastore.acquireUserFromId(sessionId)
     user_id = user_id[0]['user_id']
     try:
         cloud_url_acquire_hash = f"{CLOUD_URL}/locals/users/hash1"
@@ -46,18 +46,20 @@ def cloudAcquireGrantLevelHashes(sessionId):
 
         if check_ssl():
             print("[+] going ssl...")
-            request = requests.post(cloud_url_acquire_hash, json={"user_id":user_id}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
+            request = requests.post(cloud_url_acquire_hash, json={"id":user_id}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
 
         else:
-            request = requests.post(cloud_url_acquire_hash, json={"user_id":user_id})
-        print(request.text)
+            request = requests.post(cloud_url_acquire_hash, json={"id":user_id})
     except Exception as error:
         raise Exception(error)
+    else:
+        return request.json()
 
 
 def cloudAcquireUserPlatforms(sessionId):
     datastore = Datastore()
-    userId = datastore.findUserBySessionId(sessionId)
+    user_id = datastore.acquireUserFromId(sessionId)
+    user_id = user_id[0]['user_id']
     try:
         cloud_url_acquire_platforms = f"{CLOUD_URL}/users/platforms"
         print(">> CLOUD_URL: ", cloud_url_auth_users)

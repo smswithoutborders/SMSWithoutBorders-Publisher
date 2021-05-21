@@ -29,7 +29,7 @@ def sessions():
 
     user_authkey = request_body['auth_key']
     user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey)
-    session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["user_id"])
+    session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
 
     print(request.environ)
     origin_url = request.environ['REMOTE_ADDR'] + ":" + request.environ['SERVER_PORT']
@@ -57,6 +57,8 @@ def sync(session_id):
     # sha512 asshole
     # passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
     passwd = cloudfunctions.cloudAcquireGrantLevelHashes(session_id)
+    passwd = passwd['password_hash']
+    print("passwdHash:", passwd)
     passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
     passwd = str(b64encode(passwd), 'utf-8')
 
@@ -64,7 +66,8 @@ def sync(session_id):
     platforms = cloudfunctions.cloudAcquireUserPlatforms(session_id)
     platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
     '''
-    platforms = [{"provider":"google", "platforms":["gmail"]}]
+
+    # platforms = [{"provider":"google", "platforms":["gmail"]}]
     # pk = public key
     # sk = shared key
     # pd = password
