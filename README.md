@@ -1,26 +1,48 @@
-##### Begin by configuring databases
-###### MySQL
-- Copy the _router.example.config.ini_ file into _config.router.ini_ in the same dir
+### Configuration and running
+__mysql__
+```bash
+# copy router.example.config.ini to config.router.ini
+cp router.example.config.ini config.router.ini
+```
 
 ##### How to Run
 
-###### Create venv
+__create venv__
 ```bash
 python3 -m virtualenv .venv
 ```
 
-###### Activate venv
+__activate venv__
 ```bash
 source .venv/bin/activate
 ```
 
-###### Install requirements
+__install requirements__
 ```bash
 pip install -r requirements.txt
 ```
 
-###### Start the API
+__start the API__
 ```bash
 cd src/
 python router.py
+```
+
+### API ENDPOINTS
+__create new session for QR code__
+```curl
+[POST]
+/sync/sessions/
+```
+```json
+// body requirements
+{
+"auth_key":""
+}
+
+// returns
+{
+"status":200,
+"url":""
+}
 ```
