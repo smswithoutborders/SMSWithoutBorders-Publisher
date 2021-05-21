@@ -4,6 +4,7 @@
 import configparser
 import requests
 import os
+from ldatastore import Datastore
 
 CONFIGS = configparser.ConfigParser(interpolation=None)
 
@@ -37,18 +38,18 @@ def cloudAcquireUserInfo(auth_key):
 def cloudAcquireGrantLevelHashes(sessionId):
     datastore = Datastore()
     phonenumber = datastore.acquireUserPhonenumber(sessionId)
-    phonenumber = phonenumber['phonenumber']
+    phonenumber = phonenumber[0]['phonenumber']
     try:
-        cloud_url_acquire_platforms = f"{CLOUD_URL}/locals/users/hash1"
-        print(">> CLOUD_URL: ", cloud_url_auth_users)
+        cloud_url_acquire_hash = f"{CLOUD_URL}/locals/users/hash1"
+        print(">> CLOUD_URL: ", cloud_url_acquire_hash)
         request=None
 
         if check_ssl():
             print("[+] going ssl...")
-            request = requests.post(cloud_url_auth_users, json={"phone_number":phonenumber}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
+            request = requests.post(cloud_url_acquire_hash, json={"phone_number":phonenumber}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
 
         else:
-            request = requests.post(cloud_url_auth_users, json={"phone_number":phonenumber})
+            request = requests.post(cloud_url_acquire_hash, json={"phone_number":phonenumber})
         print(request.text)
     except Exception as error:
         raise Exception(error)
