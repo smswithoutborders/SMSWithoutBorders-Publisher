@@ -18,6 +18,7 @@ columns = {
         "phonenumber": "VARCHAR(24) NOT NULL",
         "shared_key": "VARCHAR(255) NULL",
         "public_key": "VARCHAR(1028) NULL",
+        "user_id": "VARCHAR(64) NULL",
         "date": "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
         "mdate": "TIMESTAMP on update CURRENT_TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
     }

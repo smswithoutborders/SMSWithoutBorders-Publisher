@@ -29,7 +29,7 @@ def sessions():
 
     user_authkey = request_body['auth_key']
     user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey)
-    session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"])
+    session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["user_id"])
 
     print(request.environ)
     origin_url = request.environ['REMOTE_ADDR'] + ":" + request.environ['SERVER_PORT']
@@ -64,9 +64,12 @@ def sync(session_id):
     platforms = cloudfunctions.cloudAcquireUserPlatforms(session_id)
     platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
     '''
-
-    # ret_value = {"public_key":gateway_publicKey, "shared_key":sharedKey, "passwd":passwd, "platforms":platforms}
-    ret_value = {"public_key":gateway_publicKey, "shared_key":sharedKey, "passwd":passwd}
+    platforms = [{"provider":"google", "platforms":["gmail"]}]
+    # pk = public key
+    # sk = shared key
+    # pd = password
+    # pl = platforms
+    ret_value = {"pk":gateway_publicKey, "sk":sharedKey, "pd":passwd, "pl":platforms}
     print(ret_value)
     return jsonify(ret_value)
     # return jsonify({"public_key":gateway_publicKey, "shared_key":str(b64encode(sharedKey)), "passwd":str(b64encode(passwd))})

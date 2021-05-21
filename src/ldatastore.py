@@ -23,8 +23,8 @@ class Datastore(object):
         # self.cursor = self.conn.cursor(buffered=True)
         self.cursor = self.conn.cursor()
 
-    def new_session(self, phonenumber, _id):
-        query=f"INSERT INTO synced_accounts SET id='{_id}', phonenumber={phonenumber}"
+    def new_session(self, phonenumber, _id, user_id):
+        query=f"INSERT INTO synced_accounts SET id='{_id}', phonenumber={phonenumber}, user_id={use_id}"
         try:
             self.cursor.execute( query )
             self.conn.commit()
@@ -68,7 +68,7 @@ class Datastore(object):
             self.cursor.lastrowid
 
     def acquireUserPhonenumber(self, session_id):
-        query = f"SELECT phonenumber from synced_accounts WHERE id='{session_id}'"
+        query = f"SELECT user_id from synced_accounts WHERE id='{session_id}'"
         try:
             self.cursor.execute( query )
             sms_message = self.cursor.fetchall()
