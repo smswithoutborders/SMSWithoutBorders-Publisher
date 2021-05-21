@@ -67,29 +67,13 @@ class Datastore(object):
         else:
             self.cursor.lastrowid
 
-    def acquire_message(self, modem_index:int, modem_imei:str):
-        '''
-            TODO: 
-                - Filter by last come first out
-        '''
-
-        query = f"SELECT * FROM messages where type='sending' AND claimed_modem_imei is NULL LIMIT 1"
+    def acquireUserPhonenumber(self, session_id):
+        query = f"SELECT phonenumber from synced_accounts WHERE id='{session_id}'"
         try:
             self.cursor.execute( query )
             sms_message = self.cursor.fetchall()
-            # print(sms_message, type(sms_message), len(sms_message))
-            counter = 0
-            mn_sms_message = None
-            for row in sms_message:
-                messageID = row["id"]
-                # print(row["text"], messageID)
-                self.claim_message(messageID, modem_imei)
-                
-                if counter < 1:
-                    mn_sms_message = row
-                    ++counter
 
-            return mn_sms_message
+            return sms_message
 
         except mysql.connector.Error as err:
             raise Exception( err )

@@ -54,9 +54,9 @@ def sync(session_id):
     sharedKey = securityLayer.rsa_encrypt(data=sharedKey, key=user_publicKey)
     sharedKey = str(b64encode(sharedKey), 'utf-8')
 
-    # passwd = datastore.cloudAcquireGrantLevelHashes(session_id)
     # sha512 asshole
-    passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
+    # passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
+    passwd = datastore.cloudAcquireGrantLevelHashes(session_id)
     passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
     passwd = str(b64encode(passwd), 'utf-8')
 

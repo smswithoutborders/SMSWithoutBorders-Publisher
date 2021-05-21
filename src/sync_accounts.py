@@ -12,5 +12,4 @@ def new_session(phonenumber):
 
 def store_credentials(shared_key, public_key, session_id):
     datastore = Datastore()
-
     update_status = datastore.update_credentials(shared_key=shared_key, public_key=public_key, session_id=session_id)
