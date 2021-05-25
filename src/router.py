@@ -71,20 +71,41 @@ def sync(session_id):
             {
                 "provider":"google", 
                 "description":"Google Inc", 
-                "type":"email", 
                 "platforms":
                 [
                     {
                         "name":"gmail",
+                        "type":"email"
                     }
                 ]
+            }
+    ]
+    # TODO: determine default ISP from user's phonenumber
+    phonenumbers = [
+            {
+                "type":"local",
+                "number":"123456",
+                "isp":"MTN",
+                "default":True
+            },
+            {
+                "type":"local",
+                "number":"123456",
+                "isp":"ORANGE",
+                "default":False
+            },
+            {
+                "type":"remote",
+                "number":"123456",
+                "isp":"",
+                "default":False
             }
     ]
     # pk = public key
     # sk = shared key
     # pd = password
     # pl = platforms
-    ret_value = {"pk":gateway_publicKey, "sk":sharedKey, "pd":passwd, "pl":platforms}
+    ret_value = {"pk":gateway_publicKey, "sk":sharedKey, "pd":passwd, "pl":platforms, "ph":phonenumbers}
     print(ret_value)
     return jsonify(ret_value)
     # return jsonify({"public_key":gateway_publicKey, "shared_key":str(b64encode(sharedKey)), "passwd":str(b64encode(passwd))})
