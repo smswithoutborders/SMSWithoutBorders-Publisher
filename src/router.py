@@ -50,9 +50,11 @@ def sync(session_id):
 
     gateway_publicKey = securityLayer.get_public_key()
     sharedKey = securityLayer.get_shared_key()
+    print(f"[+] Shared key (open): ", sharedKey)
     sync_accounts.store_credentials( shared_key=sharedKey, public_key=user_publicKey, session_id=session_id)
     sharedKey = securityLayer.rsa_encrypt(data=sharedKey, key=user_publicKey)
     sharedKey = str(b64encode(sharedKey), 'utf-8')
+    print(f"[+] Shared key (close): ", sharedKey)
 
     # sha512 asshole
     # passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"

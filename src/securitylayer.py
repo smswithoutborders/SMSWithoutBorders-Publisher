@@ -3,9 +3,10 @@ import secrets
 from Cryptodome.Hash import SHA256, SHA1
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Random import get_random_bytes
-from Cryptodome.Cipher import PKCS1_OAEP
+from Cryptodome.Cipher import PKCS1_OAEP, AES
 from base64 import b64decode,b64encode
 from Cryptodome.Signature import pss
+from Cryptodome.Util.Padding import pad, unpad
 
 
 class SecurityLayer():
@@ -30,18 +31,49 @@ class SecurityLayer():
         # return b64encode(cipher_rsa.encrypt(data))
         # return b64decode(cipher_rsa.encrypt(data)).decode('utf-8')
 
+    def aes_decrypt(self, data, key, iv, decodeIV=False):
+        if decodeIV:
+            iv=str(b64decode(iv), 'utf-8')
+        cipher = AES.new(bytes(key, 'utf-8'), AES.MODE_CBC, bytes(iv, 'utf-8'))
+        b64data = b64decode(data)
+        decryptedData = cipher.decrypt(b64data)
+        decryptedData = unpad(decryptedData, AES.block_size)
+        decryptedData = str(decryptedData, 'utf-8')
+        decryptedData = decryptedData.replace('\n', '')
+        # print(decryptedData)
+        return decryptedData
+
     def __read_publickey(self):
         return "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDJKfzNwH+Kdd+d1q8m8FFr5EX+gaAUAumDf+b9zjMDaHEWUqXnrCcLVy2FTkjcCOylkX+xmrlOhpYdwjrMrZ+PIfi+ok+FjrRIj1KfjAzJZd77+spS7oxcyWhw1wBhutGyOs2x4YWDnRjvhVhvuT+/aVdQjQroAhz7g1ShjeTuVeTc01K9HddiEixihF5lelLde8+AHa9V/ov6prtWD7momg0bF1J9FMp8zDKDnHPR6ptND/QhbhsMof+vAh/5x4vRcbFjRNxOqvGQxyqyzl2VxdxXBhJJ2UiumvcnY9XN3g30pvMff2zO7WpmM4wLOoRo0nijTTAerpiSlUz7jZZ2xhIc5YwTG1iSYj2GEWtN+fISfEoaurezPvigLiVuyolksVX4nMvBcSoHe4fb8sqchFAJuTT/6ko1NsXnrNGs4wKXA3JQ+riYPgxWrh/quTgwMvyErmuGoCPcm/XvkDy3GEHY3z+DXPQZgSYFERE/RZz2O+CpTnb7bBd8n6TElfM= sherlock@manjaro"
 
 
-
 if __name__ == "__main__":
     securityLayer = SecurityLayer()
-    
-    key = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwo7R0xMsbmt88EMe9i5hRSC4pgOfcUsKO0b4R/X5TdTVqeuyoy2lyip1PYagcBajpC6oYjKgj2oRp3hRaYk1h0QyNw50l9fJGR7fAILN3CmUvLKOEtcHE8phvDeY4aOP8ivaVuj+imWk4MzLDisfVS7ybJXlmA/NWVoVuTyWKCTRyxXwk3NayTKOlytvXmjjWoknccCTlMwY1ILD6S3wt/qaDVQ3dm8Yf2gZhK/pLuIgOaer0dEaOK+wJYDbtg4FPlH9TXp2d9g7CfsssFnNLu3mZkisiVchDK8Kcu9ejY5yIaf8jlFrwVpKFfQLB4AO/cwdG+owVEPn0dkvLxp7eQIDAQAB"
-    data = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
-    en_msg=securityLayer.rsa_encrypt(data, key)
-    print(type(en_msg))
-    print(en_msg)
-    print(type(str(en_msg)))
-    # print(en_msg.decode('utf-8'))
+    '''
+    data='8gjJxfN1dVknIqYiarspwZoWwyBwojecA5+ohHPgaNI='
+    key='7e8555fe4d80865f6a98c21521f2db53'
+    iv='1f52ed515871c913'
+
+    iv = securityLayer.aes_decrypt(data, key, iv)
+    print("decrypted IV:", iv)
+
+    data='eG91S0NDbURnQWtlVk9IakJtL3ljQT09Cg=='
+    decryptedData = securityLayer.aes_decrypt(data, key, iv, True)
+    print(decryptedData)
+    '''
+
+    def_key='7e8555fe4d80865f6a98c21521f2db53'
+    def_iv='1f52ed515871c913'
+    data='w6mlzmz5xN7jdm+O+7UOgiGHS4fl4yO59HWO/GHs8V0=_dvtFZjYFrIQOSqNIHl/3XQ=='
+    split_data=data.split('_')
+
+    encrypted_iv=split_data[0]
+    encrypted_data=split_data[1]
+    print("[+] Encrypted IV:", encrypted_iv)
+    print("[+] Encrypted Data:", encrypted_data)
+
+    decrypted_iv=securityLayer.aes_decrypt(encrypted_iv, def_key, def_iv)
+    decrypted_iv=str(b64decode(decrypted_iv), 'utf-8')
+    print("\n[+] Decrypted IV:", decrypted_iv)
+    decrypted_data=securityLayer.aes_decrypt(encrypted_data, def_key, decrypted_iv)
+    print("[+] Decrypted Data:", decrypted_data)
