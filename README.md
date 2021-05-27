@@ -1,3 +1,6 @@
+### Dependencies
+- MySQL
+
 ### Configuration and running
 __mysql__
 ```bash
@@ -24,8 +27,7 @@ pip install -r requirements.txt
 
 __start the API__
 ```bash
-cd src/
-python router.py
+python main.py
 ```
 
 ### API ENDPOINTS
