@@ -2,3 +2,4 @@ config.ini
 config.*.ini
 *.sw*
 __pycache__/*
+isp.json

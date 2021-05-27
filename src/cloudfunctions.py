@@ -4,11 +4,12 @@
 import configparser
 import requests
 import os
-from ldatastore import Datastore
+from . import datastore as Datastore
 
 CONFIGS = configparser.ConfigParser(interpolation=None)
 
-CONFIGS.read("config.router.ini")
+PATH_CONFIG_FILE = os.path.join(os.path.dirname(__file__), '../configs', 'config.router.ini')
+CONFIGS.read(PATH_CONFIG_FILE)
 CLOUD_URL = CONFIGS["CLOUD_API"]["url"]
 # from ldatastore import Datastore
 
