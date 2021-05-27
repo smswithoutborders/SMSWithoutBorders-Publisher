@@ -52,33 +52,26 @@ def sync(session_id):
         return jsonify({"status":403, "message":"No public key"})
 
     user_publicKey = request_body['public_key']
-    print(f"[+] App Public Key: {user_publicKey}")
 
     gateway_publicKey = securityLayer.get_public_key()
     sharedKey = securityLayer.get_shared_key()
-    print(f"[+] Shared key (open): ", sharedKey)
     sync_accounts.store_credentials( shared_key=sharedKey, public_key=user_publicKey, session_id=session_id)
     sharedKey = securityLayer.rsa_encrypt(data=sharedKey, key=user_publicKey)
     sharedKey = str(b64encode(sharedKey), 'utf-8')
-    print(f"[+] Shared key (close): ", sharedKey)
 
     # sha512 asshole
     # passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
     passwd = cloudfunctions.cloudAcquireGrantLevelHashes(session_id)
     passwd = passwd['password_hash']
-    print("passwdHash:", passwd)
     passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
     passwd = str(b64encode(passwd), 'utf-8')
 
-    print("session id:", session_id)
     results = sync_accounts.acquire_sessions(session_id)
     if len(results) < 1 or not 'phonenumber' in results[0]:
         return jsonify({"status":403, "message":"Phone number not in sync sessions"})
 
     phonenumber = results[0]["phonenumber"]
-    # print("phonenumber>>", phonenumber)
     platforms = cloudfunctions.cloudAcquireUserPlatforms(session_id, phonenumber)
-    print(platforms)
     # platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
 
     phonenumbers = []
@@ -89,15 +82,14 @@ def sync(session_id):
         for isp in isp_config:
             phonenumbers.append( isp )
 
-    print(phonenumbers)
+    # print(phonenumbers)
     # pk = public key
     # sk = shared key
     # pd = password
     # pl = platforms
+    # ph = phonenumbers
     ret_value = {"pk":gateway_publicKey, "sk":sharedKey, "pd":passwd, "pl":platforms, "ph":phonenumbers}
-    # print(ret_value)
     return jsonify(ret_value)
-    # return jsonify({"public_key":gateway_publicKey, "shared_key":str(b64encode(sharedKey)), "passwd":str(b64encode(passwd))})
 
 @app.route('/messages', methods=['POST', 'GET'])
 def new_messages():
