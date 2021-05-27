@@ -72,11 +72,12 @@ def sync(session_id):
         return jsonify({"status":403, "message":"Phone number not in sync sessions"})
 
     phonenumber = results[0]["phonenumber"]
-    print("phonenumber>>", phonenumber)
+    # print("phonenumber>>", phonenumber)
     platforms = cloudfunctions.cloudAcquireUserPlatforms(session_id, phonenumber)
     print(platforms)
     # platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
 
+    '''
     platforms = [
             {
                 "provider":"google", 
@@ -90,6 +91,7 @@ def sync(session_id):
                 ]
             }
     ]
+    '''
     # TODO: determine default ISP from user's phonenumber
     phonenumbers = [
             {
