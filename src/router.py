@@ -29,6 +29,8 @@ def sessions():
 
     user_authkey = request_body['auth_key']
     user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey)
+    if not 'phone_number' in user_details or not 'id' in user_details:
+        return jsonify({"status":403, "message":"User may not exist"})
     session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
 
     print(request.environ)
@@ -64,10 +66,16 @@ def sync(session_id):
     passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
     passwd = str(b64encode(passwd), 'utf-8')
 
-    '''
-    platforms = cloudfunctions.cloudAcquireUserPlatforms(session_id)
-    platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
-    '''
+    print("session id:", session_id)
+    results = sync_accounts.acquire_sessions(session_id)
+    if len(results) < 1 or not 'phonenumber' in results[0]:
+        return jsonify({"status":403, "message":"Phone number not in sync sessions"})
+
+    phonenumber = results[0]["phonenumber"]
+    print("phonenumber>>", phonenumber)
+    platforms = cloudfunctions.cloudAcquireUserPlatforms(session_id, phonenumber)
+    print(platforms)
+    # platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
 
     platforms = [
             {
@@ -108,7 +116,7 @@ def sync(session_id):
     # pd = password
     # pl = platforms
     ret_value = {"pk":gateway_publicKey, "sk":sharedKey, "pd":passwd, "pl":platforms, "ph":phonenumbers}
-    print(ret_value)
+    # print(ret_value)
     return jsonify(ret_value)
     # return jsonify({"public_key":gateway_publicKey, "shared_key":str(b64encode(sharedKey)), "passwd":str(b64encode(passwd))})
 
