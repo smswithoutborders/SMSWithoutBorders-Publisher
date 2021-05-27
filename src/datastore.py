@@ -2,6 +2,7 @@
 import mysql.connector
 import pymysql
 from datetime import date
+import os
 
 # rewrite message store to allow for using as a class extension
 class Datastore(object):
@@ -10,7 +11,8 @@ class Datastore(object):
         self.CONFIGS = configparser.ConfigParser(interpolation=None)
 
         if configs_filepath==None:
-            self.CONFIGS.read("config.mysql.ini")
+            PATH_CONFIG_FILE = os.path.join(os.path.dirname(__file__), '../configs', 'config.mysql.ini')
+            self.CONFIGS.read(PATH_CONFIG_FILE)
         else:
             self.CONFIGS.read(configs_filepath)
 

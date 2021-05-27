@@ -4,7 +4,7 @@
 import configparser
 import requests
 import os
-from . import datastore as Datastore
+from . datastore import Datastore
 
 CONFIGS = configparser.ConfigParser(interpolation=None)
 

@@ -1,6 +1,6 @@
 #!/bin/python
 
-from . import datastore as Datastore
+from . datastore import Datastore 
 import uuid
 
 def new_session(phonenumber, user_id):
