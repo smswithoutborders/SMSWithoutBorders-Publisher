@@ -1,3 +1,6 @@
+### Dependencies
+- MySQL
+
 ### Configuration and running
 __mysql__
 ```bash
