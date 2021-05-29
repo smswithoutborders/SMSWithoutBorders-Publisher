@@ -50,7 +50,7 @@ def sessions():
 
 @app.route('/sync/sessions/<session_id>', methods=['POST'])
 def sync(session_id):
-    user_info = acquire_sessions(session_id)
+    user_info = sync_accounts.acquire_sessions(session_id)
     if len(user_info) < 1:
         return jsonify({"status":403, "message":"Session not found"})
     if not "user_id" in user_info[0]:
@@ -72,15 +72,17 @@ def sync(session_id):
     # passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
     try:
         passwd = cloudfunctions.cloudAcquireGrantLevelHashes(user_info[0]["user_id"])
+        if not 'password_hash' in passwd:
+            return jsonify({"status":403, "message":"Error acquiring password hash"})
+
         passwd = passwd['password_hash']
         passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
         passwd = str(b64encode(passwd), 'utf-8')
 
-        if len(user_info) < 1 or not 'phonenumber' in user_info[0]:
-            return jsonify({"status":403, "message":"Phone number not in sync sessions"})
-
-        phonenumber = user_id[0]["phonenumber"]
-        platforms = cloudfunctions.cloudAcquireUserPlatforms(auth_key=user_info[0]["user_id"])
+        platforms = cloudfunctions.cloudAcquireUserPlatforms(user_id=user_info[0]["user_id"])
+        print(platforms)
+        if not 'user_provider' in platforms:
+            return jsonify({"status":403, "message":"Error fetching platforms"})
         # platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
 
         phonenumbers = []
@@ -196,4 +198,4 @@ if CONFIGS["API"]["DEBUG"] == "1":
 
 print_ip()
 start_routines.sr_database_checks()
-app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug )
+app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
