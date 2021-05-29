@@ -50,13 +50,18 @@ def sessions():
 
 @app.route('/sync/sessions/<session_id>', methods=['POST'])
 def sync(session_id):
+    user_info = acquire_sessions(session_id)
+    if len(user_info) < 1:
+        return jsonify({"status":403, "message":"Session not found"})
+    if not "user_id" in user_info[0]:
+        return jsonify({"status":500, "message":"internal system error"})
+
     securityLayer = SecurityLayer()
     request_body = request.json
     if not 'public_key' in request_body:
         return jsonify({"status":403, "message":"No public key"})
 
     user_publicKey = request_body['public_key']
-
     gateway_publicKey = securityLayer.get_public_key()
     sharedKey = securityLayer.get_shared_key()
     sync_accounts.store_credentials( shared_key=sharedKey, public_key=user_publicKey, session_id=session_id)
@@ -66,17 +71,16 @@ def sync(session_id):
     # sha512 asshole
     # passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
     try:
-        passwd = cloudfunctions.cloudAcquireGrantLevelHashes(session_id)
+        passwd = cloudfunctions.cloudAcquireGrantLevelHashes(user_info[0]["user_id"])
         passwd = passwd['password_hash']
         passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
         passwd = str(b64encode(passwd), 'utf-8')
 
-        results = sync_accounts.acquire_sessions(session_id)
-        if len(results) < 1 or not 'phonenumber' in results[0]:
+        if len(user_info) < 1 or not 'phonenumber' in user_info[0]:
             return jsonify({"status":403, "message":"Phone number not in sync sessions"})
 
-        phonenumber = results[0]["phonenumber"]
-        platforms = cloudfunctions.cloudAcquireUserPlatforms(session_id, phonenumber)
+        phonenumber = user_id[0]["phonenumber"]
+        platforms = cloudfunctions.cloudAcquireUserPlatforms(auth_key=user_info[0]["user_id"])
         # platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
 
         phonenumbers = []

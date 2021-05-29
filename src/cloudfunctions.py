@@ -35,13 +35,8 @@ def cloudAcquireUserInfo(auth_key, _id):
     else:
         return request.json()
 
-def cloudAcquireGrantLevelHashes(sessionId):
+def cloudAcquireGrantLevelHashes(user_id):
     datastore = Datastore()
-    user_id = datastore.acquireUserFromId(sessionId)
-    if not len(user_id) > 0 or not 'user_id' in user_id[0]:
-        raise Exception("error fetching user id")
-
-    user_id = user_id[0]['user_id']
     try:
         cloud_url_acquire_hash = f"{CLOUD_URL_DEV}/locals/users/hash1"
         print(">> CLOUD_URL: ", cloud_url_acquire_hash)
@@ -60,31 +55,29 @@ def cloudAcquireGrantLevelHashes(sessionId):
         return request.json()
 
 
-def cloudAcquireUserPlatforms(session_id, phonenumber):
+def cloudAcquireUserPlatforms(user_id):
     datastore = Datastore()
-    auth_key = cloudGetUserAuthKey(phonenumber)
-    print(auth_key)
+    auth_key = cloudGetUserAuthKey(user_id)
     if not 'auth_key' in auth_key:
-        raise Exception('auth key not acquired')
+        raise Exception("no auth key found")
 
-    auth_key = auth_key['auth_key']
     try:
         cloud_url_acquire_platforms = f"{CLOUD_URL}/users/providers"
         request=None
 
         if check_ssl():
             # print("[+] going ssl...")
-            request = requests.post(cloud_url_acquire_platforms, json={"auth_key":auth_key}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
+            request = requests.post(cloud_url_acquire_platforms, json={"auth_key":auth_key, "id":user_id}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
 
         else:
-            request = requests.post(cloud_url_acquire_platforms, json={"auth_key":auth_key})
+            request = requests.post(cloud_url_acquire_platforms, json={"auth_key":auth_key, "id":user_id})
         # print(request.text)
     except Exception as error:
         raise Exception(error)
     else:
         return request.json()
 
-def cloudGetUserAuthKey(phonenumber):
+def cloudGetUserAuthKey(user_id):
     try:
         cloud_url_auth_users = f"{CLOUD_URL_DEV}/users/profiles"
         # print(">> CLOUD_URL: ", cloud_url_auth_users)
@@ -92,9 +85,9 @@ def cloudGetUserAuthKey(phonenumber):
 
         if check_ssl():
             # print("[+] going ssl...")
-            request = requests.post(cloud_url_auth_users, json={"phone_number":phonenumber}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
+            request = requests.post(cloud_url_auth_users, json={"user_id":user_id}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
         else:
-            request = requests.post(cloud_url_auth_users, json={"phone_number":phonenumber})
+            request = requests.post(cloud_url_auth_users, json={"user_id":user_id})
     except Exception as error:
         raise Exception(error)
     else:
