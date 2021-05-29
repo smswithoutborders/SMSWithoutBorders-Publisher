@@ -22,15 +22,15 @@ elif [ "$d_command" == "--received" ] ; then
 
 elif [ "$d_command" == "--get_auth" ] ; then
 	echo ">> Fetching auth key..."
-	curl -H "Content-Type: application/json" -d "{\"phone_number\":\"123456\", \"password\":\"1234567890123456\"}" "${api_url}/users/profiles/login"
+	curl -H "Content-Type: application/json" -d "{\"phone_number\":\"673367023\", \"password\":\"asshole101\"}" "${api_url}/users/profiles/login"
 
 elif [ "$d_command" == "--create_user" ] ; then
 	echo ">> Creating user..."
-	curl -H "Content-Type: application/json" -d "{\"phone_number\":\"123456\", \"password\":\"1234567890123456\"}" "${api_url}/users/profiles/register"
+	curl -H "Content-Type: application/json" -d "{\"name\":\"sh3rlock\", \"phone_number\":\"673367023\", \"password\":\"asshole101\"}" "${api_url}/users/profiles/register"
 
 elif [ "$d_command" == "--new_session" ] ; then
 	echo ">>  new session..."
-	curl -H "Content-Type: application/json" -d "{\"auth_key\":\"${phonenumber}\", \"password\":\"1234567890123456\"}" "${url}/sync/sessions/"
+	curl -H "Content-Type: application/json" -d "{\"auth_key\":\"${phonenumber}\", \"id\":\"${3}\"}" "${url}/sync/sessions/"
 
 elif [ "$d_command" == "--sync" ] ; then
 	echo ">> syncing user..."
