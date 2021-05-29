@@ -11,6 +11,7 @@ CONFIGS = configparser.ConfigParser(interpolation=None)
 PATH_CONFIG_FILE = os.path.join(os.path.dirname(__file__), '../configs', 'config.router.ini')
 CONFIGS.read(PATH_CONFIG_FILE)
 CLOUD_URL = CONFIGS["CLOUD_API"]["url"]
+CLOUD_URL_DEV = CONFIGS["CLOUD_API"]["url_dev"]
 # from ldatastore import Datastore
 
 
@@ -42,7 +43,7 @@ def cloudAcquireGrantLevelHashes(sessionId):
 
     user_id = user_id[0]['user_id']
     try:
-        cloud_url_acquire_hash = f"{CLOUD_URL}/locals/users/hash1"
+        cloud_url_acquire_hash = f"{CLOUD_URL_DEV}/locals/users/hash1"
         print(">> CLOUD_URL: ", cloud_url_acquire_hash)
         request=None
 
@@ -62,6 +63,7 @@ def cloudAcquireGrantLevelHashes(sessionId):
 def cloudAcquireUserPlatforms(session_id, phonenumber):
     datastore = Datastore()
     auth_key = cloudGetUserAuthKey(phonenumber)
+    print(auth_key)
     if not 'auth_key' in auth_key:
         raise Exception('auth key not acquired')
 
@@ -84,7 +86,7 @@ def cloudAcquireUserPlatforms(session_id, phonenumber):
 
 def cloudGetUserAuthKey(phonenumber):
     try:
-        cloud_url_auth_users = f"{CLOUD_URL}/users/profiles"
+        cloud_url_auth_users = f"{CLOUD_URL_DEV}/users/profiles"
         # print(">> CLOUD_URL: ", cloud_url_auth_users)
         request=None
 
