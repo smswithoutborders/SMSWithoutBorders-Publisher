@@ -15,7 +15,7 @@ mysqlcursor = None
 # A little bit too extensive
 columns = {
         "id": "VARCHAR(255) NOT NULL PRIMARY KEY",
-        "phonenumber": "VARCHAR(24) NOT NULL",
+        "phonenumber": "VARCHAR(512) NOT NULL",
         "shared_key": "VARCHAR(255) NULL",
         "public_key": "VARCHAR(1028) NULL",
         "user_id": "VARCHAR(64) NULL",

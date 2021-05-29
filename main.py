@@ -2,6 +2,7 @@
 
 import os
 import configparser
+import traceback
 
 import src.cloudfunctions as cloudfunctions
 import src.sync_accounts as sync_accounts
@@ -28,16 +29,19 @@ app = Flask(__name__)
 @app.route('/sync/sessions/', methods=['POST'])
 def sessions():
     request_body = request.json
-    if not 'auth_key' in request_body:
-        return jsonify({"status":403, "message":"No auth key"})
+    if not 'auth_key' in request_body or len(request_body['auth_key']) < 1:
+        return jsonify({"status":403, "message":"No auth key found"})
+    if not 'id' in request_body or len(request_body['id']) < 1:
+        return jsonify({"status":403, "message":"No id found"})
 
     user_authkey = request_body['auth_key']
-    user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey)
+    user_id = request_body['id']
+    user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey, user_id)
     if not 'phone_number' in user_details or not 'id' in user_details:
         return jsonify({"status":403, "message":"User may not exist"})
     session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
 
-    print(request.environ)
+    # print(request.environ)
     origin_url = request.environ['REMOTE_ADDR'] + ":" + request.environ['SERVER_PORT']
     session_url = f"{origin_url}/sync/sessions/{session_id}"
     return jsonify({"status": 200, "url":session_url})
@@ -61,35 +65,39 @@ def sync(session_id):
 
     # sha512 asshole
     # passwd = "F50C51ED2315DCF3FA88181CF033F8029CAC64F7DEA4048327CA032EC102EA74"
-    passwd = cloudfunctions.cloudAcquireGrantLevelHashes(session_id)
-    passwd = passwd['password_hash']
-    passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
-    passwd = str(b64encode(passwd), 'utf-8')
+    try:
+        passwd = cloudfunctions.cloudAcquireGrantLevelHashes(session_id)
+        passwd = passwd['password_hash']
+        passwd = securityLayer.rsa_encrypt(data=passwd, key=user_publicKey)
+        passwd = str(b64encode(passwd), 'utf-8')
 
-    results = sync_accounts.acquire_sessions(session_id)
-    if len(results) < 1 or not 'phonenumber' in results[0]:
-        return jsonify({"status":403, "message":"Phone number not in sync sessions"})
+        results = sync_accounts.acquire_sessions(session_id)
+        if len(results) < 1 or not 'phonenumber' in results[0]:
+            return jsonify({"status":403, "message":"Phone number not in sync sessions"})
 
-    phonenumber = results[0]["phonenumber"]
-    platforms = cloudfunctions.cloudAcquireUserPlatforms(session_id, phonenumber)
-    # platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
+        phonenumber = results[0]["phonenumber"]
+        platforms = cloudfunctions.cloudAcquireUserPlatforms(session_id, phonenumber)
+        # platforms = [str(b64encode(securityLayer.rsa_encrypt(data=platforms[i], key=user_publicKey), 'utf-8')) for i in platforms]
 
-    phonenumbers = []
-    # TODO: determine default ISP from user's phonenumber
-    with open(os.path.join(os.path.dirname(__file__), 'configs', 'isp.json')) as isp_config:
-        isp_config = json.load(isp_config)
+        phonenumbers = []
+        # TODO: determine default ISP from user's phonenumber
+        with open(os.path.join(os.path.dirname(__file__), 'configs', 'isp.json')) as isp_config:
+            isp_config = json.load(isp_config)
 
-        for isp in isp_config:
-            phonenumbers.append( isp )
+            for isp in isp_config:
+                phonenumbers.append( isp )
 
-    # print(phonenumbers)
-    # pk = public key
-    # sk = shared key
-    # pd = password
-    # pl = platforms
-    # ph = phonenumbers
-    ret_value = {"pk":gateway_publicKey, "sk":sharedKey, "pd":passwd, "pl":platforms, "ph":phonenumbers}
-    return jsonify(ret_value)
+        # print(phonenumbers)
+        # pk = public key
+        # sk = shared key
+        # pd = password
+        # pl = platforms
+        # ph = phonenumbers
+        ret_value = {"pk":gateway_publicKey, "sk":sharedKey, "pd":passwd, "pl":platforms, "ph":phonenumbers}
+        return jsonify(ret_value)
+    except Exception as error:
+        print(traceback.format_exc())
+        return jsonify({"status":500, "message":"internal error"})
 
 @app.route('/messages', methods=['POST', 'GET'])
 def new_messages():

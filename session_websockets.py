@@ -11,10 +11,14 @@ connected = set()
 async def time(websocket, path):
     print("[+] New client:", websocket, path)
     connected.add(websocket)
-    while True:
-        now = datetime.datetime.utcnow().isoformat() + "Z"
-        await websocket.send(now)
-        await asyncio.sleep(random.random() * 3)
+    try:
+        while True:
+            now = datetime.datetime.utcnow().isoformat() + "Z"
+            await websocket.send(now)
+            await asyncio.sleep(random.random() * 3)
+    except Exception as error:
+        print(error)
+        print(websocket)
 
 
 ip_address = "0.0.0.0"

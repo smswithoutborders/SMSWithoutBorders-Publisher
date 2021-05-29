@@ -18,16 +18,16 @@ def check_ssl():
     return os.path.isfile( CONFIGS["SSL"]["KEY"] ) and os.path.isfile(CONFIGS["SSL"]["CRT"])
 
 
-def cloudAcquireUserInfo(auth_key):
+def cloudAcquireUserInfo(auth_key, _id):
     try:
         cloud_url_acquire_platforms = f"{CLOUD_URL}/users/profiles/info"
         request=None
 
         if check_ssl():
-            request = requests.post(cloud_url_acquire_platforms, json={"auth_key":auth_key}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
+            request = requests.post(cloud_url_acquire_platforms, json={"auth_key":auth_key, "id":_id}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
 
         else:
-            request = requests.post(cloud_url_acquire_platforms, json={"auth_key":auth_key})
+            request = requests.post(cloud_url_acquire_platforms, json={"auth_key":auth_key, "id":_id})
         # print(request.text)
     except Exception as error:
         raise Exception(error)
@@ -37,6 +37,9 @@ def cloudAcquireUserInfo(auth_key):
 def cloudAcquireGrantLevelHashes(sessionId):
     datastore = Datastore()
     user_id = datastore.acquireUserFromId(sessionId)
+    if not len(user_id) > 0 or not 'user_id' in user_id[0]:
+        raise Exception("error fetching user id")
+
     user_id = user_id[0]['user_id']
     try:
         cloud_url_acquire_hash = f"{CLOUD_URL}/locals/users/hash1"
@@ -52,6 +55,7 @@ def cloudAcquireGrantLevelHashes(sessionId):
     except Exception as error:
         raise Exception(error)
     else:
+        print(request)
         return request.json()
 
 
