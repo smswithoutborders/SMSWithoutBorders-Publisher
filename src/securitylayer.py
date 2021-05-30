@@ -62,10 +62,12 @@ if __name__ == "__main__":
     print(decryptedData)
     '''
 
-    def_key='7e8555fe4d80865f6a98c21521f2db53'
+    def_key='860fdbf0722d712f522202103077069a'
     def_iv='1f52ed515871c913'
-    # data='w6mlzmz5xN7jdm+O+7UOgiGHS4fl4yO59HWO/GHs8V0=_dvtFZjYFrIQOSqNIHl/3XQ=='
-    data='9ocklgnuaHeSShNmmyHNtHdsYN5orAA4t/5V/VxHKJs=_cJzOFdWoN3udqmq7IidyOlPXojs7sS6A7R22dAHe1whGAI/qy4tnbnvkLMbAMms6
+    def_iv='D135AC9F95F208D0BD7184DF5CA99CAD35BDEB7D85364F524110BC29F23633A0822AAC2F0288DB2BE0BED4F9EC42B0220DB21E03801F217D029DF4B729535697'[:16]
+    # print("[+] def_iv:", def_iv)
+    data='w6mlzmz5xN7jdm+O+7UOgiGHS4fl4yO59HWO/GHs8V0=_dvtFZjYFrIQOSqNIHl/3XQ=='
+    data='9ocklgnuaHeSShNmmyHNtHdsYN5orAA4t/5V/VxHKJs=_cJzOFdWoN3udqmq7IidyOlPXojs7sS6A7R22dAHe1whGAI/qy4tnbnvkLMbAMms6a'
     split_data=data.split('_')
 
     encrypted_iv=split_data[0]
