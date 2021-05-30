@@ -64,7 +64,8 @@ if __name__ == "__main__":
 
     def_key='7e8555fe4d80865f6a98c21521f2db53'
     def_iv='1f52ed515871c913'
-    data='w6mlzmz5xN7jdm+O+7UOgiGHS4fl4yO59HWO/GHs8V0=_dvtFZjYFrIQOSqNIHl/3XQ=='
+    # data='w6mlzmz5xN7jdm+O+7UOgiGHS4fl4yO59HWO/GHs8V0=_dvtFZjYFrIQOSqNIHl/3XQ=='
+    data='9ocklgnuaHeSShNmmyHNtHdsYN5orAA4t/5V/VxHKJs=_cJzOFdWoN3udqmq7IidyOlPXojs7sS6A7R22dAHe1whGAI/qy4tnbnvkLMbAMms6
     split_data=data.split('_')
 
     encrypted_iv=split_data[0]
