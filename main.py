@@ -22,7 +22,7 @@ CONFIGS = configparser.ConfigParser(interpolation=None)
 PATH_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'configs', 'config.router.ini')
 CONFIGS.read(PATH_CONFIG_FILE)
 
-from . datastore import Datastore
+from src.datastore import Datastore
 
 from flask import Flask, request, jsonify
 app = Flask(__name__)
@@ -51,10 +51,10 @@ def sessions():
     session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
 
     # print(request.environ)
-    origin_url = request.environ['REMOTE_ADDR'] + ":" + request.environ['SERVER_PORT']
-    session_url = f"{origin_url}/sync/sessions/{session_id}"
+    origin_url = request.environ['REMOTE_ADDR'] + ":" + CONFIGS['WEBSOCKET']['PORT']
+    session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
+    print(session_url)
     return jsonify({"status": 200, "url":session_url})
-
     
 
 @app.route('/sync/sessions/<session_id>', methods=['POST'])
