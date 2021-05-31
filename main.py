@@ -145,7 +145,7 @@ def new_messages():
 
         return_json = {"status" :"", "body":""}
         try: 
-            user_details = acquire_requester(phonenumber):
+            user_details = acquire_requester(phonenumber)
             # authenticate request
             if len(user_details) < 1:
                 return jsonify({"status":403, "message":"no permission to proceed"})
