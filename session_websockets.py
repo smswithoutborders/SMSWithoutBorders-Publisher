@@ -33,8 +33,8 @@ async def sessions(websocket, path):
         path= path.split('/')
         s_path = path[1] + '/' + path[2]
         session_id = path[3]
-        print("[+] s_path:", s_path)
-        print("[+] session_id:", session_id)
+        # print("[+] s_path:", s_path)
+        # print("[+] session_id:", session_id)
         api_url = CONFIGS['API']['HOST']
         api_port = CONFIGS['API']['PORT']
         protocol = "http"
@@ -44,13 +44,15 @@ async def sessions(websocket, path):
             if session_id in connected:
                 print('>> stoping connection, client exist')
                 return
-
             connected[session_id] = soc
-            print(connected.keys())
+
+            import socket
+            h_name = socket.gethostname()
+            IP_address = socket.gethostbyname(h_name)
             while iterator < 3 and connected[session_id].state == 'run':
-                url_data = f'{protocol}://{api_url}:{api_port}/sync/sessions/{session_id}'
+                url_data = f'{protocol}://{IP_address}:{api_port}/sync/sessions/{session_id}'
                 await connected[session_id].get_socket().send(url_data)
-                await asyncio.sleep(60)
+                await asyncio.sleep(15)
                 iterator+=1
 
                 prev_session=session_id
