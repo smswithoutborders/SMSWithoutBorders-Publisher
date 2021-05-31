@@ -58,4 +58,15 @@ class Datastore(object):
         except mysql.connector.Error as err:
             raise Exception( err )
 
+    def acquireUserFromPhonenumber(self, phonenumber):
+        query = f"SELECT * from synced_accounts WHERE id='{phonenumber}'"
+        try:
+            self.cursor.execute( query )
+            sms_message = self.cursor.fetchall()
+
+            return sms_message
+
+        except mysql.connector.Error as err:
+            raise Exception( err )
+
 

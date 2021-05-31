@@ -21,6 +21,13 @@ class SecurityLayer():
         # return encrypt(secrets.token_hex(32), publicKey)
         return secrets.token_hex(16)
 
+    @staticmethod
+    def sha512Hash(data):
+        h = SHA512.new()
+        h.update(bytes(data, 'utf-8'));
+        return h.hexdigest()
+
+
     def rsa_encrypt(self, data, key):
         data = bytes(data, 'utf-8')
         key = b64decode(key)

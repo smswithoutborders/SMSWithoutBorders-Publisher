@@ -21,10 +21,19 @@ CONFIGS = configparser.ConfigParser(interpolation=None)
 
 PATH_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'configs', 'config.router.ini')
 CONFIGS.read(PATH_CONFIG_FILE)
-# from ldatastore import Datastore
+
+from . datastore import Datastore
 
 from flask import Flask, request, jsonify
 app = Flask(__name__)
+
+def acquire_requester(phonenumber):
+    datastore = Datastore()
+    try:
+        return datastore.acquireUserFromPhonenumber(SecurityLayer.sha512Hash(phonenumber))
+    except Exception as error:
+        raise Exception(error)
+
 
 @app.route('/sync/sessions/', methods=['POST'])
 def sessions():
@@ -136,12 +145,20 @@ def new_messages():
 
         return_json = {"status" :"", "body":""}
         try: 
-            # TODO: Determine ISP before sending messages
+            user_details = acquire_requester(phonenumber):
+            # authenticate request
+            if len(user_details) < 1:
+                return jsonify({"status":403, "message":"no permission to proceed"})
+
             messageID=None
-            # messageID = datastore.new_message(text=text, phonenumber=phonenumber, isp="MTN", _type="sending")
 
             # parse the contents of the SMS message
-            parsedText = routerfunctions.routerParseText(text)
+            h_password = cloudfunctions.cloudAcquireGrantLevelHashes(user_details[0]['user_id'])
+            if not 'password_hash' in h_password:
+                return jsonify({"status":403, "message":"failed to get required hashes"})
+
+            user_details[0]["password_hash"] = h_password
+            parsedText = routerfunctions.routerParseText(text, user_details[0])
             print(f">> ParsedText: {parsedText}")
 
             # check for a valid protocol being returned

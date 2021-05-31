@@ -19,3 +19,8 @@ def acquire_sessions(session_id):
     results = datastore.acquireUserFromId(session_id=session_id)
     print(f"acquire_sessions_results: {results}")
     return results
+
+def acquire_user_from_phonenumber(phonumber):
+    datastore = Datastore()
+    results = datastore.acquireUserFromPhonenumber(SecurityLayer.sha512Hash(phonenumber))
+    return results
