@@ -4,8 +4,12 @@
 ### Configuration and running
 __mysql__
 ```bash
-# copy router.example.config.ini to config.router.ini
-cp router.example.config.ini config.router.ini
+cp configs/example.config.mysql.ini configs/config.mysql.ini
+cp configs/example.config.router.ini configs/config.router.ini
+cp configs/example.isp.json configs/isp.json
+
+# You can proceed to edit config files with the necessary credentials
+# configs/isp.json -> the value for default is true is that isp would be the default number for the gateway
 ```
 
 ##### How to Run
