@@ -9,6 +9,7 @@ import websockets
 import uuid
 import configparser
 import os
+import requests
 
 CONFIGS = configparser.ConfigParser(interpolation=None)
 
@@ -52,7 +53,10 @@ async def sessions(websocket, path):
                 await asyncio.sleep(15)
                 iterator+=1
 
+                prev_session=session_id
                 session_id = _id=uuid.uuid4().hex
+                request = requests.get(f"http://localhost:{CONFIGS['API']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
+                # TODO: check if request has been made
                 connected[session_id] = soc
             print("[-] Socket ended..")
         except Exception as error:

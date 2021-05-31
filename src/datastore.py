@@ -69,4 +69,15 @@ class Datastore(object):
         except mysql.connector.Error as err:
             raise Exception( err )
 
+    def update_session_id(self, prev_session_id, session_id):
+        query=f"UPDATE synced_accounts SET id='{session_id}' WHERE id='{prev_session_id}'"
+        print(query)
+        try:
+            self.cursor.execute( query )
+            self.conn.commit()
+
+        except mysql.connector.Error as err:
+            raise Exception( err )
+        else:
+            self.cursor.lastrowid
 

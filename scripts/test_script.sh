@@ -30,7 +30,7 @@ elif [ "$d_command" == "--create_user" ] ; then
 
 elif [ "$d_command" == "--new_session" ] ; then
 	echo ">>  new session..."
-	curl -H "Content-Type: application/json" -d "{\"auth_key\":\"${phonenumber}\", \"id\":\"${3}\"}" "${url}/sync/sessions/"
+	curl -H "Content-Type: application/json" -d "{\"auth_key\":\"${phonenumber}\", \"id\":\"${3}\"}" "${url}/sync/sessions"
 
 elif [ "$d_command" == "--sync" ] ; then
 	echo ">> syncing user..."

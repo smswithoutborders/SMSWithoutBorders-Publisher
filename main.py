@@ -35,26 +35,37 @@ def acquire_requester(phonenumber):
         raise Exception(error)
 
 
-@app.route('/sync/sessions/', methods=['POST'])
+@app.route('/sync/sessions', methods=['POST', 'GET'])
 def sessions():
-    request_body = request.json
-    if not 'auth_key' in request_body or len(request_body['auth_key']) < 1:
-        return jsonify({"status":403, "message":"No auth key found"})
-    if not 'id' in request_body or len(request_body['id']) < 1:
-        return jsonify({"status":403, "message":"No id found"})
+    if request.method == 'POST':
+        request_body = request.json
+        if not 'auth_key' in request_body or len(request_body['auth_key']) < 1:
+            return jsonify({"status":403, "message":"No auth key found"})
+        if not 'id' in request_body or len(request_body['id']) < 1:
+            return jsonify({"status":403, "message":"No id found"})
 
-    user_authkey = request_body['auth_key']
-    user_id = request_body['id']
-    user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey, user_id)
-    if not 'phone_number' in user_details or not 'id' in user_details:
-        return jsonify({"status":403, "message":"User may not exist"})
-    session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
+        user_authkey = request_body['auth_key']
+        user_id = request_body['id']
+        user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey, user_id)
+        if not 'phone_number' in user_details or not 'id' in user_details:
+            return jsonify({"status":403, "message":"User may not exist"})
+        session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
 
-    # print(request.environ)
-    origin_url = request.environ['REMOTE_ADDR'] + ":" + CONFIGS['WEBSOCKET']['PORT']
-    session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
-    print(session_url)
-    return jsonify({"status": 200, "url":session_url})
+        # print(request.environ)
+        origin_url = request.environ['REMOTE_ADDR'] + ":" + CONFIGS['WEBSOCKET']['PORT']
+        session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
+        print(session_url)
+        return jsonify({"status": 200, "url":session_url})
+
+    elif request.method == 'GET':
+        prev_session_id = request.args.get('prev_session_id')
+        session_id = request.args.get('session_id')
+        print(f"- Trying to update: {prev_session_id} -> {session_id}")
+        try:
+            results= sync_accounts.update_session(prev_session_id=prev_session_id, session_id=session_id)
+            return '200- done'
+        except Exception as error:
+            return error
     
 
 @app.route('/sync/sessions/<session_id>', methods=['POST'])

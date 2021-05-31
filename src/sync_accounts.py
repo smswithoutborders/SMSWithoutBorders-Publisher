@@ -24,3 +24,10 @@ def acquire_user_from_phonenumber(phonumber):
     datastore = Datastore()
     results = datastore.acquireUserFromPhonenumber(SecurityLayer.sha512Hash(phonenumber))
     return results
+
+def update_session(prev_session_id, session_id):
+    datastore = Datastore()
+    try:
+        results = datastore.update_session_id(prev_session_id=prev_session_id, session_id=session_id)
+    except Exception as error:
+        raise Exception(error)
