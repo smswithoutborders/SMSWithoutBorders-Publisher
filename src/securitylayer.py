@@ -45,8 +45,7 @@ class SecurityLayer():
         b64data = b64decode(data)
         decryptedData = cipher.decrypt(b64data)
         decryptedData = unpad(decryptedData, AES.block_size)
-        print(decryptedData)
-        decryptedData = str(decryptedData, 'utf-8')
+        # decryptedData = str(decryptedData, 'utf-8')
         # decryptedData = decryptedData.replace('\n', '')
         # print(decryptedData)
         return decryptedData
@@ -71,10 +70,11 @@ if __name__ == "__main__":
     print(decryptedData)
     '''
 
-    def_key='d5f0620aa458f99be129729340d146c1'
+    def_key='26dce55aa7ce6238240986e422d16495'
     def_iv='D135AC9F95F208D0BD7184DF5CA99CAD35BDEB7D85364F524110BC29F23633A0822AAC2F0288DB2BE0BED4F9EC42B0220DB21E03801F217D029DF4B729535697'[:16]
     # print("[+] def_iv:", def_iv)
-    data='wIHcLqi7BRgLYuBQL+sI8Ij/bT2Xpq5iJ0DTX4VHE1c=_mX2JQLKTQ3vtZ2+FSOwHlwm1JdfwH0URP6t2HjiawoI='
+    # data='wIHcLqi7BRgLYuBQL+sI8Ij/bT2Xpq5iJ0DTX4VHE1c=_mX2JQLKTQ3vtZ2+FSOwHlwm1JdfwH0URP6t2HjiawoI='
+    data='IDkXBRcUxUp8MeCIGQMUXHozVlK8pmJKRZeMc1a10z4=_ZiWtyZ63hdG7LJgrFrvpJ6aYQXtEgOD2qK0HHxjKx4HDGbhgimAHR01kvP/q5Eja'
     split_data=data.split('_')
 
     encrypted_iv=split_data[0]
@@ -85,5 +85,7 @@ if __name__ == "__main__":
     decrypted_iv=securityLayer.aes_decrypt(encrypted_iv, def_key, def_iv)
     print("\n[+] Decrypted IV:", decrypted_iv)
     # decrypted_iv=str(b64decode(decrypted_iv), 'utf-8')
-    decrypted_data=securityLayer.aes_decrypt(encrypted_data, def_key, decrypted_iv)
+    decrypted_data=securityLayer.aes_decrypt(encrypted_data, def_key, str(decrypted_iv, 'utf-8').upper())
     print("[+] Decrypted Data:", decrypted_data)
+    # print("[+] Decrypted Data:", b64encode(bytes(str(decrypted_data, 'utf-8'), 'utf-8')))
+    print(str(decrypted_data, 'utf-8'))
