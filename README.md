@@ -31,7 +31,11 @@ pip install -r requirements.txt
 
 __start the API__
 ```bash
-python main.py
+# start routing end points
+python3 main.py
+
+# start websocket end points - must be started if going to sync
+python3 session_websockets.py
 ```
 
 ### API ENDPOINTS
