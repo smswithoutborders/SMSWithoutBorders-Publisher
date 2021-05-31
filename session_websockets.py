@@ -27,7 +27,7 @@ class c_websocket:
 connected = {}
 async def sessions(websocket, path):
     print("[+] New client:", websocket, path)
-    print(type(websocket))
+    print(f'# Clients: {len(connected)}')
     if path.find('sync/sessions') > -1:
         path= path.split('/')
         s_path = path[1] + '/' + path[2]
@@ -40,7 +40,12 @@ async def sessions(websocket, path):
         try:
             iterator = 0
             soc = c_websocket(websocket)
+            if session_id in connected:
+                print('>> stoping connection, client exist')
+                return
+
             connected[session_id] = soc
+            print(connected.keys())
             while iterator < 4 and connected[session_id].state == 'run':
                 url_data = f'{protocol}://{api_url}:{api_port}/sync/sessions/{session_id}'
                 await connected[session_id].get_socket().send(url_data)
