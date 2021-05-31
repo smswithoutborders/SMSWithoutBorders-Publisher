@@ -47,10 +47,10 @@ async def sessions(websocket, path):
 
             connected[session_id] = soc
             print(connected.keys())
-            while iterator < 4 and connected[session_id].state == 'run':
+            while iterator < 3 and connected[session_id].state == 'run':
                 url_data = f'{protocol}://{api_url}:{api_port}/sync/sessions/{session_id}'
                 await connected[session_id].get_socket().send(url_data)
-                await asyncio.sleep(15)
+                await asyncio.sleep(60)
                 iterator+=1
 
                 prev_session=session_id
@@ -58,16 +58,17 @@ async def sessions(websocket, path):
                 request = requests.get(f"http://localhost:{CONFIGS['API']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
                 # TODO: check if request has been made
                 connected[session_id] = soc
+            del connected[session_id]
             print("[-] Socket ended..")
         except Exception as error:
             print(error)
             print(websocket)
 
     elif path.find('/sync/ack') > -1:
+        print(">> acknowledgment seen...")
         session_id = path.split('/')[3]
-        print(session_id)
         connected[session_id].state = 'ack'
-        await connected[session_id].get_socket().send("acked...")
+        await connected[session_id].get_socket().send("200- acked")
         del connected[session_id]
 
 server_ip = CONFIGS['API']['HOST']

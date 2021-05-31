@@ -3,6 +3,8 @@
 import os
 import configparser
 import traceback
+import asyncio
+import websocket
 
 import src.cloudfunctions as cloudfunctions
 import src.sync_accounts as sync_accounts
@@ -26,6 +28,14 @@ from src.datastore import Datastore
 
 from flask import Flask, request, jsonify
 app = Flask(__name__)
+
+def socket_message(session_id, message):
+    if message == 'ack':
+        uri= f"ws://localhost:{CONFIGS['WEBSOCKET']['PORT']}/sync/ack/{session_id}"
+        ws = websocket.WebSocketApp(uri)
+        ws.run_forever()
+    else:
+        print( "unknown socket protocol requested" )
 
 def acquire_requester(phonenumber):
     datastore = Datastore()
@@ -72,7 +82,7 @@ def sessions():
 def sync(session_id):
     user_info = sync_accounts.acquire_sessions(session_id)
     if len(user_info) < 1:
-        return jsonify({"status":403, "message":"Session not found"})
+        return jsonify({"status":403, "message":"session not found"})
     if not "user_id" in user_info[0]:
         return jsonify({"status":500, "message":"internal system error"})
 
@@ -120,6 +130,7 @@ def sync(session_id):
         # pl = platforms
         # ph = phonenumbers
         ret_value = {"pk":gateway_publicKey, "sk":sharedKey, "pd":passwd, "pl":platforms, "ph":phonenumbers}
+        socket_message(session_id=session_id, message='ack')
         return jsonify(ret_value)
     except Exception as error:
         print(traceback.format_exc())
