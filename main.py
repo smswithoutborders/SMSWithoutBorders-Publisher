@@ -34,6 +34,12 @@ def socket_message(session_id, message):
         uri= f"ws://localhost:{CONFIGS['WEBSOCKET']['PORT']}/sync/ack/{session_id}"
         ws = websocket.WebSocketApp(uri)
         ws.run_forever()
+
+    elif message == 'pause':
+        uri= f"ws://localhost:{CONFIGS['WEBSOCKET']['PORT']}/sync/pause/{session_id}"
+        ws = websocket.WebSocketApp(uri)
+        ws.run_forever()
+
     else:
         print( "unknown socket protocol requested" )
 
@@ -85,6 +91,7 @@ def sync(session_id):
         return jsonify({"status":403, "message":"session not found"})
     if not "user_id" in user_info[0]:
         return jsonify({"status":500, "message":"internal system error"})
+    socket_message(session_id=session_id, message='pause')
 
     securityLayer = SecurityLayer()
     request_body = request.json

@@ -27,8 +27,8 @@ class c_websocket:
 
 connected = {}
 async def sessions(websocket, path):
-    print("[+] New client:", websocket, path)
-    print(f'# Clients: {len(connected)}')
+    # print("[+] New client:", websocket, path)
+    # print(f'# Clients: {len(connected)}')
     if path.find('sync/sessions') > -1:
         path= path.split('/')
         s_path = path[1] + '/' + path[2]
@@ -56,10 +56,12 @@ async def sessions(websocket, path):
                 iterator+=1
 
                 prev_session=session_id
-                session_id = _id=uuid.uuid4().hex
-                request = requests.get(f"http://localhost:{CONFIGS['API']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
-                # TODO: check if request has been made
-                connected[session_id] = soc
+                if connected[session_id].state != 'pause':
+                    session_id = _id=uuid.uuid4().hex
+                    request = requests.get(f"http://localhost:{CONFIGS['API']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
+                    connected[session_id] = soc
+                else:
+                    await asyncio.sleep(60*2)
             del connected[session_id]
             print("[-] Socket ended..")
         except Exception as error:
@@ -72,6 +74,12 @@ async def sessions(websocket, path):
         connected[session_id].state = 'ack'
         await connected[session_id].get_socket().send("200- acked")
         del connected[session_id]
+
+    elif path.find('/sync/pause') > -1:
+        print(">> paused seen...")
+        session_id = path.split('/')[3]
+        connected[session_id].state = 'pause'
+        await connected[session_id].get_socket().send("201- paused")
 
 server_ip = CONFIGS['API']['HOST']
 server_port = CONFIGS['WEBSOCKET']['PORT']
