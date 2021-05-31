@@ -69,14 +69,14 @@ async def sessions(websocket, path):
             print(websocket)
 
     elif path.find('/sync/ack') > -1:
-        print(">> acknowledgment seen...")
+        # print(">> acknowledgment seen...")
         session_id = path.split('/')[3]
         connected[session_id].state = 'ack'
         await connected[session_id].get_socket().send("200- acked")
         del connected[session_id]
 
     elif path.find('/sync/pause') > -1:
-        print(">> paused seen...")
+        # print(">> paused seen...")
         session_id = path.split('/')[3]
         connected[session_id].state = 'pause'
         await connected[session_id].get_socket().send("201- paused")
