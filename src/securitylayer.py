@@ -40,10 +40,11 @@ class SecurityLayer():
         decryptedData = unpad(decryptedData, AES.block_size)
         print(decryptedData)
         decryptedData = str(decryptedData, 'utf-8')
-        decryptedData = decryptedData.replace('\n', '')
+        # decryptedData = decryptedData.replace('\n', '')
         # print(decryptedData)
         return decryptedData
 
+    #  TODO:
     def __read_publickey(self):
         return "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDJKfzNwH+Kdd+d1q8m8FFr5EX+gaAUAumDf+b9zjMDaHEWUqXnrCcLVy2FTkjcCOylkX+xmrlOhpYdwjrMrZ+PIfi+ok+FjrRIj1KfjAzJZd77+spS7oxcyWhw1wBhutGyOs2x4YWDnRjvhVhvuT+/aVdQjQroAhz7g1ShjeTuVeTc01K9HddiEixihF5lelLde8+AHa9V/ov6prtWD7momg0bF1J9FMp8zDKDnHPR6ptND/QhbhsMof+vAh/5x4vRcbFjRNxOqvGQxyqyzl2VxdxXBhJJ2UiumvcnY9XN3g30pvMff2zO7WpmM4wLOoRo0nijTTAerpiSlUz7jZZ2xhIc5YwTG1iSYj2GEWtN+fISfEoaurezPvigLiVuyolksVX4nMvBcSoHe4fb8sqchFAJuTT/6ko1NsXnrNGs4wKXA3JQ+riYPgxWrh/quTgwMvyErmuGoCPcm/XvkDy3GEHY3z+DXPQZgSYFERE/RZz2O+CpTnb7bBd8n6TElfM= sherlock@manjaro"
 
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     def_key='d5f0620aa458f99be129729340d146c1'
     def_iv='D135AC9F95F208D0BD7184DF5CA99CAD35BDEB7D85364F524110BC29F23633A0822AAC2F0288DB2BE0BED4F9EC42B0220DB21E03801F217D029DF4B729535697'[:16]
     # print("[+] def_iv:", def_iv)
-    data='o1tqLSITdjsXlCjYYZGKjEVDiVELvvdrYlzxoHe6kGk=_piKULBawhwh+Fu7GhsvQJtAe48jAps0l6StWKXqxxOs='
+    data='wIHcLqi7BRgLYuBQL+sI8Ij/bT2Xpq5iJ0DTX4VHE1c=_mX2JQLKTQ3vtZ2+FSOwHlwm1JdfwH0URP6t2HjiawoI='
     split_data=data.split('_')
 
     encrypted_iv=split_data[0]
