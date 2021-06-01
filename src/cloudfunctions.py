@@ -102,8 +102,8 @@ def cloudAuthUser(user_id, provider, platform, protocol, phonenumber):
     else:
         cloud_url_auth_users = CLOUD_URL + "/users/stored_tokens"
         if check_ssl():
-            request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"],"provider":provider, "platform":platform}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
+            request = requests.post(cloud_url_auth_users, json={"id":user_id, "auth_key":request["auth_key"],"provider":provider, "platform":platform}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
         else:
-            request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"],"provider":provider, "platform":platform})
+            request = requests.post(cloud_url_auth_users, json={"id":user_id, "auth_key":request["auth_key"],"provider":provider, "platform":platform})
 
     return request.json()

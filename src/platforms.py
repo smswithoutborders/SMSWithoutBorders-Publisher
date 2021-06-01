@@ -24,7 +24,7 @@ class Platforms:
                             break
                     break
             break
-        print( providers )
+        # print( providers )
 
         for provider in providers:
             def_platform = f"{provider}_{platform}"

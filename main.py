@@ -197,23 +197,28 @@ def new_messages():
                 # userDetails = cloudfunctions.cloudAuthUser("gmail", "send", phonenumber)
 
                 if userDetails is not None:
-                    try:
-                        # platform = Platforms("gmail")
-                        platform = Platforms(platform=parsedText["platform"])
-                        results = platform.execute(parsedText["protocol"], parsedText["body"], userDetails)
-                    except Exception as error:
-                        raise Exception(error)
-                    else:
-                        if results:
-                            print(f"[+] Successfully executed for platform - {results}")
-                            return_json["status"] = 200
-                            return_json["body"] = f"successfully executed for platform - {results}"
+                    if len(userDetails) > 0:
+                        try:
+                            # platform = Platforms("gmail")
+                            platform = Platforms(platform=parsedText["platform"])
+                            results = platform.execute(parsedText["protocol"], parsedText["body"], userDetails)
+                        except Exception as error:
+                            raise Exception(error)
                         else:
-                            print(f"[+] Failed to execute for platform - {results}")
-                            return_json["status"] = 500
-                            return_json["body"] = results
+                            if results:
+                                print(f"[+] Successfully executed for platform - {results}")
+                                return_json["status"] = 200
+                                return_json["body"] = f"successfully executed for platform - {results}"
+                            else:
+                                print(f"[+] Failed to execute for platform - {results}")
+                                return_json["status"] = 500
+                                return_json["body"] = results
+                    else:
+                        return_json["status"] = 404
+                        raise Exception(f"no token stored in wallet")
                 else:
                     return_json["status"] = 403
+                    print(userDetails)
                     raise Exception(f"Failed to authenticate user/request...")
             else:
                 return_json["status"] = 400
