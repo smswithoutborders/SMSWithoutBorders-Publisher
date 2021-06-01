@@ -95,31 +95,15 @@ def cloudGetUserAuthKey(user_id):
     else:
         return request.json()
 
-def cloudAuthUser(platform, protocol, phonenumber):
-    request = cloudGetUserAuthKey(phonenumber)
-    if not "status_code" in request and request.status_code != 200:
-        return None
+def cloudAuthUser(user_id, provider, platform, protocol, phonenumber):
+    request = cloudGetUserAuthKey(user_id)
     if not "auth_key" in request:
         return None
     else:
-        # print("[+] User authenticated... Fetching tokens:", platform)
-        # with everything authenticated, let's get the tokens
-
         cloud_url_auth_users = CLOUD_URL + "/users/stored_tokens"
-        # print(">> CLOUD_URL: ", cloud_url_auth_users)
-        # request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"]})
         if check_ssl():
-            request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"], "platform":platform}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
+            request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"],"provider":provider, "platform":platform}, cert=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]))
         else:
-            request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"], "platform":platform})
+            request = requests.post(cloud_url_auth_users, json={"auth_key":request["auth_key"],"provider":provider, "platform":platform})
 
-        if not "status_code" in request and request.status_code != 200:
-            return None
-        
-        req_json = request.json()
-        # print("text:", req_json)
-
-        if len(req_json) > 0:
-            return req_json
-
-        return None
+    return request.json()

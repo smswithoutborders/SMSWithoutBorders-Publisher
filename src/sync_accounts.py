@@ -1,6 +1,7 @@
 #!/bin/python
 
 from . datastore import Datastore 
+from . securitylayer import SecurityLayer
 import uuid
 
 def new_session(phonenumber, user_id):
@@ -20,7 +21,7 @@ def acquire_sessions(session_id):
     print(f"acquire_sessions_results: {results}")
     return results
 
-def acquire_user_from_phonenumber(phonumber):
+def acquire_user_from_phonenumber(phonenumber):
     datastore = Datastore()
     results = datastore.acquireUserFromPhonenumber(SecurityLayer.sha512Hash(phonenumber))
     return results

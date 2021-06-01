@@ -59,7 +59,7 @@ class Datastore(object):
             raise Exception( err )
 
     def acquireUserFromPhonenumber(self, phonenumber):
-        query = f"SELECT * from synced_accounts WHERE id='{phonenumber}'"
+        query = f"SELECT * from synced_accounts WHERE phonenumber='{phonenumber}' ORDER BY mdate DESC LIMIT 1"
         try:
             self.cursor.execute( query )
             sms_message = self.cursor.fetchall()

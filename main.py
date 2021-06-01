@@ -27,7 +27,9 @@ CONFIGS.read(PATH_CONFIG_FILE)
 from src.datastore import Datastore
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
 
 def socket_message(session_id, message):
     if message == 'ack':
@@ -46,7 +48,7 @@ def socket_message(session_id, message):
 def acquire_requester(phonenumber):
     datastore = Datastore()
     try:
-        return datastore.acquireUserFromPhonenumber(SecurityLayer.sha512Hash(phonenumber))
+        return sync_accounts.acquire_user_from_phonenumber(phonenumber)
     except Exception as error:
         raise Exception(error)
 
@@ -164,24 +166,21 @@ def new_messages():
             timestamp = request_body["timestamp"]
         if "discharge_timestamp" in request_body:
             discharge_timestamp = request_body["discharge_timestamp"]
-        
-        # TODO: put logger in here to log everything
-        print(f'''[+] New message...
-                \n\t-text>> {text}
-                \n\t-phonenumber>> {phonenumber}
-                \n\t-timestamp>> {timestamp}
-                \n\t-discharge_timestamp>> {discharge_timestamp}''')
+
+        print(f"{phonenumber}|{text}")
 
         return_json = {"status" :"", "body":""}
         try: 
             user_details = acquire_requester(phonenumber)
             # authenticate request
             if len(user_details) < 1:
-                return jsonify({"status":403, "message":"no permission to proceed"})
+                return jsonify({"status":401, "message":"requester not synced"})
 
+            print("[+] - User authenticated")
             messageID=None
 
             # parse the contents of the SMS message
+            # print(user_details)
             h_password = cloudfunctions.cloudAcquireGrantLevelHashes(user_details[0]['user_id'])
             if not 'password_hash' in h_password:
                 return jsonify({"status":403, "message":"failed to get required hashes"})
@@ -194,7 +193,7 @@ def new_messages():
             if parsedText is not None and "protocol" in parsedText:
 
                 # Authenticate acquire stored stoken information for users
-                userDetails = cloudfunctions.cloudAuthUser(phonenumber=phonenumber, protocol=parsedText["protocol"], platform=parsedText["platform"])
+                userDetails = cloudfunctions.cloudAuthUser(user_id=user_details[0]['user_id'], phonenumber=phonenumber, protocol=parsedText["protocol"], platform=parsedText["platform"], provider=parsedText["provider"])
                 # userDetails = cloudfunctions.cloudAuthUser("gmail", "send", phonenumber)
 
                 if userDetails is not None:

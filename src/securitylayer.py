@@ -1,13 +1,12 @@
 #!/bin/python
 import secrets
-from Cryptodome.Hash import SHA256, SHA1
+from Cryptodome.Hash import SHA512, SHA256, SHA1
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Cipher import PKCS1_OAEP, AES
 from base64 import b64decode,b64encode
 from Cryptodome.Signature import pss
 from Cryptodome.Util.Padding import pad, unpad
-
 
 class SecurityLayer():
     def __init__(self):
@@ -41,7 +40,8 @@ class SecurityLayer():
     def aes_decrypt(self, data, key, iv, decodeIV=False):
         if decodeIV:
             iv=str(b64decode(iv), 'utf-8')
-        cipher = AES.new(bytes(key, 'utf-8'), AES.MODE_CBC, bytes(iv, 'utf-8'))
+        # cipher = AES.new(bytes(key, 'utf-8'), AES.MODE_CBC, bytes(iv, 'utf-8'))
+        cipher = AES.new(key.encode('utf-8'), AES.MODE_CBC, iv.encode('utf-8'))
         b64data = b64decode(data)
         decryptedData = cipher.decrypt(b64data)
         decryptedData = unpad(decryptedData, AES.block_size)
@@ -57,36 +57,14 @@ class SecurityLayer():
 
 if __name__ == "__main__":
     securityLayer = SecurityLayer()
-    '''
-    data='8gjJxfN1dVknIqYiarspwZoWwyBwojecA5+ohHPgaNI='
-    key='7e8555fe4d80865f6a98c21521f2db53'
-    iv='1f52ed515871c913'
-
-    iv = securityLayer.aes_decrypt(data, key, iv)
-    print("decrypted IV:", iv)
-
-    data='eG91S0NDbURnQWtlVk9IakJtL3ljQT09Cg=='
-    decryptedData = securityLayer.aes_decrypt(data, key, iv, True)
-    print(decryptedData)
-    '''
 
     def_key='26dce55aa7ce6238240986e422d16495'
     def_iv='D135AC9F95F208D0BD7184DF5CA99CAD35BDEB7D85364F524110BC29F23633A0822AAC2F0288DB2BE0BED4F9EC42B0220DB21E03801F217D029DF4B729535697'[:16]
-    # print("[+] def_iv:", def_iv)
-    # data='wIHcLqi7BRgLYuBQL+sI8Ij/bT2Xpq5iJ0DTX4VHE1c=_mX2JQLKTQ3vtZ2+FSOwHlwm1JdfwH0URP6t2HjiawoI='
-    data='ybBp+UXHP9d3c5NstRhvaCQI3iAzPlr7ybE72lXex20=_6ndK9b9iLTnqWrVyuNtaOdc6tJWH3fpni5DZlYDFjRdGoYhEnh8avYPdxyPxVrPP+zzcXrqwAgnrlM41qtlLjQ=='
-    split_data=data.split('_')
+    data='N588SMCM2QF83T34QAsHvQW1wVjROIPxYASZs57lF14pIP+BxGevhGOx7YP9Ih0K3psX2ownAvzkcqbUK1+OkaBdhZ2QWAl5B+rxRw=='
 
-    encrypted_iv=split_data[0]
-    encrypted_data=split_data[1]
-    print("[+] Encrypted IV:", encrypted_iv)
-    print("[+] Encrypted Data:", encrypted_data)
+    iv=data[:16]
+    data=data[16:]
+    print(f"iv: {iv}\ndata:{data}")
 
-    decrypted_iv=securityLayer.aes_decrypt(encrypted_iv, def_key, def_iv)
-    print("\n[+] Decrypted IV:", decrypted_iv)
-    # decrypted_iv=str(b64decode(decrypted_iv), 'utf-8')
-    decrypted_data=securityLayer.aes_decrypt(encrypted_data, def_key, str(decrypted_iv, 'utf-8').upper())
-    # print("[+] Decrypted Data:", decrypted_data)
-    # print("[+] Decrypted Data:", b64encode(bytes(str(decrypted_data, 'utf-8'), 'utf-8')))
-    # print(str(decrypted_data, 'utf-8'))
+    decrypted_data=securityLayer.aes_decrypt(data, def_key, iv)
     print(decrypted_data.decode("utf-8"))
