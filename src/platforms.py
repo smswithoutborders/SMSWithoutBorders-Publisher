@@ -24,11 +24,11 @@ class Platforms:
                             break
                     break
             break
-        # print( providers )
+        print( providers )
 
         for provider in providers:
             def_platform = f"{provider}_{platform}"
-            # print("def_platform:", def_platform)
+            print("def_platform:", def_platform)
 
             if not def_platform in providers[provider]:
                 raise Exception("Unknown platform:", def_platform)
