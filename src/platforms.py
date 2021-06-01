@@ -46,7 +46,8 @@ class Platforms:
 
     def execute(self, protocol, body, userDetails):
         try:
-            print(f">> Executing for platform: <{self.platform_name}:{protocol}:{body}:{userDetails}>")
+            # print(f">> Executing for platform: <{self.platform_name}:{protocol}:{body}:{userDetails}>")
+            # print(f">> Executing for platform: <{self.platform_name}:{protocol}:{body}>")
             # print(f">> Executing for platform: <{self.platform_name}:{protocol}:{body}:{userDetails[self.provider]}>")
             results = self.platform.execute( protocol=protocol, body=body, userDetails=userDetails["user_token"][0])
             print("[+] Results:", results)

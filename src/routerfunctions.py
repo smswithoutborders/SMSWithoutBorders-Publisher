@@ -14,8 +14,8 @@ def decrypt_series(data, user_details):
     def_key = user_details['shared_key']
     def_iv = user_details['password_hash']
 
-    iv=data[:16].replace('\n', '')
-    data=data[16:].replace('\n', '')
+    iv=data[:16]
+    data=data[16:]
     print(f"iv: {iv}\ndata:{data}")
 
     decrypted_data=securityLayer.aes_decrypt(data, def_key, iv)
