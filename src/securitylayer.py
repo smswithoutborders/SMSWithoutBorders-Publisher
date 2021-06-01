@@ -74,7 +74,7 @@ if __name__ == "__main__":
     def_iv='D135AC9F95F208D0BD7184DF5CA99CAD35BDEB7D85364F524110BC29F23633A0822AAC2F0288DB2BE0BED4F9EC42B0220DB21E03801F217D029DF4B729535697'[:16]
     # print("[+] def_iv:", def_iv)
     # data='wIHcLqi7BRgLYuBQL+sI8Ij/bT2Xpq5iJ0DTX4VHE1c=_mX2JQLKTQ3vtZ2+FSOwHlwm1JdfwH0URP6t2HjiawoI='
-    data='IDkXBRcUxUp8MeCIGQMUXHozVlK8pmJKRZeMc1a10z4=_ZiWtyZ63hdG7LJgrFrvpJ6aYQXtEgOD2qK0HHxjKx4HDGbhgimAHR01kvP/q5Eja'
+    data='ybBp+UXHP9d3c5NstRhvaCQI3iAzPlr7ybE72lXex20=_6ndK9b9iLTnqWrVyuNtaOdc6tJWH3fpni5DZlYDFjRdGoYhEnh8avYPdxyPxVrPP+zzcXrqwAgnrlM41qtlLjQ=='
     split_data=data.split('_')
 
     encrypted_iv=split_data[0]
@@ -86,6 +86,7 @@ if __name__ == "__main__":
     print("\n[+] Decrypted IV:", decrypted_iv)
     # decrypted_iv=str(b64decode(decrypted_iv), 'utf-8')
     decrypted_data=securityLayer.aes_decrypt(encrypted_data, def_key, str(decrypted_iv, 'utf-8').upper())
-    print("[+] Decrypted Data:", decrypted_data)
+    # print("[+] Decrypted Data:", decrypted_data)
     # print("[+] Decrypted Data:", b64encode(bytes(str(decrypted_data, 'utf-8'), 'utf-8')))
-    print(str(decrypted_data, 'utf-8'))
+    # print(str(decrypted_data, 'utf-8'))
+    print(decrypted_data.decode("utf-8"))
