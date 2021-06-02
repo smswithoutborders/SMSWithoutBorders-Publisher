@@ -33,12 +33,13 @@ CORS(app)
 
 def socket_message(session_id, message):
     if message == 'ack':
-        uri= f"ws://localhost:{CONFIGS['WEBSOCKET']['PORT']}/sync/ack/{session_id}"
+        # uri= f"ws://localhost:{CONFIGS['WEBSOCKET']['PORT']}/sync/ack/{session_id}"
+        uri= f"{CONFIGS['WEBSOCKET']['URL']}/sync/ack/{session_id}"
         ws = websocket.WebSocketApp(uri)
         ws.run_forever()
 
     elif message == 'pause':
-        uri= f"ws://localhost:{CONFIGS['WEBSOCKET']['PORT']}/sync/pause/{session_id}"
+        uri= f"{CONFIGS['WEBSOCKET']['URL']}/sync/pause/{session_id}"
         ws = websocket.WebSocketApp(uri)
         ws.run_forever()
 

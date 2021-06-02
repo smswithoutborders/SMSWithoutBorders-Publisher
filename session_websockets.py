@@ -56,7 +56,7 @@ async def sessions(websocket, path):
             IP_address = socket.gethostbyname(h_name)
             '''
             while iterator < 3 and connected[session_id].state == 'run':
-                url_data = f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions/{session_id}"
+                url_data = f"{CONFIGS['CLOUD_API']['URL']}/sync/sessions/{session_id}"
                 print(url_data)
                 await connected[session_id].get_socket().send(url_data)
                 await asyncio.sleep(15)
