@@ -56,7 +56,7 @@ async def sessions(websocket, path):
             IP_address = socket.gethostbyname(h_name)
             '''
             while iterator < 3 and connected[session_id].state == 'run':
-                url_data = f"{CONFIGS['CLOUD_API']['URL']}/sync/sessions/{session_id}"
+                url_data = f"{CONFIGS['CLOUD_API']['URL']}:{CONFIGS['API']['PORT']}/sync/sessions/{session_id}"
                 print(url_data)
                 await connected[session_id].get_socket().send(url_data)
                 await asyncio.sleep(15)
@@ -65,7 +65,7 @@ async def sessions(websocket, path):
                 prev_session=session_id
                 if connected[session_id].state != 'pause':
                     session_id = _id=uuid.uuid4().hex
-                    request = requests.get(f"{CONFIGS['CLOUD_API']['URL']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
+                    request = requests.get(f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
                     connected[session_id] = soc
                 else:
                     await asyncio.sleep(60*2)
@@ -76,14 +76,14 @@ async def sessions(websocket, path):
             print(websocket)
 
     elif path.find('/sync/ack') > -1:
-        # print(">> acknowledgment seen...")
+        print(">> acknowledgment seen...")
         session_id = path.split('/')[3]
         connected[session_id].state = 'ack'
         await connected[session_id].get_socket().send("200- acked")
         del connected[session_id]
 
     elif path.find('/sync/pause') > -1:
-        # print(">> paused seen...")
+        print(">> paused seen...")
         session_id = path.split('/')[3]
         connected[session_id].state = 'pause'
         await connected[session_id].get_socket().send("201- paused")
@@ -96,12 +96,6 @@ start_server=''
 if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
     print("websocket is going secure...")
     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    ssl_path=CONFIGS["SSL"]["PEM"].split('/')
-    ssl_dir="/".join(ssl_path[0:len(ssl_path)-1])
-    # localhost_pem = pathlib.Path(__file__).with_name(CONFIGS["SSL"]["PEM"])
-    # localhost_pem = pathlib.Path(ssl_dir).with_name(ssl_path[-1])
-    # localhost_pem = pathlib.Path(CONFIGS['SSL']['PEM']).with_name(ssl_path[-1])
-    # ssl_context.load_cert_chain(localhost_pem)
     ssl_context.load_cert_chain(certfile=CONFIGS['SSL']['CRT'], keyfile=CONFIGS['SSL']['KEY'])
     start_server = websockets.serve(sessions, server_ip, server_port, ssl=ssl_context)
 

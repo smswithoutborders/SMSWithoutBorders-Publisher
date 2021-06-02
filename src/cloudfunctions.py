@@ -10,8 +10,8 @@ CONFIGS = configparser.ConfigParser(interpolation=None)
 
 PATH_CONFIG_FILE = os.path.join(os.path.dirname(__file__), '../configs', 'config.router.ini')
 CONFIGS.read(PATH_CONFIG_FILE)
-CLOUD_URL = CONFIGS["CLOUD_API"]["url"]
-CLOUD_URL_DEV = CONFIGS["CLOUD_API"]["url_dev"]
+CLOUD_URL = f"{CONFIGS['CLOUD_API']['URL']}:{CONFIGS['CLOUD_API']['PORT']}"
+CLOUD_URL_DEV = f"{CONFIGS['CLOUD_API']['URL_DEV']}:{CONFIGS['CLOUD_API']['PORT_DEV']}"
 # from ldatastore import Datastore
 
 
