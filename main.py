@@ -69,9 +69,10 @@ def sessions():
             return jsonify({"status":403, "message":"User may not exist"})
         session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
 
-        # print(request.environ)
-        origin_url = request.environ['REMOTE_ADDR'] + ":" + CONFIGS['WEBSOCKET']['PORT']
-        session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
+        session_url = f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions/{session_id}"
+        # print(f"origin url: {origin_url}")
+        # session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
+
         print(session_url)
         return jsonify({"status": 200, "url":session_url})
 
@@ -246,6 +247,11 @@ if CONFIGS["API"]["DEBUG"] == "1":
     # Allows server reload once code changes
     app.debug = True
 
-print_ip()
+# print_ip()
 start_routines.sr_database_checks()
-app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+
+if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
+    app.run(ssl_context=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]), host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+
+else:
+    app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )

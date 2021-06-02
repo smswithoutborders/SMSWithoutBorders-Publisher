@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3 
 
 # WS server that sends messages at random intervals
 
@@ -10,6 +10,8 @@ import uuid
 import configparser
 import os
 import requests
+import ssl
+import pathlib
 
 CONFIGS = configparser.ConfigParser(interpolation=None)
 
@@ -27,7 +29,7 @@ class c_websocket:
 
 connected = {}
 async def sessions(websocket, path):
-    # print("[+] New client:", websocket, path)
+    print("[+] New client:", websocket, path)
     # print(f'# Clients: {len(connected)}')
     if path.find('sync/sessions') > -1:
         path= path.split('/')
@@ -38,6 +40,8 @@ async def sessions(websocket, path):
         api_url = CONFIGS['API']['HOST']
         api_port = CONFIGS['API']['PORT']
         protocol = "http"
+        if os.path.exists(CONFIGS['SSL']['CRT']) and os.path.exists(CONFIGS['SSL']['KEY']):
+            protocol = "https"
         try:
             iterator = 0
             soc = c_websocket(websocket)
@@ -46,11 +50,14 @@ async def sessions(websocket, path):
                 return
             connected[session_id] = soc
 
+            '''
             import socket
             h_name = socket.gethostname()
             IP_address = socket.gethostbyname(h_name)
+            '''
             while iterator < 3 and connected[session_id].state == 'run':
-                url_data = f'{protocol}://{IP_address}:{api_port}/sync/sessions/{session_id}'
+                url_data = f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions/{session_id}"
+                print(url_data)
                 await connected[session_id].get_socket().send(url_data)
                 await asyncio.sleep(15)
                 iterator+=1
@@ -58,7 +65,7 @@ async def sessions(websocket, path):
                 prev_session=session_id
                 if connected[session_id].state != 'pause':
                     session_id = _id=uuid.uuid4().hex
-                    request = requests.get(f"http://localhost:{CONFIGS['API']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
+                    request = requests.get(f"{CONFIGS['CLOUD_API']['URL']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
                     connected[session_id] = soc
                 else:
                     await asyncio.sleep(60*2)
@@ -84,7 +91,22 @@ async def sessions(websocket, path):
 server_ip = CONFIGS['API']['HOST']
 server_port = CONFIGS['WEBSOCKET']['PORT']
 print(f"ws://{server_ip}:{server_port}")
-start_server = websockets.serve(sessions, server_ip, server_port)
+
+start_server=''
+if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
+    print("websocket is going secure...")
+    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ssl_path=CONFIGS["SSL"]["PEM"].split('/')
+    ssl_dir="/".join(ssl_path[0:len(ssl_path)-1])
+    # localhost_pem = pathlib.Path(__file__).with_name(CONFIGS["SSL"]["PEM"])
+    # localhost_pem = pathlib.Path(ssl_dir).with_name(ssl_path[-1])
+    # localhost_pem = pathlib.Path(CONFIGS['SSL']['PEM']).with_name(ssl_path[-1])
+    # ssl_context.load_cert_chain(localhost_pem)
+    ssl_context.load_cert_chain(certfile=CONFIGS['SSL']['CRT'], keyfile=CONFIGS['SSL']['KEY'])
+    start_server = websockets.serve(sessions, server_ip, server_port, ssl=ssl_context)
+
+else:
+    start_server = websockets.serve(sessions, server_ip, server_port)
 
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
