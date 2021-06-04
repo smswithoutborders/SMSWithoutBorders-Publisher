@@ -5,6 +5,7 @@ import configparser
 import traceback
 import asyncio
 import websocket
+import ssl
 
 import src.cloudfunctions as cloudfunctions
 import src.sync_accounts as sync_accounts
@@ -31,16 +32,34 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+def socket_message_error(wsapp, err):
+    print(err)
+
 def socket_message(session_id, message):
+    # websocket.enableTrace(True)
+    # TODO make certificates actually do something
+    ssl_context=None
+    if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.load_cert_chain(certfile=CONFIGS['SSL']['CRT'], keyfile=CONFIGS['SSL']['KEY'])
     if message == 'ack':
-        uri= f"ws://localhost:{CONFIGS['WEBSOCKET']['PORT']}/sync/ack/{session_id}"
-        ws = websocket.WebSocketApp(uri)
-        ws.run_forever()
+        # uri= f"ws://localhost:{CONFIGS['WEBSOCKET']['PORT']}/sync/ack/{session_id}"
+        uri= f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/ack/{session_id}"
+        print(uri)
+        ws = websocket.WebSocketApp(uri, on_error=socket_message_error) 
+        if not ssl_context == None:
+            ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+        else:
+            ws.run_forever()
 
     elif message == 'pause':
-        uri= f"ws://localhost:{CONFIGS['WEBSOCKET']['PORT']}/sync/pause/{session_id}"
-        ws = websocket.WebSocketApp(uri)
-        ws.run_forever()
+        uri= f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/pause/{session_id}"
+        print(uri)
+        ws = websocket.WebSocketApp(uri, on_error=socket_message_error)
+        if not ssl_context == None:
+            ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+        else:
+            ws.run_forever()
 
     else:
         print( "unknown socket protocol requested" )
@@ -69,9 +88,10 @@ def sessions():
             return jsonify({"status":403, "message":"User may not exist"})
         session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
 
-        # print(request.environ)
-        origin_url = request.environ['REMOTE_ADDR'] + ":" + CONFIGS['WEBSOCKET']['PORT']
-        session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
+        session_url = f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions/{session_id}"
+        # print(f"origin url: {origin_url}")
+        # session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
+
         print(session_url)
         return jsonify({"status": 200, "url":session_url})
 
@@ -246,6 +266,11 @@ if CONFIGS["API"]["DEBUG"] == "1":
     # Allows server reload once code changes
     app.debug = True
 
-print_ip()
+# print_ip()
 start_routines.sr_database_checks()
-app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+
+if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
+    app.run(ssl_context=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]), host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+
+else:
+    app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
