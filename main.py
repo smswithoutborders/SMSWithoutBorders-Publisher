@@ -171,7 +171,7 @@ def sync(session_id):
 
         prev_session = session_id
         session_id = uuid.uuid4().hex
-        response = requests.get(f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
+        response = requests.get(f"{CONFIGS['CLOUD_API']['URL']}:{CONFIGS['CLOUD_API']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
 
         return jsonify(ret_value)
     except Exception as error:
@@ -220,7 +220,6 @@ def new_messages():
 
             user_details[0]["password_hash"] = h_password
             parsedText = routerfunctions.routerParseText(text, user_details[0])
-            print(f">> ParsedText: {parsedText}")
 
             # check for a valid protocol being returned
             if parsedText is not None and "protocol" in parsedText:
