@@ -1,10 +1,16 @@
 #!/usr/bin/python
 
+'''
+- when qr expires should not be used again
+- when qr is synced cannot be used again
+- if sync with same phonenumber, replace previous sync with new one
+'''
 import os
 import configparser
 import traceback
 import asyncio
 import websocket
+import requests
 import ssl
 
 import src.cloudfunctions as cloudfunctions
@@ -158,8 +164,14 @@ def sync(session_id):
         # pd = password
         # pl = platforms
         # ph = phonenumbers
-        ret_value = {"pk":gateway_publicKey, "sk":sharedKey, "pd":passwd, "pl":platforms, "ph":phonenumbers}
+        # sid = session_id
+        ret_value = {"pk":gateway_publicKey, "sk":sharedKey, "pd":passwd, "pl":platforms, "ph":phonenumbers, "sid":session_id}
         socket_message(session_id=session_id, message='ack')
+
+        prev_session = session_id
+        session_id = uuid.uuid4().hex
+        response = requests.get(f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
+
         return jsonify(ret_value)
     except Exception as error:
         print(traceback.format_exc())

@@ -81,3 +81,26 @@ class Datastore(object):
         else:
             self.cursor.lastrowid
 
+    def update_status(session_id, status):
+        query=f"UPDATE synced_accounts SET status=%s WHERE id=%s"
+        print(query)
+        try:
+            self.cursor.execute( query [session_id, status])
+            self.conn.commit()
+
+        except mysql.connector.Error as err:
+            raise Exception( err )
+        else:
+            self.cursor.lastrowid
+
+
+    def remove_all_for_except(user_id, except_session_id):
+        query=f"DELETE FROM synced_accounts WHERE session_id != %s"
+        try:
+            self.cursor.execute( query, [except_session_id])
+            self.conn.commit()
+
+        except mysql.connector.Error as err:
+            raise Exception( err )
+        else:
+            self.cursor.rowcount

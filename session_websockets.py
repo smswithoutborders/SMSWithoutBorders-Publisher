@@ -69,8 +69,11 @@ async def sessions(websocket, path):
                     connected[session_id] = soc
                 else:
                     await asyncio.sleep(60*2)
+                    break
             del connected[session_id]
             print("[-] Socket ended..")
+            session_id = _id=uuid.uuid4().hex
+            request = requests.get(f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
         except Exception as error:
             print(error)
             print(websocket)
