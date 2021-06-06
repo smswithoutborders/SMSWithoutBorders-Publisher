@@ -12,6 +12,7 @@ import asyncio
 import websocket
 import requests
 import ssl
+import uuid
 
 import src.cloudfunctions as cloudfunctions
 import src.sync_accounts as sync_accounts
