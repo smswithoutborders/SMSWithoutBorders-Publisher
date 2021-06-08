@@ -65,7 +65,7 @@ async def sessions(websocket, path):
                 prev_session=session_id
                 if connected[session_id].state != 'pause':
                     session_id = _id=uuid.uuid4().hex
-                    request = requests.get(f"{CONFIGS['CLOUD_API']['URL']}:{CONFIGS['CLOUD_API']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
+                    response = requests.get(f"{CONFIGS['CLOUD_API']['URL']}:{CONFIGS['CLOUD_API']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
                     connected[session_id] = soc
                 else:
                     await asyncio.sleep(60*2)
