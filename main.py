@@ -179,15 +179,16 @@ def sync(session_id):
         return jsonify({"status":500, "message":"internal error"})
 
 
-@app.route('/twilio_messages', methods=['POST', 'GET'])
+@app.route('/twilio_messages', methods=['POST'])
 def incoming_messages():
+    print(request.values)
     From=request.values.get('From', None)
     To=request.values.get('To', None)
     FromCountry=request.values.get('FromCountry', None)
     NumSegments=request.values.get('NumSegments', None)
     Body=request.values.get('Body',None)
 
-    # print(f"From: {From}\nTo: {To}\nBody: {Body}\nFromCountry: {FromCountry}\nNumSegments: {NumSegments}")
+    print(f"From: {From}\nTo: {To}\nBody: {Body}\nFromCountry: {FromCountry}\nNumSegments: {NumSegments}")
     '''
     try:
         router_url = CONFIGS["CLOUD_API"]["url"]
@@ -205,17 +206,17 @@ def incoming_messages():
     forward["text"] = Body
     forward["From"] = "Twilio"
 
-    new_messages(forward)
+    return new_messages(forward)
     
     return ""
 
 @app.route('/messages', methods=['POST', 'GET'])
 def new_messages(forwarded=None):
     request_body = None
-    if request.method == 'POST':
-        request_body = request.json
-    elif forwarded is not None:
+    if forwarded is not None:
         request_body = forwarded
+    elif request.method == 'POST':
+        request_body = request.json
 
     if request_body is None:
         return jsonify({"status":401, "message":"invalid request, missing body"})
