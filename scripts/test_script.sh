@@ -3,6 +3,7 @@
 
 url="http://localhost:6969"
 api_url="http://localhost:9000"
+twilio_url="https://smswithoutborders.com:6969/twilio_messages"
 d_command=$1
 phonenumber=$2
 
@@ -35,4 +36,9 @@ elif [ "$d_command" == "--new_session" ] ; then
 elif [ "$d_command" == "--sync" ] ; then
 	echo ">> syncing user..."
 	curl -H "Content-Type: application/json" -d "{\"public_key\":\"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2Hh5f/HFiB8P67IUIdhFxE/NryrHKvyQoMvbNq7qzRTj+Fjd1CG9rmjTU6f1UNg49EX7cdz5xWABuml1tmx0+90D84GaMlKGXL6GqJ7YsRrS1Wl+HbDYEnqLThTArZUegHbhyXvhGIlbQknr6mH9MhCkd/hUxLYVh9wvwqtoYVeEsxho929kAwB3fJv81xXP7+nD9IXnB9shLnia44Eo1Xs/3dpLqjw2Mjhz4DUOYMO/lheHAl8V8sJkKQPIbq4k4Hgbml7Xzc0yBu9j7H1FLbtUuud8Q+EHxlhaT9IZ4j4CgtlUW6j0OOQ/vX7NDj+Tr58WCd58GcVnJsmjl0LhlQIDAQAB\"}" "${url}/sync/sessions/${phonenumber}"
+
+elif [ "$d_command" == "--twilio_test" ] ; then
+	echo ">> testing Twilio"
+	# curl -k -H "Content-Type: application/json" -d "{\"From\":\"000000\", \"To\":\"11111\", \"FromCountry\":\"Cameroon\", \"NumSegments\":4, \"Body\":\"Hello world Test script\"}" "${twilio_url}"
+	curl -k -X POST -F 'From=000000' -F 'To=11111' -F 'FromCountry=Cameroon' -F 'NumSegments=4' -F 'Body=Hello world Test script' "${twilio_url}"
 fi
