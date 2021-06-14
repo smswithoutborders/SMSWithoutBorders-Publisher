@@ -201,8 +201,8 @@ def incoming_messages():
     return api_request.text
     '''
     forward = {}
-    forward["phonenumber"} = From
-    forward["text"} = Body
+    forward["phonenumber"] = From
+    forward["text"] = Body
     forward["From"] = "Twilio"
 
     new_messages(forward)
