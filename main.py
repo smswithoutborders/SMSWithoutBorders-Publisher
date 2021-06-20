@@ -206,8 +206,10 @@ def incoming_messages():
     forward["text"] = Body
     forward["From"] = "Twilio"
 
-    return new_messages(forward)
+    # return new_messages(forward)
     
+    response=new_messages(forward)
+    print(f"- router response: {response.text}")
     return ""
 
 @app.route('/messages', methods=['POST', 'GET'])
