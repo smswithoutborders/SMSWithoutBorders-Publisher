@@ -40,5 +40,5 @@ elif [ "$d_command" == "--sync" ] ; then
 elif [ "$d_command" == "--twilio_test" ] ; then
 	echo ">> testing Twilio"
 	# curl -k -H "Content-Type: application/json" -d "{\"From\":\"000000\", \"To\":\"11111\", \"FromCountry\":\"Cameroon\", \"NumSegments\":4, \"Body\":\"Hello world Test script\"}" "${twilio_url}"
-	curl -k -X POST -F 'From=000000' -F 'To=11111' -F 'FromCountry=Cameroon' -F 'NumSegments=4' -F 'Body={"phonenumber":"00000", "text":"Hello world Test script"} "${twilio_url}"
+	curl -k -X POST -F 'From=000000' -F 'To=11111' -F 'FromCountry=Cameroon' -F 'NumSegments=4' -F 'Body={"phonenumber":"00000", "text":"Hello world Test script"}' "${twilio_url}"
 fi
