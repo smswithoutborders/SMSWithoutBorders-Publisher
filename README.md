@@ -1,9 +1,9 @@
 ### Dependencies
 - MySQL
 
-### Configuration and running
-__mysql__
+### Getting Started
 ```bash
+git submodule update --init --recursive
 cp configs/example.config.mysql.ini configs/config.mysql.ini
 cp configs/example.config.router.ini configs/config.router.ini
 cp configs/example.isp.json configs/isp.json
