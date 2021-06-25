@@ -94,17 +94,21 @@ def sessions():
 
         user_authkey = request_body['auth_key']
         user_id = request_body['id']
-        user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey, user_id)
-        if not 'phone_number' in user_details or not 'id' in user_details:
-            return jsonify({"status":403, "message":"User may not exist"})
-        session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
+        try: 
+            user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey, user_id)
+            
+            if not 'phone_number' in user_details or not 'id' in user_details:
+                return jsonify({"status":403, "message":"User may not exist"})
+            session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
 
-        session_url = f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions/{session_id}"
-        # print(f"origin url: {origin_url}")
-        # session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
+            session_url = f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions/{session_id}"
+            # print(f"origin url: {origin_url}")
+            # session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
 
-        print(session_url)
-        return jsonify({"status": 200, "url":session_url})
+            print(session_url)
+            return jsonify({"status": 200, "url":session_url})
+        except Exception as error:
+            print(traceback.format_exc())
 
     elif request.method == 'GET':
         prev_session_id = request.args.get('prev_session_id')
