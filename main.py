@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 '''
 - when qr expires should not be used again
@@ -27,17 +27,17 @@ from src.securitylayer import SecurityLayer
 from base64 import b64decode,b64encode
 import json
 
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+app = Flask(__name__)
+CORS(app)
+
 CONFIGS = configparser.ConfigParser(interpolation=None)
 
 PATH_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'configs', 'config.router.ini')
 CONFIGS.read(PATH_CONFIG_FILE)
 
 from src.datastore import Datastore
-
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-app = Flask(__name__)
-CORS(app)
 
 def socket_message_error(wsapp, err):
     print(err)
@@ -77,6 +77,10 @@ def acquire_requester(phonenumber):
         return sync_accounts.acquire_user_from_phonenumber(phonenumber)
     except Exception as error:
         raise Exception(error)
+
+@app.route('/', methods=['GET'])
+def index():
+    return "May the force be with you!"
 
 
 @app.route('/sync/sessions', methods=['POST', 'GET'])
@@ -308,10 +312,16 @@ if CONFIGS["API"]["DEBUG"] == "1":
     app.debug = True
 
 # print_ip()
-start_routines.sr_database_checks()
+if __name__ == '__main__':
+    start_routines.sr_database_checks()
 
-if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
-    app.run(ssl_context=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]), host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
-
-else:
-    app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+    if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
+        # ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        # ssl_context.load_verify_locations(CONFIGS["SSL"]["PEM"])
+        print("- Running secured...")
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+        ssl_context.load_cert_chain(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"])
+        app.run(ssl_context=ssl_context, host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+    else:
+        print("- Running insecure...")
+        app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
