@@ -6,6 +6,7 @@
 - if sync with same phonenumber, replace previous sync with new one
 '''
 import os
+import sys
 import configparser
 import traceback
 import asyncio
@@ -14,6 +15,7 @@ import requests
 import ssl
 import uuid
 
+from twilio.rest import Client
 import src.cloudfunctions as cloudfunctions
 import src.sync_accounts as sync_accounts
 import src.routerfunctions as routerfunctions
@@ -29,6 +31,7 @@ import json
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+
 app = Flask(__name__)
 CORS(app)
 
@@ -307,21 +310,69 @@ def new_messages(forwarded=None):
     
     return jsonify(return_json)
 
+
+def twilio_send(number):
+    account_sid = CONFIGS['TWILIO']['ACCOUNT_SID']
+    auth_token = CONFIGS['TWILIO']['AUTH_TOKEN']
+    client = Client(account_sid, auth_token)
+
+    service = client.verify.services.create( friendly_name=CONFIGS['TWILIO']['FRIENDLY_NAME'])
+    print(service.sid)
+
+    client = Client(account_sid, auth_token)
+
+    verification = client.verify \
+            .services(service.sid) \
+            .verifications \
+            .create(to=number, channel='sms')
+
+    # print(verification.status)
+    print(verification)
+
+    if verification.status == 'pending':
+        return service.sid
+    return None
+
+
+@app.route('/sms/twilio', methods=['POST'])
+def sms_twilio():
+    # generate code
+    # connect to twilio and send to number (number required)
+    request_body=None
+    if request.method == 'POST':
+        request_body = request.json
+    if not 'number' in request_body:
+        return jsonify({"status":400, "message":"sending number required"})
+
+    number = request_body['number']
+    code = twilio_send(number)
+    
+    if code is not None:
+        return jsonify({"code":code, "status":200})
+
+    return jsonify({"status":500, "message":"failed"})
+
 if CONFIGS["API"]["DEBUG"] == "1":
     # Allows server reload once code changes
     app.debug = True
 
 # print_ip()
 if __name__ == '__main__':
-    start_routines.sr_database_checks()
+    if len(sys.argv) == 1:
+        start_routines.sr_database_checks()
 
-    if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
-        # ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        # ssl_context.load_verify_locations(CONFIGS["SSL"]["PEM"])
-        print("- Running secured...")
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS)
-        ssl_context.load_cert_chain(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"])
-        app.run(ssl_context=ssl_context, host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+        if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
+            # ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            # ssl_context.load_verify_locations(CONFIGS["SSL"]["PEM"])
+            print("- Running secured...")
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+            ssl_context.load_cert_chain(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"])
+            app.run(ssl_context=ssl_context, host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+        else:
+            print("- Running insecure...")
+            app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+
+
     else:
-        print("- Running insecure...")
-        app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+        if sys.argv[1] == '-twilio_send':
+            twilio_send(sys.argv[2])
