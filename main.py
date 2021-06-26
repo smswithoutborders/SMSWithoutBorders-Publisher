@@ -42,6 +42,14 @@ CONFIGS.read(PATH_CONFIG_FILE)
 
 from src.datastore import Datastore
 
+twilio_service=None
+if CONFIGS['TWILIO']['ACCOUNT_SID'] != None and CONFIGS['TWILIO']['AUTH_TOKEN'] != None:
+    account_sid = CONFIGS['TWILIO']['ACCOUNT_SID']
+    auth_token = CONFIGS['TWILIO']['AUTH_TOKEN']
+    client = Client(account_sid, auth_token)
+    twilio_service = client.verify.services.create( friendly_name=CONFIGS['TWILIO']['FRIENDLY_NAME'])
+    # print(twilio_service.sid)
+
 def socket_message_error(wsapp, err):
     print(err)
 
@@ -312,27 +320,37 @@ def new_messages(forwarded=None):
 
 
 def twilio_send(number):
-    account_sid = CONFIGS['TWILIO']['ACCOUNT_SID']
-    auth_token = CONFIGS['TWILIO']['AUTH_TOKEN']
-    client = Client(account_sid, auth_token)
-
-    service = client.verify.services.create( friendly_name=CONFIGS['TWILIO']['FRIENDLY_NAME'])
-    print(service.sid)
-
     client = Client(account_sid, auth_token)
 
     verification = client.verify \
-            .services(service.sid) \
+            .services(twilio_service.sid) \
             .verifications \
             .create(to=number, channel='sms')
 
     # print(verification.status)
-    print(verification)
+    # print(verification)
 
     if verification.status == 'pending':
-        return service.sid
+        return twilio_service.sid
     return None
 
+
+def twilio_verify(number, code, twilio_service_sid=None):
+    service_code = None
+    if twilio_service_sid is not None:
+        service_code = twilio_service_sid
+    else:
+        service_code = twilio_service.sid
+
+    verification_check = client.verify \
+            .services(service_code) \
+            .verification_checks \
+            .create(to=number, code=code)
+
+    # print(verification.status)
+    # print(verification_check)
+
+    return verification_check.status
 
 @app.route('/sms/twilio', methods=['POST'])
 def sms_twilio():
@@ -352,13 +370,37 @@ def sms_twilio():
 
     return jsonify({"status":500, "message":"failed"})
 
-if CONFIGS["API"]["DEBUG"] == "1":
-    # Allows server reload once code changes
-    app.debug = True
+@app.route('/sms/twilio/verify_token', methods=['POST'])
+def sms_twilio_verify():
+    # generate code
+    # connect to twilio and send to number (number required)
+    request_body=None
+    if request.method == 'POST':
+        request_body = request.json
+    if not 'number' in request_body:
+        return jsonify({"status":400, "message":"number required"})
+    if not 'code' in request_body:
+        return jsonify({"status":400, "message":"code required"})
+
+    number = request_body['number']
+    code = request_body['code']
+
+    status = twilio_verify(number, code)
+    
+    if status is not None:
+        return jsonify({"verification_status":status, "status":200})
+
+    return jsonify({"status":500, "message":"failed"})
+
 
 # print_ip()
 if __name__ == '__main__':
     if len(sys.argv) == 1:
+        '''
+        if CONFIGS["API"]["DEBUG"] == "1":
+            # Allows server reload once code changes
+            app.debug = True
+        '''
         start_routines.sr_database_checks()
 
         if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
@@ -375,4 +417,8 @@ if __name__ == '__main__':
 
     else:
         if sys.argv[1] == '-twilio_send':
-            twilio_send(sys.argv[2])
+            # ('number')
+            print(twilio_send(sys.argv[2]))
+        elif sys.argv[1] == '-twilio_verify':
+            # ('service.sid', 'number', 'code')
+            print(twilio_verify(twilio_service_sid=sys.argv[2], number=sys.argv[3], code=sys.argv[4]))
