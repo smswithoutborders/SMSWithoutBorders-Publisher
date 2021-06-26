@@ -99,9 +99,9 @@ def sessions():
     if request.method == 'POST':
         request_body = request.json
         if not 'auth_key' in request_body or len(request_body['auth_key']) < 1:
-            return jsonify({"status":403, "message":"No auth key found"})
+            return jsonify({"message":"No auth key found"}), 403
         if not 'id' in request_body or len(request_body['id']) < 1:
-            return jsonify({"status":403, "message":"No id found"})
+            return jsonify({"message":"No id found"}), 403
 
         user_authkey = request_body['auth_key']
         user_id = request_body['id']
@@ -363,33 +363,37 @@ def twilio_verify(number, code, twilio_service_sid=None):
 def sms_twilio():
     # generate code
     # connect to twilio and send to number (number required)
+    if request.remote_addr != '127.0.0.1':
+        return '', 403
     request_body=None
     if request.method == 'POST':
         request_body = request.json
     if not 'number' in request_body:
-        return jsonify({"status":400, "message":"sending number required"})
+        return jsonify({"message":"sending number required"}), 400
 
     number = request_body['number']
     service_sid = twilio_send(number)
     
     if service_sid is not None:
-        return jsonify({"service_sid":service_sid, "code":code, "status":200})
+        return jsonify({"service_sid":service_sid, "code":code}), 200
 
-    return jsonify({"status":500, "message":"failed"})
+    return jsonify({"message":"failed"}), 500
 
 @app.route('/sms/twilio/verify_token', methods=['POST'])
 def sms_twilio_verify():
     # generate code
     # connect to twilio and send to number (number required)
+    if request.remote_addr != '127.0.0.1':
+        return '', 403
     request_body=None
     if request.method == 'POST':
         request_body = request.json
     if not 'number' in request_body:
-        return jsonify({"status":400, "message":"number required"})
+        return jsonify({"message":"number required"}), 400
     if not 'code' in request_body:
-        return jsonify({"status":400, "message":"code required"})
+        return jsonify({"message":"code required"}), 400
     if not 'service_code' in request_body:
-        return jsonify({"status":400, "message":"service code required"})
+        return jsonify({"message":"service code required"}), 400
 
     number = request_body['number']
     code = request_body['code']
@@ -397,13 +401,13 @@ def sms_twilio_verify():
     try:
         status = twilio_verify(number, code)
     except Exception as error:
-        return jsonify({"status":500, "message":"failed"})
+        return jsonify({"message":"failed"}), 500
     else:
         if status is not None:
             # status=('approved' || 'pending')
-            return jsonify({"verification_status":status, "status":200})
+            return jsonify({"verification_status":status}), 200
 
-    return jsonify({"status":500, "message":"failed"})
+    return jsonify({"message":"failed"}), 500
 
 
 # print_ip()
