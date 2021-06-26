@@ -342,15 +342,18 @@ def twilio_verify(number, code, twilio_service_sid=None):
     else:
         service_code = twilio_service.sid
 
-    verification_check = client.verify \
-            .services(service_code) \
-            .verification_checks \
-            .create(to=number, code=code)
+    try:
+        verification_check = client.verify \
+                .services(service_code) \
+                .verification_checks \
+                .create(to=number, code=code)
 
-    # print(verification.status)
-    # print(verification_check)
+        # print(verification.status)
+        # print(verification_check)
 
-    return verification_check.status
+        return verification_check.status
+    except Exception as error:
+        raise Exception(error)
 
 @app.route('/sms/twilio', methods=['POST'])
 def sms_twilio():
@@ -363,10 +366,10 @@ def sms_twilio():
         return jsonify({"status":400, "message":"sending number required"})
 
     number = request_body['number']
-    code = twilio_send(number)
+    service_sid = twilio_send(number)
     
-    if code is not None:
-        return jsonify({"code":code, "status":200})
+    if service_sid is not None:
+        return jsonify({"service_sid":service_sid, "code":code, "status":200})
 
     return jsonify({"status":500, "message":"failed"})
 
@@ -381,14 +384,20 @@ def sms_twilio_verify():
         return jsonify({"status":400, "message":"number required"})
     if not 'code' in request_body:
         return jsonify({"status":400, "message":"code required"})
+    if not 'service_code' in request_body:
+        return jsonify({"status":400, "message":"service code required"})
 
     number = request_body['number']
     code = request_body['code']
 
-    status = twilio_verify(number, code)
-    
-    if status is not None:
-        return jsonify({"verification_status":status, "status":200})
+    try:
+        status = twilio_verify(number, code)
+    except Exception as error:
+        return jsonify({"status":500, "message":"failed"})
+    else:
+        if status is not None:
+            # status=('approved' || 'pending')
+            return jsonify({"verification_status":status, "status":200})
 
     return jsonify({"status":500, "message":"failed"})
 
@@ -421,4 +430,7 @@ if __name__ == '__main__':
             print(twilio_send(sys.argv[2]))
         elif sys.argv[1] == '-twilio_verify':
             # ('service.sid', 'number', 'code')
-            print(twilio_verify(twilio_service_sid=sys.argv[2], number=sys.argv[3], code=sys.argv[4]))
+            try:
+                print(twilio_verify(twilio_service_sid=sys.argv[2], number=sys.argv[3], code=sys.argv[4]))
+            except Exception as error:
+                print("Exception happened... guess why")
