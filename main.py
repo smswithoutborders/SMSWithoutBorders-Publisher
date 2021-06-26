@@ -363,8 +363,10 @@ def twilio_verify(number, code, twilio_service_sid=None):
 def sms_twilio():
     # generate code
     # connect to twilio and send to number (number required)
+    '''
     if request.remote_addr != '127.0.0.1':
         return '', 403
+    '''
     request_body=None
     if request.method == 'POST':
         request_body = request.json
@@ -383,8 +385,10 @@ def sms_twilio():
 def sms_twilio_verify():
     # generate code
     # connect to twilio and send to number (number required)
+    '''
     if request.remote_addr != '127.0.0.1':
         return '', 403
+    '''
     request_body=None
     if request.method == 'POST':
         request_body = request.json
