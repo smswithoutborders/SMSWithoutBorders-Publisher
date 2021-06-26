@@ -375,11 +375,11 @@ def sms_twilio():
     service_sid = twilio_send(number)
     
     if service_sid is not None:
-        return jsonify({"service_sid":service_sid, "code":code}), 200
+        return jsonify({"service_sid":service_sid}), 200
 
     return jsonify({"message":"failed"}), 500
 
-@app.route('/sms/twilio/verify_token', methods=['POST'])
+@app.route('/sms/twilio/verification_token', methods=['POST'])
 def sms_twilio_verify():
     # generate code
     # connect to twilio and send to number (number required)
@@ -392,14 +392,15 @@ def sms_twilio_verify():
         return jsonify({"message":"number required"}), 400
     if not 'code' in request_body:
         return jsonify({"message":"code required"}), 400
-    if not 'service_code' in request_body:
-        return jsonify({"message":"service code required"}), 400
+    if not 'session_id' in request_body:
+        return jsonify({"message":"session id required"}), 400
 
     number = request_body['number']
     code = request_body['code']
+    session_id = request_body['session_id']
 
     try:
-        status = twilio_verify(number, code)
+        status = twilio_verify(number, code, session_id)
     except Exception as error:
         return jsonify({"message":"failed"}), 500
     else:
