@@ -43,11 +43,12 @@ CONFIGS.read(PATH_CONFIG_FILE)
 from src.datastore import Datastore
 
 twilio_service=None
+twilio_client = None
 if CONFIGS['TWILIO']['ACCOUNT_SID'] != None and CONFIGS['TWILIO']['AUTH_TOKEN'] != None:
     account_sid = CONFIGS['TWILIO']['ACCOUNT_SID']
     auth_token = CONFIGS['TWILIO']['AUTH_TOKEN']
-    client = Client(account_sid, auth_token)
-    twilio_service = client.verify.services.create( friendly_name=CONFIGS['TWILIO']['FRIENDLY_NAME'])
+    twilio_client = Client(account_sid, auth_token)
+    # twilio_service = client.verify.services.create( friendly_name=CONFIGS['TWILIO']['FRIENDLY_NAME'])
     # print(twilio_service.sid)
 
 def socket_message_error(wsapp, err):
@@ -338,6 +339,25 @@ def twilio_send(number):
         return twilio_service.sid
     return None
 
+def twilio_sms_send(number, text):
+    # client = Client(account_sid, auth_token)
+
+    try:
+        messages = twilio_client.messages.create(
+                from_=CONFIGS['TWILIO']['OWN_NUMBER'],
+                body=text,
+                # status_callback=CONFIGS['TWILIO']['ON_DELIVERY'],
+                to=number
+            )
+
+    except Exception as error:
+        raise Exception( error )
+    else:
+        print(messages.sid)
+        return messages.sid
+
+    return None
+
 
 def twilio_verify(number, code, twilio_service_sid=None):
     service_code = None
@@ -358,6 +378,35 @@ def twilio_verify(number, code, twilio_service_sid=None):
         return verification_check.status
     except Exception as error:
         raise Exception(error)
+
+@app.route('/sms/twilio_send', methods=['POST'])
+def sms_twilio_send():
+    # generate code
+    # connect to twilio and send to number (number required)
+    '''
+    if request.remote_addr != '127.0.0.1':
+        return '', 403
+    '''
+    request_body=None
+    if request.method == 'POST':
+        request_body = request.json
+    if not 'number' in request_body:
+        return jsonify({"message":"sending number required"}), 400
+    if not 'text' in request_body:
+        return jsonify({"message":"sending text required"}), 400
+
+    number = request_body['number']
+    text = request_body['text']
+    try:
+        message_sid = twilio_sms_send(number=number, text=text)
+    except Exception as error:
+        print(error)
+    else:
+        if message_sid is not None:
+            return jsonify({"service_sid":service_sid}), 200
+
+    return jsonify({"message":"failed"}), 500
+
 
 @app.route('/sms/twilio', methods=['POST'])
 def sms_twilio():
@@ -438,12 +487,18 @@ if __name__ == '__main__':
 
 
     else:
-        if sys.argv[1] == '-twilio_send':
+        if sys.argv[1] == '-twilio_auth_send':
             # ('number')
             print(twilio_send(sys.argv[2]))
         elif sys.argv[1] == '-twilio_verify':
             # ('service.sid', 'number', 'code')
             try:
                 print(twilio_verify(twilio_service_sid=sys.argv[2], number=sys.argv[3], code=sys.argv[4]))
+            except Exception as error:
+                print("Exception happened... guess why")
+        elif sys.argv[1] == '-twilio_send':
+            # ('service.sid', 'number', 'code')
+            try:
+                print(twilio_sms_send(number=sys.argv[2], text=sys.argv[3]))
             except Exception as error:
                 print("Exception happened... guess why")
