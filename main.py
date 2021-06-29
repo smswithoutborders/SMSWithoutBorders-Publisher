@@ -353,7 +353,7 @@ def twilio_sms_send(number, text):
     except Exception as error:
         raise Exception( error )
     else:
-        print(messages.sid)
+        # print(messages.sid)
         return messages.sid
 
     return None
@@ -379,7 +379,7 @@ def twilio_verify(number, code, twilio_service_sid=None):
     except Exception as error:
         raise Exception(error)
 
-@app.route('/sms/twilio_send', methods=['POST'])
+@app.route('/sms/twilio/plain', methods=['POST'])
 def sms_twilio_send():
     # generate code
     # connect to twilio and send to number (number required)
@@ -403,7 +403,7 @@ def sms_twilio_send():
         print(error)
     else:
         if message_sid is not None:
-            return jsonify({"service_sid":service_sid}), 200
+            return jsonify({"message_sid":message_sid}), 200
 
     return jsonify({"message":"failed"}), 500
 
