@@ -501,4 +501,5 @@ if __name__ == '__main__':
             try:
                 print(twilio_sms_send(number=sys.argv[2], text=sys.argv[3]))
             except Exception as error:
+                print(error)
                 print("Exception happened... guess why")
