@@ -29,7 +29,7 @@ def cloudAcquireUserInfo(auth_key, _id):
 
         else:
             request = requests.post(cloud_url_acquire_platforms, json={"auth_key":auth_key, "id":_id})
-        # print(request.text)
+        print(request.text)
     except Exception as error:
         raise Exception(error)
     else:

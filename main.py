@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 '''
 - when qr expires should not be used again
@@ -6,6 +6,7 @@
 - if sync with same phonenumber, replace previous sync with new one
 '''
 import os
+import sys
 import configparser
 import traceback
 import asyncio
@@ -14,6 +15,7 @@ import requests
 import ssl
 import uuid
 
+from twilio.rest import Client
 import src.cloudfunctions as cloudfunctions
 import src.sync_accounts as sync_accounts
 import src.routerfunctions as routerfunctions
@@ -27,6 +29,12 @@ from src.securitylayer import SecurityLayer
 from base64 import b64decode,b64encode
 import json
 
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+
 CONFIGS = configparser.ConfigParser(interpolation=None)
 
 PATH_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'configs', 'config.router.ini')
@@ -34,10 +42,13 @@ CONFIGS.read(PATH_CONFIG_FILE)
 
 from src.datastore import Datastore
 
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-app = Flask(__name__)
-CORS(app)
+twilio_service=None
+if CONFIGS['TWILIO']['ACCOUNT_SID'] != None and CONFIGS['TWILIO']['AUTH_TOKEN'] != None:
+    account_sid = CONFIGS['TWILIO']['ACCOUNT_SID']
+    auth_token = CONFIGS['TWILIO']['AUTH_TOKEN']
+    client = Client(account_sid, auth_token)
+    twilio_service = client.verify.services.create( friendly_name=CONFIGS['TWILIO']['FRIENDLY_NAME'])
+    # print(twilio_service.sid)
 
 def socket_message_error(wsapp, err):
     print(err)
@@ -78,29 +89,37 @@ def acquire_requester(phonenumber):
     except Exception as error:
         raise Exception(error)
 
+@app.route('/', methods=['GET'])
+def index():
+    return "May the force be with you!"
+
 
 @app.route('/sync/sessions', methods=['POST', 'GET'])
 def sessions():
     if request.method == 'POST':
         request_body = request.json
         if not 'auth_key' in request_body or len(request_body['auth_key']) < 1:
-            return jsonify({"status":403, "message":"No auth key found"})
+            return jsonify({"message":"No auth key found"}), 403
         if not 'id' in request_body or len(request_body['id']) < 1:
-            return jsonify({"status":403, "message":"No id found"})
+            return jsonify({"message":"No id found"}), 403
 
         user_authkey = request_body['auth_key']
         user_id = request_body['id']
-        user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey, user_id)
-        if not 'phone_number' in user_details or not 'id' in user_details:
-            return jsonify({"status":403, "message":"User may not exist"})
-        session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
+        try: 
+            user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey, user_id)
+            
+            if not 'phone_number' in user_details or not 'id' in user_details:
+                return jsonify({"status":403, "message":"User may not exist"})
+            session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
 
-        session_url = f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions/{session_id}"
-        # print(f"origin url: {origin_url}")
-        # session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
+            session_url = f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions/{session_id}"
+            # print(f"origin url: {origin_url}")
+            # session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
 
-        print(session_url)
-        return jsonify({"status": 200, "url":session_url})
+            print(session_url)
+            return jsonify({"status": 200, "url":session_url})
+        except Exception as error:
+            print(traceback.format_exc())
 
     elif request.method == 'GET':
         prev_session_id = request.args.get('prev_session_id')
@@ -303,15 +322,128 @@ def new_messages(forwarded=None):
     
     return jsonify(return_json)
 
-if CONFIGS["API"]["DEBUG"] == "1":
-    # Allows server reload once code changes
-    app.debug = True
+
+def twilio_send(number):
+    client = Client(account_sid, auth_token)
+
+    verification = client.verify \
+            .services(twilio_service.sid) \
+            .verifications \
+            .create(to=number, channel='sms')
+
+    # print(verification.status)
+    # print(verification)
+
+    if verification.status == 'pending':
+        return twilio_service.sid
+    return None
+
+
+def twilio_verify(number, code, twilio_service_sid=None):
+    service_code = None
+    if twilio_service_sid is not None:
+        service_code = twilio_service_sid
+    else:
+        service_code = twilio_service.sid
+
+    try:
+        verification_check = client.verify \
+                .services(service_code) \
+                .verification_checks \
+                .create(to=number, code=code)
+
+        # print(verification.status)
+        # print(verification_check)
+
+        return verification_check.status
+    except Exception as error:
+        raise Exception(error)
+
+@app.route('/sms/twilio', methods=['POST'])
+def sms_twilio():
+    # generate code
+    # connect to twilio and send to number (number required)
+    '''
+    if request.remote_addr != '127.0.0.1':
+        return '', 403
+    '''
+    request_body=None
+    if request.method == 'POST':
+        request_body = request.json
+    if not 'number' in request_body:
+        return jsonify({"message":"sending number required"}), 400
+
+    number = request_body['number']
+    service_sid = twilio_send(number)
+    
+    if service_sid is not None:
+        return jsonify({"service_sid":service_sid}), 200
+
+    return jsonify({"message":"failed"}), 500
+
+@app.route('/sms/twilio/verification_token', methods=['POST'])
+def sms_twilio_verify():
+    # generate code
+    # connect to twilio and send to number (number required)
+    '''
+    if request.remote_addr != '127.0.0.1':
+        return '', 403
+    '''
+    request_body=None
+    if request.method == 'POST':
+        request_body = request.json
+    if not 'number' in request_body:
+        return jsonify({"message":"number required"}), 400
+    if not 'code' in request_body:
+        return jsonify({"message":"code required"}), 400
+    if not 'session_id' in request_body:
+        return jsonify({"message":"session id required"}), 400
+
+    number = request_body['number']
+    code = request_body['code']
+    session_id = request_body['session_id']
+
+    try:
+        status = twilio_verify(number, code, session_id)
+    except Exception as error:
+        return jsonify({"message":"failed"}), 500
+    else:
+        if status is not None:
+            # status=('approved' || 'pending')
+            return jsonify({"verification_status":status}), 200
+
+    return jsonify({"message":"failed"}), 500
+
 
 # print_ip()
-start_routines.sr_database_checks()
+if __name__ == '__main__':
+    if len(sys.argv) == 1:
+        '''
+        if CONFIGS["API"]["DEBUG"] == "1":
+            # Allows server reload once code changes
+            app.debug = True
+        '''
+        start_routines.sr_database_checks()
 
-if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
-    app.run(ssl_context=(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"]), host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+        if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
+            # ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            # ssl_context.load_verify_locations(CONFIGS["SSL"]["PEM"])
+            print("- Running secured...")
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+            ssl_context.load_cert_chain(CONFIGS["SSL"]["CRT"], CONFIGS["SSL"]["KEY"])
+            app.run(ssl_context=ssl_context, host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+        else:
+            print("- Running insecure...")
+            app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
 
-else:
-    app.run(host=CONFIGS["API"]["HOST"], port=CONFIGS["API"]["PORT"], debug=app.debug, threaded=True )
+
+    else:
+        if sys.argv[1] == '-twilio_send':
+            # ('number')
+            print(twilio_send(sys.argv[2]))
+        elif sys.argv[1] == '-twilio_verify':
+            # ('service.sid', 'number', 'code')
+            try:
+                print(twilio_verify(twilio_service_sid=sys.argv[2], number=sys.argv[3], code=sys.argv[4]))
+            except Exception as error:
+                print("Exception happened... guess why")
