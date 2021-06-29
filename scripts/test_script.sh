@@ -45,11 +45,14 @@ elif [ "$d_command" == "--twilio_test" ] ; then
 	echo ">> Testing sample twilio request"
 	curl -k -X POST -F 'From=000000' -F 'To=11111' -F 'FromCountry=Cameroon' -F 'NumSegments=4' -F 'Body={"phonenumber":"00000", "text":"Hello world Test script"}' "${twilio_url}"
 
-elif [ "$d_command" == "--twilio-send" ] ; then
+elif [ "$d_command" == "--twilio-auth-send" ] ; then
 	echo  ">> Implementing twilio send"
 	curl -k -H "Content-Type: application/json" -d "{\"number\":\"${phonenumber}\"}" "${twilio_send_url}" 
 
 elif [ "$d_command" == "--twilio-verify" ] ; then
 	echo  ">> Verifying twilio request"
 	curl -k -d "{\"session_id\":\"${4}\", \"number\":\"${phonenumber}\", \"code\":\"${3}\"}" "${twilio_send_url}/verification_token" -H "Content-Type: application/json"
+elif [ "$d_command" == "--twilio-sms-send" ] ; then
+	echo  ">> Sending twilio SMS"
+	curl -k -d "{\"text\":\"${3}\", \"number\":\"${phonenumber}\"}" "${twilio_send_url}/plain" -H "Content-Type: application/json"
 fi
