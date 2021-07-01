@@ -93,7 +93,7 @@ async def sessions(websocket, path):
 
 server_ip = CONFIGS['API']['HOST']
 server_port = CONFIGS['WEBSOCKET']['PORT']
-print(f"ws://{server_ip}:{server_port}")
+# print(f"ws://{server_ip}:{server_port}")
 
 start_server=''
 if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
