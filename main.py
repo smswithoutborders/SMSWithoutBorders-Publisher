@@ -48,7 +48,7 @@ if CONFIGS['TWILIO']['ACCOUNT_SID'] != None and CONFIGS['TWILIO']['AUTH_TOKEN'] 
     account_sid = CONFIGS['TWILIO']['ACCOUNT_SID']
     auth_token = CONFIGS['TWILIO']['AUTH_TOKEN']
     twilio_client = Client(account_sid, auth_token)
-    # twilio_service = client.verify.services.create( friendly_name=CONFIGS['TWILIO']['FRIENDLY_NAME'])
+    twilio_service = twilio_client.verify.services.create( friendly_name=CONFIGS['TWILIO']['FRIENDLY_NAME'])
     # print(twilio_service.sid)
 
 def socket_message_error(wsapp, err):
@@ -325,9 +325,8 @@ def new_messages(forwarded=None):
 
 
 def twilio_send(number):
-    client = Client(account_sid, auth_token)
-
-    verification = client.verify \
+    # client = Client(account_sid, auth_token)
+    verification = twilio_client.verify \
             .services(twilio_service.sid) \
             .verifications \
             .create(to=number, channel='sms')
@@ -367,7 +366,7 @@ def twilio_verify(number, code, twilio_service_sid=None):
         service_code = twilio_service.sid
 
     try:
-        verification_check = client.verify \
+        verification_check = twilio_client.verify \
                 .services(service_code) \
                 .verification_checks \
                 .create(to=number, code=code)
