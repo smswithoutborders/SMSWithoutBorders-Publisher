@@ -7,7 +7,12 @@ import configparser
 from datetime import date
 
 CONFIGS = configparser.ConfigParser(interpolation=None)
-DATABASE = "deku"
+PATH_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'configs', 'config.mysql.ini')
+if os.path.exists( PATH_CONFIG_FILE ):
+    CONFIGS.read(PATH_CONFIG_FILE)
+else:
+    raise Exception(f"config file not found: {PATH_CONFIG_FILE}")
+DATABASE = CONFIGS["MYSQL"]["DATABASE"]
 TABLE_SESSIONS = "synced_accounts"
 mydb = None
 mysqlcursor = None
@@ -103,11 +108,6 @@ def insert_default_route( router_url):
 
 # CHECK DATABASE
 def sr_database_checks():
-    PATH_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'configs', 'config.mysql.ini')
-    if os.path.exists( PATH_CONFIG_FILE ):
-        CONFIGS.read(PATH_CONFIG_FILE)
-    else:
-        raise Exception(f"config file not found: {PATH_CONFIG_FILE}")
     global mysqlcursor, mydb
 
     HOST = CONFIGS["MYSQL"]["HOST"]

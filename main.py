@@ -32,6 +32,7 @@ import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+start_routines.sr_database_checks()
 app = Flask(__name__)
 CORS(app)
 
@@ -471,7 +472,6 @@ if __name__ == '__main__':
             # Allows server reload once code changes
             app.debug = True
         '''
-        start_routines.sr_database_checks()
 
         if os.path.exists(CONFIGS["SSL"]["CRT"]) and os.path.exists(CONFIGS["SSL"]["KEY"]) and os.path.exists(CONFIGS["SSL"]["PEM"]):
             # ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
