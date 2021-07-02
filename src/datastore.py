@@ -25,10 +25,10 @@ class Datastore(object):
         # self.cursor = self.conn.cursor(buffered=True)
         self.cursor = self.conn.cursor()
 
-    def new_session(self, phonenumber, _id, user_id):
-        query=f"INSERT INTO synced_accounts SET id=%s, phonenumber=%s, user_id=%s"
+    def new_session(self, country_code, phonenumber, _id, user_id):
+        query=f"INSERT INTO synced_accounts SET id=%s, country_code=%s, phonenumber=%s, user_id=%s"
         try:
-            self.cursor.execute( query, [_id, phonenumber, user_id])
+            self.cursor.execute( query, [_id, country_code, phonenumber, user_id])
             self.conn.commit()
 
         except mysql.connector.Error as err:

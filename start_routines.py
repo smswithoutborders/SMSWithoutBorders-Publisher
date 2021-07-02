@@ -24,6 +24,7 @@ columns = {
         "shared_key": "VARCHAR(255) NULL",
         "public_key": "VARCHAR(1028) NULL",
         "user_id": "VARCHAR(64) NULL",
+        "country_code": "VARCHAR(11) NOT NULL",
         "date": "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
         "mdate": "TIMESTAMP on update CURRENT_TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
     }
@@ -143,7 +144,7 @@ def sr_database_checks():
     mysqlcursor.execute("SHOW TABLES")
     tables = []
     for table in mysqlcursor:
-        tables.append(list(table)[0])
+        tables.append(list(table)[0].decode())
 
     for TABLE in list_tables:
         print(">> Checking Tables...")

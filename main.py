@@ -101,25 +101,25 @@ def sessions():
     if request.method == 'POST':
         request_body = request.json
         if not 'auth_key' in request_body or len(request_body['auth_key']) < 1:
-            return jsonify({"message":"No auth key found"}), 403
+            return jsonify({"message":"No auth key found"}), 400
         if not 'id' in request_body or len(request_body['id']) < 1:
-            return jsonify({"message":"No id found"}), 403
+            return jsonify({"message":"No id found"}), 400
 
         user_authkey = request_body['auth_key']
         user_id = request_body['id']
         try: 
             user_details = cloudfunctions.cloudAcquireUserInfo(user_authkey, user_id)
             
-            if not 'phone_number' in user_details or not 'id' in user_details:
-                return jsonify({"status":403, "message":"User may not exist"})
-            session_id = sync_accounts.new_session(phonenumber=user_details["phone_number"], user_id=user_details["id"])
+            if not 'phonenumber_hash' in user_details or not 'id' in user_details:
+                return jsonify({"message":"User may not exist"}), 403
+            session_id = sync_accounts.new_session(country_code=user_details["country_code"], phonenumber=user_details["phonenumber_hash"], user_id=user_details["id"])
 
             session_url = f"{CONFIGS['WEBSOCKET']['URL']}:{CONFIGS['WEBSOCKET']['PORT']}/sync/sessions/{session_id}"
             # print(f"origin url: {origin_url}")
             # session_url = f"ws://{origin_url}/sync/sessions/{session_id}"
 
             print(session_url)
-            return jsonify({"status": 200, "url":session_url})
+            return jsonify({"url":session_url}), 200
         except Exception as error:
             print(traceback.format_exc())
 
@@ -192,7 +192,7 @@ def sync(session_id):
 
         prev_session = session_id
         session_id = uuid.uuid4().hex
-        response = requests.get(f"{CONFIGS['CLOUD_API']['URL']}:{CONFIGS['CLOUD_API']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
+        response = requests.get(f"{CONFIGS['CLOUD_API']['URL']}:{CONFIGS['API']['PORT']}/sync/sessions?prev_session_id={prev_session}&session_id={session_id}")
 
         return jsonify(ret_value)
     except Exception as error:
@@ -251,7 +251,7 @@ def new_messages(forwarded=None):
 
     text = request_body["text"]
     phonenumber = request_body["phonenumber"]
-    phonenumber = isp.rm_country_code(phonenumber)
+    # phonenumber = isp.rm_country_code(phonenumber)
     timestamp=""
     discharge_timestamp=""
     if "timestamp" in request_body:

@@ -4,11 +4,11 @@ from . datastore import Datastore
 from . securitylayer import SecurityLayer
 import uuid
 
-def new_session(phonenumber, user_id):
+def new_session(country_code, phonenumber, user_id):
    datastore = Datastore() 
 
    session_id = uuid.uuid4().hex
-   create_status = datastore.new_session(phonenumber=phonenumber, _id=session_id, user_id=user_id)
+   create_status = datastore.new_session(country_code=country_code, phonenumber=phonenumber, _id=session_id, user_id=user_id)
    return session_id
 
 def store_credentials(shared_key, public_key, session_id):
