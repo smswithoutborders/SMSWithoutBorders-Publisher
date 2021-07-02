@@ -23,7 +23,7 @@ import src.routerfunctions as routerfunctions
 import start_routines
 import src.deduce_isp as isp
 
-from src.platforms import Platforms
+from platforms import Platforms
 from src.securitylayer import SecurityLayer
 
 from base64 import b64decode,b64encode
@@ -319,7 +319,7 @@ def new_messages(forwarded=None):
         # return_json["status"] = request.status_code
         # return_json["status"] = 500
         # return_json["body"] = request
-        print(err)
+        print(traceback.format_exc())
         return_json["body"] = str(err)
     
     return jsonify(return_json)

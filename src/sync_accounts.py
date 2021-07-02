@@ -23,6 +23,7 @@ def acquire_sessions(session_id):
 
 def acquire_user_from_phonenumber(phonenumber):
     datastore = Datastore()
+    # Passowrd is hashed and checked
     results = datastore.acquireUserFromPhonenumber(SecurityLayer.sha512Hash(phonenumber))
     return results
 

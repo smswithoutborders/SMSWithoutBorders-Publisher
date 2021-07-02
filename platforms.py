@@ -7,14 +7,14 @@ class Platforms:
 
     # TODO: this are created in a dir called platforms and would be parsed to get them
     def __init__(self, platform):
-        self.DEFAULT_PROVIDERS_PATH = "Platforms"
-        # scan for all submodules
+        self.DEFAULT_PROVIDERS_PATH = os.path.join(os.path.dirname(__file__), '', 'Platforms')        # scan for all submodules
+        # self.DEFAULT_PROVIDERS_PATH = "Platforms"
         providers = {}
         for root, dirs, files in os.walk( self.DEFAULT_PROVIDERS_PATH ):
             for _dir in dirs:
                 providers[_dir] = []
                 for root, dirs, files in os.walk( self.DEFAULT_PROVIDERS_PATH+"/"+_dir ):
-                    # print(f"Files: {files}")
+                    print(f"Files: {files}")
                     for _file in files:
                         if _file.split('_')[0] == _dir:
                             splitted_filename = _file.split('.')[:-1]
@@ -24,7 +24,7 @@ class Platforms:
                             break
                     break
             break
-        # print( providers )
+        print( providers )
 
         for provider in providers:
             def_platform = f"{provider}_{platform}"
@@ -39,7 +39,7 @@ class Platforms:
                 # Being platform abstractions here
                 importlib.invalidate_caches()
                 
-                LIB_NAME = f"{self.DEFAULT_PROVIDERS_PATH}.{provider}"
+                LIB_NAME = f"{self.DEFAULT_PROVIDERS_PATH}.{provider}".split('/')[-1:][0]
                 LIB = f".{def_platform}"
                 print(f"({LIB},{LIB_NAME})")
                 self.platform = importlib.import_module(LIB, LIB_NAME)
