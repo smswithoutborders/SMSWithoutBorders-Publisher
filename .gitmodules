@@ -1,3 +1,6 @@
 [submodule "Platforms/google"]
 	path = Platforms/google
 	url = https://github.com/smswithoutborders/SMSwithoutBorders-customplatform-Gmail.git
+[submodule "Platforms/SMSwithoutBorders-customplatform-Twitter"]
+	path = Platforms/SMSwithoutBorders-customplatform-Twitter
+	url = https://github.com/smswithoutborders/SMSwithoutBorders-customplatform-Twitter.git
