@@ -144,7 +144,10 @@ def sr_database_checks():
     mysqlcursor.execute("SHOW TABLES")
     tables = []
     for table in mysqlcursor:
-        tables.append(list(table)[0].decode())
+        if type(list(table)[0]) != type(""):
+            tables.append(list(table)[0].decode())
+        else:
+            tables.append(list(table)[0])
 
     for TABLE in list_tables:
         print(">> Checking Tables...")
