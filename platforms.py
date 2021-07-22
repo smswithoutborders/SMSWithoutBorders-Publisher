@@ -31,7 +31,8 @@ class Platforms:
             print("def_platform:", def_platform)
 
             if not def_platform in providers[provider]:
-                raise Exception("Unknown platform:", def_platform)
+                # raise Exception("Unknown platform:", def_platform)
+                continue
             else:
                 self.platform_name = platform
                 self.provider = provider
