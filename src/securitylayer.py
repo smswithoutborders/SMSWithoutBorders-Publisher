@@ -50,11 +50,6 @@ class SecurityLayer():
         # print(decryptedData)
         return decryptedData
 
-    #  TODO:
-    def __read_publickey(self):
-        return "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDJKfzNwH+Kdd+d1q8m8FFr5EX+gaAUAumDf+b9zjMDaHEWUqXnrCcLVy2FTkjcCOylkX+xmrlOhpYdwjrMrZ+PIfi+ok+FjrRIj1KfjAzJZd77+spS7oxcyWhw1wBhutGyOs2x4YWDnRjvhVhvuT+/aVdQjQroAhz7g1ShjeTuVeTc01K9HddiEixihF5lelLde8+AHa9V/ov6prtWD7momg0bF1J9FMp8zDKDnHPR6ptND/QhbhsMof+vAh/5x4vRcbFjRNxOqvGQxyqyzl2VxdxXBhJJ2UiumvcnY9XN3g30pvMff2zO7WpmM4wLOoRo0nijTTAerpiSlUz7jZZ2xhIc5YwTG1iSYj2GEWtN+fISfEoaurezPvigLiVuyolksVX4nMvBcSoHe4fb8sqchFAJuTT/6ko1NsXnrNGs4wKXA3JQ+riYPgxWrh/quTgwMvyErmuGoCPcm/XvkDy3GEHY3z+DXPQZgSYFERE/RZz2O+CpTnb7bBd8n6TElfM= sherlock@manjaro"
-
-
 if __name__ == "__main__":
     securityLayer = SecurityLayer()
 
