@@ -51,11 +51,12 @@ class SecurityLayer():
         return decryptedData
 
 if __name__ == "__main__":
+    ''' broken test - please do not use, write a functional test by importing the lib '''
     securityLayer = SecurityLayer()
 
-    def_key='26dce55aa7ce6238240986e422d16495'
-    def_iv='D135AC9F95F208D0BD7184DF5CA99CAD35BDEB7D85364F524110BC29F23633A0822AAC2F0288DB2BE0BED4F9EC42B0220DB21E03801F217D029DF4B729535697'[:16]
-    data='N588SMCM2QF83T34QAsHvQW1wVjROIPxYASZs57lF14pIP+BxGevhGOx7YP9Ih0K3psX2ownAvzkcqbUK1+OkaBdhZ2QWAl5B+rxRw=='
+    def_key=''
+    def_iv=''[:16]
+    data=''
 
     iv=data[:16]
     data=data[16:]
