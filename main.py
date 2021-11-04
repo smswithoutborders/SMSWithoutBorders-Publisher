@@ -1,5 +1,4 @@
-#!/usr/bin/python3
-
+#!/usr/bin/env python3
 '''
 - when qr expires should not be used again
 - when qr is synced cannot be used again
@@ -91,7 +90,7 @@ def acquire_requester(phonenumber):
     except Exception as error:
         raise Exception(error)
 
-@app.route('/', methods=['GET'])
+@app.route('/', methods=['GET', 'POST'])
 def index():
     return "May the force be with you!"
 
