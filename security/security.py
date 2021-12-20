@@ -4,11 +4,12 @@
 - https://cryptography.io/en/latest/hazmat/primitives/asymmetric/dh/
 '''
 
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import dh
+from cryptography.hazmat.primitives import hashes 
+from cryptography.hazmat.primitives.asymmetric import dh 
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 import base64
-import unittest
+import binascii
+import traceback
 
 class DHKeyExchange:
     def __init__(self, parameters=None):
@@ -24,6 +25,9 @@ class DHKeyExchange:
         # a DH handshake both peers must agree on a common set of parameters.
         self.private_key = self.parameters.generate_private_key()
         self.public_key = self.private_key.public_key()
+        print("* public key: ", self.public_key)
+        print("++ public key", dir(self.public_key))
+        print("++ private key", dir(self.private_key))
 
     def get_keypairs(self):
         print("* Acquiring keypair values...")
@@ -43,28 +47,18 @@ class DHKeyExchange:
 
         return derived_key
 
-class TestDHKeyExchange(unittest.TestCase):
-    def test_shared_keys(self):
-        serverEnc = DHKeyExchange()
-        server_private_key, server_public_key, server_parameters = \
-                serverEnc.get_keypairs()
-
-        peerEnc = DHKeyExchange(server_parameters)
-        peer_private_key, peer_public_key, peer_parameters = \
-                peerEnc.get_keypairs()
-
-        server_derived_key = serverEnc.generate_shared_key(peer_public_key)
-        peer_derived_key = peerEnc.generate_shared_key(server_public_key)
-
-        # print("+ server", server_derived_key)
-        # print("+ peer", peer_derived_key)
-
-        self.assertEqual(server_derived_key, peer_derived_key)
 
 
 if __name__ == "__main__":
-    '''
-    # For the next handshake we MUST generate another private key, but
-    # we can reuse the parameters.
-    '''
-    unittest.main()
+
+    import sys
+    # public_key = base64.b64decode(sys.argv[1])
+    public_key = sys.argv[1]
+    print("+ public key", public_key)
+    
+    alice = DHKeyExchange()
+    alice_private_key, alice_public_key, alice_parameters = \
+            alice.get_keypairs()
+    derived_key = alice.generate_shared_key(public_key)
+    # print("+ server", base64.b64encode(derived_key))
+    print("+ server", binascii.hexlify(derived_key))
