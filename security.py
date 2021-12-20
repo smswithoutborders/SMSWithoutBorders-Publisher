@@ -7,6 +7,8 @@
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+import base64
+import unittest
 
 class DHKeyExchange:
     def __init__(self, parameters=None):
@@ -41,25 +43,29 @@ class DHKeyExchange:
 
         return derived_key
 
+class TestDHKeyExchange(unittest.TestCase):
+    def test_shared_keys(self):
+        serverEnc = DHKeyExchange()
+        server_private_key, server_public_key, server_parameters = \
+                serverEnc.get_keypairs()
+
+        peerEnc = DHKeyExchange(server_parameters)
+        peer_private_key, peer_public_key, peer_parameters = \
+                peerEnc.get_keypairs()
+
+        server_derived_key = serverEnc.generate_shared_key(peer_public_key)
+        peer_derived_key = peerEnc.generate_shared_key(server_public_key)
+
+        # print("+ server", server_derived_key)
+        # print("+ peer", peer_derived_key)
+
+        self.assertEqual(server_derived_key, peer_derived_key)
+
 
 if __name__ == "__main__":
     '''
     # For the next handshake we MUST generate another private key, but
     # we can reuse the parameters.
     '''
+    unittest.main()
 
-    serverEnc = DHKeyExchange()
-    server_private_key, server_public_key, server_parameters = \
-            serverEnc.get_keypairs()
-
-    peerEnc = DHKeyExchange(server_parameters)
-    peer_private_key, peer_public_key, peer_parameters = \
-            peerEnc.get_keypairs()
-
-    server_derived_key = serverEnc.generate_shared_key(peer_public_key)
-    peer_derived_key = peerEnc.generate_shared_key(server_public_key)
-
-    print("+ server", server_derived_key)
-    print("+ peer", peer_derived_key)
-
-    assert(server_derived_key == peer_derived_key)
