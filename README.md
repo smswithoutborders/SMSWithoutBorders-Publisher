@@ -1,6 +1,10 @@
 ### Dependencies
 - MySQL
 
+### Features
+\- Management of customized third-party service APIs \
+\- Decrypts and utilizes saved user's third-party Oauth tokens 
+
 ### Getting Started
 ```bash
 git submodule update --init --recursive
