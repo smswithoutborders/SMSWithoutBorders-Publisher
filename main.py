@@ -2,6 +2,10 @@
 
 import logging
 import requests
+import json
+import os
+import sys
+import configparser
 
 def dev_backend_authenticate_user(auth_id: str, auth_key: str) -> tuple:
     """
@@ -35,15 +39,55 @@ def backend_publisher_api_request_decrypted_tokens(
         json_response (dict)
     """
 
-    backend_publisher_api_decrypted_tokens_request_url = "http://localhost:10000/v1/decrypt"
+    backend_publisher_api_decrypted_tokens_request_url = "http://localhost:10000/v2/decrypt"
 
-    response = request.get(
+    # logging.debug("Cookies: %s\n", request.cookies, dir(request.cookies))
+    # logging.debug("Cookies: %s\n", dir(request.cookies))
+    logging.debug("Cookies: %s\n", request.cookies.get_dict())
+
+    cookies=json.dumps(request.cookies.get("SWOBDev"))
+    cookies = {"SOWBDev":cookies}
+    logging.debug(cookies)
+    response = request.post(
+            backend_publisher_api_decrypted_tokens_request_url,
+            json={"platform": platform, "phone_number": MSISDN}, cookies=request.cookies.get_dict())
+    """
+    response = request.post(
             backend_publisher_api_decrypted_tokens_request_url,
             json={"platform": platform, "phone_number": MSISDN})
+    """
 
     response.raise_for_status()
 
     return response.json()
+
+
+def request_publishing(MSISDN: str, platform: str)->None:
+    """
+    """
+    config_file_filepath = os.path.join(
+            os.path.dirname(__file__), 'configs', 'config.ini')
+
+    __config = configparser.ConfigParser()
+    __config.read(config_file_filepath)
+
+    auth_key = __config['DEV_API']['AUTH_KEY']
+    auth_id = __config['DEV_API']['AUTH_ID']
+
+    logging.debug("Auth key: %s", auth_key)
+    logging.debug("Auth id: %s", auth_id)
+
+    try:
+        authenticated_user, request = dev_backend_authenticate_user(
+                auth_id = auth_id, auth_key = auth_key)
+    except Exception as error:
+        logging.exception(error)
+    else:
+        logging.debug("%s %s", authenticated_user, request.cookies)
+        decrypted_tokens = backend_publisher_api_request_decrypted_tokens(
+                request=request, MSISDN=MSISDN, platform=platform)
+
+        logging.debug("Decrypted tokens: %s", decrypted_tokens)
 
 
 if __name__ == "__main__":
@@ -55,19 +99,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level='DEBUG')
 
-    auth_id = ""
-    auth_key = ""
-    MSISDN = "+"
-    platform = ""
+    MSISDN = sys.argv[1]
+    platform = sys.argv[2]
+    request_publishing(MSISDN=MSISDN, platform=platform)
 
-    try:
-        authenticated_user, request = dev_backend_authenticate_user(
-                auth_id = auth_id, auth_key = auth_key)
-    except Exception as error:
-        logging.exception(error)
-    else:
-        logging.debug("%s %s", authenticated_user, request)
-        decrypted_tokens = backend_publisher_api_request_decrypted_tokens(
-                request=request, MSISDN=MSISDN, platform=platform)
-
-        logging.debug("Decrypted tokens: %s", decrypted_tokens)
