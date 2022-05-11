@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+import requests
 
 def dev_backend_authenticate_user(auth_id: str, auth_key: str) -> tuple:
     """
@@ -22,7 +23,7 @@ def dev_backend_authenticate_user(auth_id: str, auth_key: str) -> tuple:
 
 
 def backend_publisher_api_request_decrypted_tokens(
-        request: requests.Session, MSISDN: str) -> dict:
+        request: requests.Session, MSISDN: str, platform: str) -> dict:
     """Request for the user's tokens.
 
     Args:
@@ -46,22 +47,27 @@ def backend_publisher_api_request_decrypted_tokens(
 
 
 if __name__ == "__main__":
-
-
     """
     TODO:
     - Authenticate with Dev Backend.
     - Make the request for decrypted tokens.
     """
 
+    logging.basicConfig(level='DEBUG')
+
     auth_id = ""
     auth_key = ""
-    MSISDN = ""
+    MSISDN = "+"
+    platform = ""
 
-    authenticated_user, request = dev_backend_authenticate_user(
-            auth_id: auth_id, auth_key: auth_key)
+    try:
+        authenticated_user, request = dev_backend_authenticate_user(
+                auth_id = auth_id, auth_key = auth_key)
+    except Exception as error:
+        logging.exception(error)
+    else:
+        logging.debug("%s %s", authenticated_user, request)
+        decrypted_tokens = backend_publisher_api_request_decrypted_tokens(
+                request=request, MSISDN=MSISDN, platform=platform)
 
-    decrypted_tokens = backend_publisher_api_request_decrypted_tokens(
-            request=request, MSISDN=MSISDN)
-
-    logging.debug("Decrypted tokens: %s", decrypted_tokens)
+        logging.debug("Decrypted tokens: %s", decrypted_tokens)
