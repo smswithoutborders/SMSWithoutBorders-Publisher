@@ -15,4 +15,5 @@ install: create_templates
 
 update:
 	@cat $(list_filepath) | xargs echo | xargs -l bash -c 'git clone $$0 $(available_platforms_dir)/$$1'
-	@echo "[*] Updated platforms..."
+	@echo "[*] Fetched platforms..."
+	# git pull latest platforms
