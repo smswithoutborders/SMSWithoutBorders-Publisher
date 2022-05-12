@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
 import logging
 import requests
 import json
@@ -12,6 +15,28 @@ config_file_filepath = os.path.join(
 
 __config = configparser.ConfigParser()
 __config.read(config_file_filepath)
+
+app = Flask(__name__)
+# TODO Add origins to config file
+CORS(
+    app,
+    origins="*",
+    supports_credentials=True,
+)
+
+@app.route('/publish', methods=['POST'])
+def publish():
+    """
+    Expecting a JSON request.
+    """
+    try:
+        data = request.json
+    except Exception as error:
+        return '', 500
+    else:
+        message = data['message']
+        app.logger.debug("Message for publishing: %s", message)
+
 
 def dev_backend_authenticate_user(auth_id: str, auth_key: str) -> tuple:
     """
