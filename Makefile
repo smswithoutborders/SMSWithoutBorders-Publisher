@@ -10,8 +10,9 @@ create_templates:
 	@mkdir -p $(available_platforms_dir)
 
 install: create_templates
-	cat $(list_filepath) | xargs echo | xargs -l bash -c 'git clone $$0 $(available_platforms_dir)/$$1'
+	@cat $(list_filepath) | xargs echo | xargs -l bash -c 'git clone $$0 $(available_platforms_dir)/$$1'
+	@echo "[*] Installed new platforms..."
 
 update:
-	@cd $(platforms_dir); \
-		@cat $(list_filename) | xargs -I{} git clone {}
+	@cat $(list_filepath) | xargs echo | xargs -l bash -c 'git clone $$0 $(available_platforms_dir)/$$1'
+	@echo "[*] Updated platforms..."
