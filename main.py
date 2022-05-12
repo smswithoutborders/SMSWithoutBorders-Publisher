@@ -7,12 +7,16 @@ import os
 import sys
 import configparser
 
+config_file_filepath = os.path.join(
+        os.path.dirname(__file__), 'configs', 'config.ini')
+
+__config = configparser.ConfigParser()
+__config.read(config_file_filepath)
+
 def dev_backend_authenticate_user(auth_id: str, auth_key: str) -> tuple:
     """
     """
-
-
-    dev_backend_api_auth_url = "https://developers.smswithoutborders.com:13000/v1/authenticate"
+    dev_backend_api_auth_url = __config['DEV_API']['AUTHENTICATION_URL']
     logging.debug("dev_backed_api_auth_url: %s", dev_backend_authenticate_user)
 
     request = requests.Session()
@@ -39,7 +43,10 @@ def backend_publisher_api_request_decrypted_tokens(
         json_response (dict)
     """
 
-    backend_publisher_api_decrypted_tokens_request_url = "http://localhost:10000/v2/decrypt"
+    backend_publisher_port = int(__config['BACKEND_PUBLISHER']['PORT'])
+    backend_publisher_endpoint = __config['BACKEND_PUBLISHER']['ENDPOINT']
+    backend_publisher_api_decrypted_tokens_request_url = "http://localhost:%d%s" % (
+            backend_publisher_port, backend_publisher_endpoint)
 
     # logging.debug("Cookies: %s\n", request.cookies, dir(request.cookies))
     # logging.debug("Cookies: %s\n", dir(request.cookies))
@@ -65,11 +72,6 @@ def backend_publisher_api_request_decrypted_tokens(
 def request_publishing(MSISDN: str, platform: str)->None:
     """
     """
-    config_file_filepath = os.path.join(
-            os.path.dirname(__file__), 'configs', 'config.ini')
-
-    __config = configparser.ConfigParser()
-    __config.read(config_file_filepath)
 
     auth_key = __config['DEV_API']['AUTH_KEY']
     auth_id = __config['DEV_API']['AUTH_ID']
