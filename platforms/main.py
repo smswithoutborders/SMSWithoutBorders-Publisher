@@ -38,6 +38,8 @@ class Platforms:
                             break
         return platforms
 
+
+    def import_available_platform(self, platform: str) -> None:
         """
         for provider in providers:
             def_platform = f"{provider}_{platform}"

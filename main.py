@@ -51,7 +51,6 @@ def dev_backend_authenticate_user(auth_id: str, auth_key: str) -> tuple:
 
     response.raise_for_status()
 
-
     return True, request
 
 
@@ -70,6 +69,7 @@ def backend_publisher_api_request_decrypted_tokens(
 
     backend_publisher_port = int(__config['BACKEND_PUBLISHER']['PORT'])
     backend_publisher_endpoint = __config['BACKEND_PUBLISHER']['ENDPOINT']
+
     backend_publisher_api_decrypted_tokens_request_url = "http://localhost:%d%s" % (
             backend_publisher_port, backend_publisher_endpoint)
 
