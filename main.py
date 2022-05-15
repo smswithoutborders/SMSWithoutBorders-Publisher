@@ -98,7 +98,13 @@ def publish():
 
         app.logger.debug("Message for publishing: %s", message)
 
-        request_publishing(MSISDN=MSISDN, data=message)
+        try:
+            request_publishing(MSISDN=MSISDN, data=message)
+        except Exception as error:
+            app.logger.exception(error)
+            return '', 500
+
+    return '', 200
 
 
 def request_publishing(MSISDN: str, data: str)->None:
@@ -115,7 +121,7 @@ def request_publishing(MSISDN: str, data: str)->None:
         authenticated_user, request = dev_backend_authenticate_user(
                 auth_id = auth_id, auth_key = auth_key)
     except Exception as error:
-        logging.exception(error)
+        raise error
     else:
         logging.debug("%s %s", authenticated_user, request.cookies)
 
@@ -136,10 +142,7 @@ def request_publishing(MSISDN: str, data: str)->None:
             data = ':'.join(data[1:])
             publish(user_details =decrypted_tokens, platform_type= platform_type, data=data, platform=platform)
         except Exception as error:
-            app.logger.exception(error)
-            return '', 500
-
-        return '', 200
+            raise error
 
 
 def publish(user_details: dict, platform_type: str, data: str, platform ) -> None:
@@ -158,14 +161,8 @@ def publish(user_details: dict, platform_type: str, data: str, platform ) -> Non
 
 if __name__ == "__main__":
     """
-    TODO:
-    - Authenticate with Dev Backend.
-    - Make the request for decrypted tokens.
     """
-
-    logging.basicConfig(level='DEBUG')
-
-    MSISDN = sys.argv[1]
-    data = sys.argv[2]
-    request_publishing(MSISDN=MSISDN, data=data)
-
+    host = "127.0.0.1"
+    port = 12022
+    debug = True
+    app.run(host=host, port=port, debug=debug, threaded=True )
