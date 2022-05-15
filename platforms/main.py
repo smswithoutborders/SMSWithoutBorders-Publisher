@@ -23,37 +23,6 @@ class Platforms:
             self.platform_type = self.platforms_type[platform_name]
 
 
-    def parse_for(self, platform_type: str, data: list) -> dict:
-        """
-        """
-        logging.debug("parsing for %s %s", platform_type, data)
-
-
-        if platform_type == "email":
-            """
-            to:cc:bcc:subject:data
-            """
-
-            to = data[0]
-            cc = data[1]
-            bcc = data[2]
-            subject = data[3]
-            message = ":".join(data[4:])
-
-
-            return {
-                    "to": to,
-                    "cc": cc,
-                    "bcc": bcc,
-                    "subject": subject,
-                    "message": message
-                    }
-
-        else:
-            raise Exception("unknown_platform")
-
-
-
     @staticmethod
     def list() -> dict:
         platforms_path = os.path.join(os.path.dirname(__file__), 'available')

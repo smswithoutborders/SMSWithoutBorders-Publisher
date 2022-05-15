@@ -133,7 +133,8 @@ def request_publishing(MSISDN: str, data: str)->None:
 
 
         try:
-            publish(user_details =decrypted_tokens, platform_type= platform_type, data=data[1:], platform=platform)
+            data = ':'.join(data[1:])
+            publish(user_details =decrypted_tokens, platform_type= platform_type, data=data, platform=platform)
         except Exception as error:
             app.logger.exception(error)
             return '', 500
@@ -141,21 +142,18 @@ def request_publishing(MSISDN: str, data: str)->None:
         return '', 200
 
 
-def publish(user_details: dict, platform_type: str, data: list, platform ) -> None:
+def publish(user_details: dict, platform_type: str, data: str, platform ) -> None:
     """
     """
 
     platforms = Platforms()
 
     try:
-        data = platforms.parse_for(platform_type=platform_type, data=data)
+        # data = platforms.parse_for(platform_type=platform_type, data=data)
+        logging.debug(data)
+        platform.execute(body=data, user_details=user_details)
     except Exception as error:
         raise error
-    else:
-        """
-        """
-        logging.debug(data)
-        logging.debug(dir(platform))
 
 
 if __name__ == "__main__":
