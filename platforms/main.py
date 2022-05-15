@@ -41,40 +41,23 @@ class Platforms:
                             platforms[available_dir] = platforms_path
 
                             break
+
         return platforms
 
 
-    def import_available_platforms(self, platforms: dict) -> None:
+    def __import_available_platforms__(self, platforms: dict) -> None:
         """
         """
 
         for platform_name, platform_filepath in platforms.items():
+            try:
+                spec = importlib.util.spec_from_file_location(platform_name, platform_filepath)
+                platform_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(platform_module)
 
-            """
-            for provider in providers:
-                def_platform = f"{provider}_{platform}"
-                print("def_platform:", def_platform)
-
-                if not def_platform in providers[provider]:
-                    # raise Exception("Unknown platform:", def_platform)
-                    continue
-                else:
-                    platform_name = platform
-                    provider = provider
-
-                    # Being platform abstractions here
-                    importlib.invalidate_caches()
-                    
-                    LIB_NAME = f"{platforms_path}.{provider}".split('/')[-1:][0]
-                    LIB = f".{def_platform}"
-                    print(f"({LIB},{LIB_NAME})")
-                    platform = importlib.import_module(LIB, LIB_NAME)
-            """
-            spec = importlib.util.spec_from_file_location(platform_name, platform_filepath)
-            platform_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(platform_module)
-
-            dir(platform_module)
+                logging.debug(dir(platform_module))
+            except Exception as error:
+                logging.exception(error)
 
 
     def execute(self, protocol, body, userDetails):
