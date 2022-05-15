@@ -10,6 +10,8 @@ import os
 import sys
 import configparser
 
+from platforms.main import Platforms
+
 config_file_filepath = os.path.join(
         os.path.dirname(__file__), 'configs', 'config.ini')
 
@@ -24,18 +26,6 @@ CORS(
     supports_credentials=True,
 )
 
-@app.route('/publish', methods=['POST'])
-def publish():
-    """
-    Expecting a JSON request.
-    """
-    try:
-        data = request.json
-    except Exception as error:
-        return '', 500
-    else:
-        message = data['message']
-        app.logger.debug("Message for publishing: %s", message)
 
 
 def dev_backend_authenticate_user(auth_id: str, auth_key: str) -> tuple:
@@ -93,8 +83,25 @@ def backend_publisher_api_request_decrypted_tokens(
 
     return response.json()
 
+@app.route('/publish', methods=['POST'])
+def publish():
+    """
+    Expecting a JSON request.
+    """
+    try:
+        data = request.json
+    except Exception as error:
+        return '', 500
+    else:
+        message = data['message']
+        MSISDN = data['MSISDN']
 
-def request_publishing(MSISDN: str, platform: str)->None:
+        app.logger.debug("Message for publishing: %s", message)
+
+        request_publishing(MSISDN=MSISDN, data=message)
+
+
+def request_publishing(MSISDN: str, data: str)->None:
     """
     """
 
@@ -111,10 +118,44 @@ def request_publishing(MSISDN: str, platform: str)->None:
         logging.exception(error)
     else:
         logging.debug("%s %s", authenticated_user, request.cookies)
+
+
+        data = data.split(':')
+        platform_letter = data[0]
+
+        platforms = Platforms()
+        platform_name, platform_type, platform = platforms.get_platform(platform_letter)
         decrypted_tokens = backend_publisher_api_request_decrypted_tokens(
-                request=request, MSISDN=MSISDN, platform=platform)
+                request=request, MSISDN=MSISDN, platform=platform_name)
+
 
         logging.debug("Decrypted tokens: %s", decrypted_tokens)
+
+
+        try:
+            publish(user_details =decrypted_tokens, platform_type= platform_type, data=data[1:], platform=platform)
+        except Exception as error:
+            app.logger.exception(error)
+            return '', 500
+
+        return '', 200
+
+
+def publish(user_details: dict, platform_type: str, data: list, platform ) -> None:
+    """
+    """
+
+    platforms = Platforms()
+
+    try:
+        data = platforms.parse_for(platform_type=platform_type, data=data)
+    except Exception as error:
+        raise error
+    else:
+        """
+        """
+        logging.debug(data)
+        logging.debug(dir(platform))
 
 
 if __name__ == "__main__":
@@ -127,6 +168,6 @@ if __name__ == "__main__":
     logging.basicConfig(level='DEBUG')
 
     MSISDN = sys.argv[1]
-    platform = sys.argv[2]
-    request_publishing(MSISDN=MSISDN, platform=platform)
+    data = sys.argv[2]
+    request_publishing(MSISDN=MSISDN, data=data)
 

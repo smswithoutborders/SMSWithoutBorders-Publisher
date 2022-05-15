@@ -7,6 +7,53 @@ import os
 
 logging.basicConfig(level='DEBUG')
 class Platforms:
+
+    def __init__(self, platform_name: str = None):
+        """
+        """
+        self.platforms_letters = {
+                'g' : 'gmail',
+                't' : 'twitter'
+                }
+        self.platforms_type = {
+                'gmail':'email'
+                }
+
+        if platform_name and platform_name in self.platforms_type:
+            self.platform_type = self.platforms_type[platform_name]
+
+
+    def parse_for(self, platform_type: str, data: list) -> dict:
+        """
+        """
+        logging.debug("parsing for %s %s", platform_type, data)
+
+
+        if platform_type == "email":
+            """
+            to:cc:bcc:subject:data
+            """
+
+            to = data[0]
+            cc = data[1]
+            bcc = data[2]
+            subject = data[3]
+            message = ":".join(data[4:])
+
+
+            return {
+                    "to": to,
+                    "cc": cc,
+                    "bcc": bcc,
+                    "subject": subject,
+                    "message": message
+                    }
+
+        else:
+            raise Exception("unknown_platform")
+
+
+
     @staticmethod
     def list() -> dict:
         platforms_path = os.path.join(os.path.dirname(__file__), 'available')
@@ -45,20 +92,35 @@ class Platforms:
         return platforms
 
 
-    def __import_available_platforms__(self, platforms: dict) -> None:
+    def __import_available_platforms__(self, platforms: dict) -> dict:
         """
         """
 
+        imported_platforms = {}
         for platform_name, platform_filepath in platforms.items():
             try:
                 spec = importlib.util.spec_from_file_location(platform_name, platform_filepath)
                 platform_module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(platform_module)
 
-                logging.debug(dir(platform_module))
+                # logging.debug(dir(platform_module))
+                imported_platforms[platform_name] = platform_module
             except Exception as error:
                 logging.exception(error)
 
+
+        return imported_platforms
+
+
+    def get_platform(self, platform_letter: str) -> tuple:
+        """
+        """
+        platform_name =  self.platforms_letters[platform_letter] 
+        imported_platforms = self.__import_available_platforms__(Platforms.list())
+        
+        self.__init__(platform_name)
+
+        return platform_name, self.platform_type, imported_platforms[platform_name]
 
     def execute(self, protocol, body, userDetails):
         try:
