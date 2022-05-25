@@ -63,13 +63,8 @@ def backend_publisher_api_request_decrypted_tokens(
     backend_publisher_api_decrypted_tokens_request_url = "http://localhost:%d%s" % (
             backend_publisher_port, backend_publisher_endpoint)
 
-    # logging.debug("Cookies: %s\n", request.cookies, dir(request.cookies))
-    # logging.debug("Cookies: %s\n", dir(request.cookies))
-    logging.debug("Cookies: %s\n", request.cookies.get_dict())
-
     cookies=json.dumps(request.cookies.get("SWOBDev"))
     cookies = {"SOWBDev":cookies}
-    logging.debug(cookies)
     response = request.post(
             backend_publisher_api_decrypted_tokens_request_url,
             json={"platform": platform, "phone_number": MSISDN}, cookies=request.cookies.get_dict())
@@ -154,6 +149,7 @@ def publish(user_details: dict, platform_type: str, data: str, platform ) -> Non
     try:
         # data = platforms.parse_for(platform_type=platform_type, data=data)
         logging.debug(data)
+        logging.debug(user_details)
         platform.execute(body=data, user_details=user_details)
     except Exception as error:
         raise error
