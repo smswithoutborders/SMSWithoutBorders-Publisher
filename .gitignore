@@ -4,3 +4,6 @@ config.ini
 .venv
 venv
 __pycache__/*
+configs/config.ini
+platforms/list.txt
+platforms/available/*

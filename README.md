@@ -1,58 +1,27 @@
-### Dependencies
-- MySQL
+# SMSWithoutBorders Publisher
 
-### Getting Started
-```bash
-git submodule update --init --recursive
-cp configs/example.config.mysql.ini configs/config.mysql.ini
-cp configs/example.config.router.ini configs/config.router.ini
-cp configs/example.isp.json configs/isp.json
+### Function
 
-# You can proceed to edit config files with the necessary credentials
-# configs/isp.json -> the value for default is true is that isp would be the default number for the gateway
+### Methodology
+
+#### Platform letters
+`Gmail = g` 
+
+`Twitter = t`
+
+#### Messaging template
+Messages should be structured to the following format:
+```
+{platform letter}:{<message content = this varies with platforms>}
 ```
 
-##### How to Run
+##### Messaging template - Emails
+ ```
+ {platform letter}:{to}:{cc}:{bcc}:{subject}:{body}
+ ```
 
-__create venv__
-```bash
-python3 -m virtualenv .venv
-```
+### Installation
 
-__activate venv__
-```bash
-source .venv/bin/activate
-```
+### Adding platforms
 
-__install requirements__
-```bash
-pip install -r requirements.txt
-```
-
-__start the API__
-```bash
-# start routing end points
-python3 main.py
-
-# start websocket end points - must be started if going to sync
-python3 session_websockets.py
-```
-
-### API ENDPOINTS
-__create new session for QR code__
-```curl
-[POST]
-/sync/sessions/
-```
-```json
-// body requirements
-{
-"auth_key":""
-}
-
-// returns
-{
-"status":200,
-"url":""
-}
-```
+#### Platform required template
