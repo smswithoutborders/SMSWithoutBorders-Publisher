@@ -10,6 +10,9 @@ import os
 import sys
 import configparser
 
+import datetime
+from twilio.rest import Client
+
 from platforms.main import Platforms
 
 config_file_filepath = os.path.join(
@@ -135,9 +138,42 @@ def request_publishing(MSISDN: str, data: str)->None:
 
         try:
             data = ':'.join(data[1:])
-            publish(user_details =decrypted_tokens, platform_type= platform_type, data=data, platform=platform)
+            publish(
+                    user_details =decrypted_tokens, 
+                    platform_type= platform_type, 
+                    data=data, 
+                    platform=platform)
         except Exception as error:
             raise error
+        else:
+            respond_to_user(MSISDN, platform_name)
+
+
+def respond_to_user(MSISDN, platform_name):
+    """
+    """
+    # Download the helper library from https://www.twilio.com/docs/python/install
+    # Find your Account SID and Auth Token at twilio.com/console
+    # and set the environment variables. See http://twil.io/secure
+    """
+    account_sid = os.environ['TWILIO_ACCOUNT_SID']
+    auth_token = os.environ['TWILIO_AUTH_TOKEN']
+    """
+    account_sid = __config['TWILIO']['SID']
+    auth_token = __config['TWILIO']['TOKEN']
+    from_= __configs['TWILIO']['FROM']
+    client = Client(account_sid, auth_token)
+
+    time = datetime.datetime.now().ctime()
+    body = f"Your {platform_name} was successfully published on {time} GMT.\n\nThanks for using SMSWithoutBorders, please tell a friend."
+
+    message = client.messages.create(
+                                  body=body,
+                                  from_=from_,
+                                  to=MSISDN
+                              )
+
+    logging.debug(message.sid)
 
 
 def publish(user_details: dict, platform_type: str, data: str, platform ) -> None:

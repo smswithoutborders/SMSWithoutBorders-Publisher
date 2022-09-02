@@ -17,7 +17,7 @@ google-auth==1.28.0
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.4.3
 googleapis-common-protos==1.53.0
-httplib2==0.19.0
+httplib2==0.20.4
 humanfriendly==10.0
 idna==3.3
 importlib-metadata==4.11.3
@@ -34,7 +34,8 @@ pyaes==1.6.1
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycparser==2.21
-pyparsing==2.4.7
+PyJWT==2.4.0
+pyparsing==3.0.9
 PySocks==1.7.1
 python-telegram==0.15.0
 pytz==2021.1
@@ -44,6 +45,7 @@ rsa==4.8
 six==1.15.0
 Telethon==1.24.0
 tweepy==4.8.0
+twilio==7.13.0
 typing-extensions==4.2.0
 typing-inspect==0.7.1
 uritemplate==3.0.1
