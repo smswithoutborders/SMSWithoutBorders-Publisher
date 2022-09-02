@@ -161,7 +161,7 @@ def respond_to_user(MSISDN, platform_name):
     """
     account_sid = __config['TWILIO']['SID']
     auth_token = __config['TWILIO']['TOKEN']
-    from_= __configs['TWILIO']['FROM']
+    from_= __config['TWILIO']['FROM']
     client = Client(account_sid, auth_token)
 
     time = datetime.datetime.now().ctime()
