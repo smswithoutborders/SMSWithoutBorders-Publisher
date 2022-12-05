@@ -6,6 +6,7 @@ import random
 from retry import retry
 import logging
 import base64
+import json
 
 import aes
 
@@ -28,14 +29,38 @@ def publishing_payload(ch, method, properties, body: bytes) -> None:
         body = body[16:]
 
         body = aes.AESCipher.decrypt(data=body, shared_key=shared_key, iv=iv)
+
+        body = json.loads(body)
+
     except Exception as error:
         logging.exception(error)
-
         ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
+
     else:
         logging.info("decrypted payload: %s", body)
 
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        body_content = body['data']
+        body_content = ':'.join(body_content.split(':')[1:])
+
+        logging.debug("Body content: %s", body_content)
+
+        platform_name = body['platform_name']
+
+        try:
+            platform = ImportPlatform(platform_name=platform_name)
+            platform.execute(body=body_content, user_details=body)
+
+        except PlatformDoesNotExist as error:
+            logging.exception(error)
+            ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
+
+        except Exception as error:
+            logging.exception(error)
+            ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
+
+        else:
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            logging.info("publishing complete...")
 
 
 @retry((pika.exceptions.AMQPConnectionError, pika.exceptions.AMQPHeartbeatTimeout), 
