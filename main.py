@@ -9,6 +9,9 @@ import base64
 
 import aes
 
+from SwobThirdPartyPlatforms import ImportPlatform
+from SwobThirdPartyPlatforms.exceptions import PlatformDoesNotExist
+
 logging.basicConfig(level="DEBUG")
 
 shared_key = os.environ["PUBLISHER_DECRYPTION_KEY"]
@@ -25,42 +28,69 @@ def publishing_payload(ch, method, properties, body: bytes) -> None:
         body = body[16:]
 
         body = aes.AESCipher.decrypt(data=body, shared_key=shared_key, iv=iv)
-
     except Exception as error:
         logging.exception(error)
 
         ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
-
     else:
         logging.info("decrypted payload: %s", body)
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
-@retry(pika.exceptions.AMQPConnectionError, delay=5, jitter=(1, 3))
+@retry((pika.exceptions.AMQPConnectionError, pika.exceptions.AMQPHeartbeatTimeout), 
+       delay=5, jitter=(1, 3))
 def consumer():
     """
     """
-    credentials=pika.PlainCredentials("sherlock", "asshole")
+    user = os.environ["RMQ_USER"]
+    password = os.environ["RMQ_PASSWORD"]
+    host = os.environ["RMQ_HOST"]
+
+    GMAIL_CREDENTIALS=os.environ["GMAIL_CREDENTIALS"]
+
+    queue_name = "default-smswithoutborders-queue" \
+            if not os.environ.get("RMQ_QUEUE_NAME") \
+            else os.environ.get("RMQ_QUEUE_NAME")
+    
+    routing_key = "default-smswithoutborders-routing-key" \
+            if not os.environ.get("RMQ_ROUTING_KEY") \
+            else os.environ.get("RMQ_ROUTING_KEY")
+
+    exchange_name = "default-smswithoutborders-exchange" \
+            if not os.environ.get("RMQ_EXCHANGE") \
+            else os.environ.get("RMQ_EXCHANGE")
+
+    connection_name = "default-smswithoutborders-consumer" \
+            if not os.environ.get("RMQ_CONNECTION_NAME") \
+            else os.environ.get("RMQ_CONNECTION_NAME")
+
+    credentials=pika.PlainCredentials(user, password)
+
+    client_properties = {'connection_name' : connection_name}
+
     connection = pika.BlockingConnection(pika.ConnectionParameters(
         heartbeat=30,
         blocked_connection_timeout=300,
-        host='staging.smswithoutborders.com',
+        host=host,
+        client_properties=client_properties,
         credentials=credentials))
 
     channel = connection.channel()
 
-    result = channel.queue_declare(queue='unofficial-smswithoutborders-queue', 
-                                   durable=True)
+    result = channel.queue_declare(queue=queue_name, durable=True)
 
-    queue_name = result.method.queue
+    channel.exchange_declare(
+            exchange=exchange_name, 
+            exchange_type="topic", 
+            durable=True)
 
-    channel.queue_bind(exchange='smswithoutborders-exchange', 
-                       queue=queue_name, 
-                       routing_key="smswithoutborders-default-routing-key")
+    channel.queue_bind(exchange=exchange_name, 
+                       queue=result.method.queue, 
+                       routing_key=routing_key)
 
     channel.basic_consume(
-            queue=queue_name, 
+            queue=result.method.queue, 
             on_message_callback=publishing_payload)
 
     try:
