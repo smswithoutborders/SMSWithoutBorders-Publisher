@@ -37,12 +37,8 @@ def publishing_payload(ch, method, properties, body: bytes) -> None:
         ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
 
     else:
-        logging.info("decrypted payload: %s", body)
-
         body_content = body['data']
         body_content = ':'.join(body_content.split(':')[1:])
-
-        logging.debug("Body content: %s", body_content)
 
         platform_name = body['platform_name']
 
