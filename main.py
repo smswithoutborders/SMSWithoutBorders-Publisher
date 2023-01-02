@@ -1,200 +1,125 @@
 #!/usr/bin/env python3
 
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-
-import logging
-import requests
-import json
 import os
-import sys
-import configparser
+import pika
+import random
+from retry import retry
+import logging
+import base64
+import json
 
-import datetime
-from twilio.rest import Client
+import aes
 
-from platforms.main import Platforms
+from SwobThirdPartyPlatforms import ImportPlatform
+from SwobThirdPartyPlatforms.exceptions import PlatformDoesNotExist
 
-config_file_filepath = os.path.join(
-        os.path.dirname(__file__), 'configs', 'config.ini')
+logging.basicConfig(level="DEBUG")
 
-__config = configparser.ConfigParser()
-__config.read(config_file_filepath)
+shared_key = os.environ["PUBLISHER_DECRYPTION_KEY"]
 
-app = Flask(__name__)
-# TODO Add origins to config file
-CORS(
-    app,
-    origins="*",
-    supports_credentials=True,
-)
-
-
-
-def dev_backend_authenticate_user(auth_id: str, auth_key: str) -> tuple:
+def publishing_payload(ch, method, properties, body: bytes) -> None:
     """
     """
-    dev_backend_api_auth_url = __config['DEV_API']['AUTHENTICATION_URL']
-    logging.debug("dev_backed_api_auth_url: %s", dev_backend_authenticate_user)
-
-    request = requests.Session()
-    response = request.post(
-            dev_backend_api_auth_url,
-            json={"auth_key": auth_key, "auth_id": auth_id})
-
-    response.raise_for_status()
-
-    return True, request
-
-
-def backend_publisher_api_request_decrypted_tokens(
-        request: requests.Session, MSISDN: str, platform: str) -> dict:
-    """Request for the user's tokens.
-
-    Args:
-        Request (requests.Session): authenticated sessions from dev BE.
-
-        MSISDN (str): phone number of the user token is requested for.
-
-    Returns:
-        json_response (dict)
-    """
-
-    backend_publisher_port = int(__config['BACKEND_PUBLISHER']['PORT'])
-    backend_publisher_endpoint = __config['BACKEND_PUBLISHER']['ENDPOINT']
-
-    backend_publisher_api_decrypted_tokens_request_url = "http://localhost:%d%s" % (
-            backend_publisher_port, backend_publisher_endpoint)
-
-    cookies=json.dumps(request.cookies.get("SWOBDev"))
-    cookies = {"SOWBDev":cookies}
-    response = request.post(
-            backend_publisher_api_decrypted_tokens_request_url,
-            json={"platform": platform, "phone_number": MSISDN}, cookies=request.cookies.get_dict())
-    """
-    response = request.post(
-            backend_publisher_api_decrypted_tokens_request_url,
-            json={"platform": platform, "phone_number": MSISDN})
-    """
-
-    response.raise_for_status()
-
-    return response.json()
-
-@app.route('/publish', methods=['POST'])
-def publish():
-    """
-    Expecting a JSON request.
-    """
-    try:
-        data = request.json
-    except Exception as error:
-        return '', 500
-    else:
-        message = data['message']
-        MSISDN = data['MSISDN']
-
-        app.logger.debug("Message for publishing: %s", message)
-
-        try:
-            request_publishing(MSISDN=MSISDN, data=message)
-        except Exception as error:
-            app.logger.exception(error)
-            return '', 500
-
-    return '', 200
-
-
-def request_publishing(MSISDN: str, data: str)->None:
-    """
-    """
-
-    auth_key = __config['DEV_API']['AUTH_KEY']
-    auth_id = __config['DEV_API']['AUTH_ID']
-
-    logging.debug("Auth key: %s", auth_key)
-    logging.debug("Auth id: %s", auth_id)
+    logging.info("Publishing payload: %s", body)
 
     try:
-        authenticated_user, request = dev_backend_authenticate_user(
-                auth_id = auth_id, auth_key = auth_key)
+        body = base64.b64decode(body)
+
+        iv = body[:16]
+        body = body[16:]
+
+        body = aes.AESCipher.decrypt(data=body, shared_key=shared_key, iv=iv)
+
+        body = json.loads(body)
+
     except Exception as error:
-        raise error
+        logging.exception(error)
+        ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
+
     else:
-        logging.debug("%s %s", authenticated_user, request.cookies)
+        body_content = body['data']
+        body_content = ':'.join(body_content.split(':')[1:])
 
-
-        data = data.split(':')
-        platform_letter = data[0]
-
-        platforms = Platforms()
-        platform_name, platform_type, platform = platforms.get_platform(platform_letter)
-        decrypted_tokens = backend_publisher_api_request_decrypted_tokens(
-                request=request, MSISDN=MSISDN, platform=platform_name)
-
-
-        logging.debug("Decrypted tokens: %s", decrypted_tokens)
-
+        platform_name = body['platform_name']
 
         try:
-            data = ':'.join(data[1:])
-            publish(
-                    user_details =decrypted_tokens, 
-                    platform_type= platform_type, 
-                    data=data, 
-                    platform=platform)
+            platform = ImportPlatform(platform_name=platform_name)
+            platform.execute(body=body_content, user_details=body)
+
+        except PlatformDoesNotExist as error:
+            logging.exception(error)
+            ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
+
         except Exception as error:
-            raise error
+            logging.exception(error)
+            ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
+
         else:
-            respond_to_user(MSISDN, platform_name)
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            logging.info("publishing complete...")
 
 
-def respond_to_user(MSISDN, platform_name):
+@retry((pika.exceptions.AMQPConnectionError, pika.exceptions.AMQPHeartbeatTimeout), 
+       delay=5, jitter=(1, 3))
+def consumer():
     """
     """
-    # Download the helper library from https://www.twilio.com/docs/python/install
-    # Find your Account SID and Auth Token at twilio.com/console
-    # and set the environment variables. See http://twil.io/secure
-    """
-    account_sid = os.environ['TWILIO_ACCOUNT_SID']
-    auth_token = os.environ['TWILIO_AUTH_TOKEN']
-    """
-    account_sid = __config['TWILIO']['SID']
-    auth_token = __config['TWILIO']['TOKEN']
-    from_= __config['TWILIO']['FROM']
-    client = Client(account_sid, auth_token)
+    user = os.environ["RMQ_USER"]
+    password = os.environ["RMQ_PASSWORD"]
+    host = os.environ["RMQ_HOST"]
 
-    time = datetime.datetime.now().ctime()
-    body = f"Your {platform_name} was successfully published on {time} GMT.\n\nThanks for using SMSWithoutBorders, please tell a friend."
+    GMAIL_CREDENTIALS=os.environ["GMAIL_CREDENTIALS"]
 
-    message = client.messages.create(
-                                  body=body,
-                                  from_=from_,
-                                  to=MSISDN
-                              )
+    queue_name = "default-smswithoutborders-queue" \
+            if not os.environ.get("RMQ_QUEUE_NAME") \
+            else os.environ.get("RMQ_QUEUE_NAME")
+    
+    routing_key = "default-smswithoutborders-routing-key" \
+            if not os.environ.get("RMQ_ROUTING_KEY") \
+            else os.environ.get("RMQ_ROUTING_KEY")
 
-    logging.debug(message.sid)
+    exchange_name = "default-smswithoutborders-exchange" \
+            if not os.environ.get("RMQ_EXCHANGE") \
+            else os.environ.get("RMQ_EXCHANGE")
 
+    connection_name = "default-smswithoutborders-consumer" \
+            if not os.environ.get("RMQ_CONNECTION_NAME") \
+            else os.environ.get("RMQ_CONNECTION_NAME")
 
-def publish(user_details: dict, platform_type: str, data: str, platform ) -> None:
-    """
-    """
+    credentials=pika.PlainCredentials(user, password)
 
-    platforms = Platforms()
+    client_properties = {'connection_name' : connection_name}
+
+    connection = pika.BlockingConnection(pika.ConnectionParameters(
+        heartbeat=30,
+        blocked_connection_timeout=300,
+        host=host,
+        client_properties=client_properties,
+        credentials=credentials))
+
+    channel = connection.channel()
+
+    result = channel.queue_declare(queue=queue_name, durable=True)
+
+    channel.exchange_declare(
+            exchange=exchange_name, 
+            exchange_type="topic", 
+            durable=True)
+
+    channel.queue_bind(exchange=exchange_name, 
+                       queue=result.method.queue, 
+                       routing_key=routing_key)
+
+    channel.basic_consume(
+            queue=result.method.queue, 
+            on_message_callback=publishing_payload)
 
     try:
-        # data = platforms.parse_for(platform_type=platform_type, data=data)
-        logging.debug(data)
-        logging.debug(user_details)
-        platform.execute(body=data, user_details=user_details)
+        channel.start_consuming()
+    except pika.exceptions.ConnectionClosedByBroker:
+        logging.warning("Clean stoping broker...")
     except Exception as error:
-        raise error
-
+        logging.exception(error)
 
 if __name__ == "__main__":
-    """
-    """
-    host = "127.0.0.1"
-    port = 12022
-    debug = True
-    app.run(host=host, port=port, debug=debug, threaded=True )
+    consumer()
