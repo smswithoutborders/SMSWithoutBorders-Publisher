@@ -52,7 +52,8 @@ def publishing_payload(ch, method, properties, body: bytes) -> None:
 
         except Exception as error:
             logging.exception(error)
-            ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
+            # ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
+            ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
 
         else:
             ch.basic_ack(delivery_tag=method.delivery_tag)
