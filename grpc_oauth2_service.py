@@ -180,7 +180,7 @@ class OAuth2Service(publisher_pb2_grpc.PublisherServicer):
 
             return response(
                 token=json.dumps(token),
-                profile=profile,
+                profile=json.dumps(profile),
                 message="Successfully fetched tokens",
             )
 
