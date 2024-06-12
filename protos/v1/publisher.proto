@@ -51,7 +51,7 @@ message ExchangeOAuth2CodeRequest {
     // URL of the authorization server's token endpoint.
     string token_endpoint = 6;
     // URL of the userinfo endpoint to fetch user information
-    string userinfo_uri = 7;
+    string userinfo_endpoint = 7;
 }
   
 // Response message for the ExchangeOAuth2Code RPC
