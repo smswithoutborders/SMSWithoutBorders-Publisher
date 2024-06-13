@@ -1,11 +1,20 @@
 FROM python:3.9
 
-RUN apt update && apt install -y apache2 apache2-dev python3-pip less vim
+RUN apt-get update && \
+    apt-get install -y build-essential \
+    apache2 apache2-dev \
+    python3-dev \
+    supervisor && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /publisher
 
 COPY . .
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-RUN pip install --force-reinstall -r requirements.txt
+RUN pip install -U pip && \
+    pip install --no-cache-dir wheel && \
+    pip install --no-cache-dir --force-reinstall -r requirements.txt
 
-CMD python main.py
+ENV MODE=production
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
