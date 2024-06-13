@@ -1,6 +1,6 @@
 # SMSWithoutBorders Publisher
 
-# Documentation
+### Documentation
 
 1. [gRPC](docs/grpc.md)
 

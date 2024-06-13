@@ -13,7 +13,7 @@ import aes
 from SwobThirdPartyPlatforms import ImportPlatform
 from SwobThirdPartyPlatforms.exceptions import PlatformDoesNotExist
 
-logging.basicConfig(level="DEBUG")
+logging.basicConfig(level=logging.INFO)
 
 shared_key = os.environ["PUBLISHER_DECRYPTION_KEY"]
 

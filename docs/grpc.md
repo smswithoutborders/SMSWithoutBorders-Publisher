@@ -53,6 +53,16 @@ necessary Python files. For other languages, see
 python -m grpc_tools.protoc -I protos/v1 --python_out=. --grpc_python_out=. protos/v1/publisher.proto
 ```
 
+### Starting the Server
+
+**Quick Start (for Development Only):**
+
+```bash
+GRPC_PORT=6000 \
+GRPC_HOST=127.0.0.1 \
+python3 grpc_server.py
+```
+
 ## Usage
 
 ## OAuth2
