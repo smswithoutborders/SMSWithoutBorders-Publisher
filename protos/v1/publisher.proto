@@ -2,72 +2,54 @@ syntax = "proto3";
 
 package publisher.v1;
 
-// Request message for getting the authorization URL
-message GetAuthorizationUrlRequest {
-    // List of scopes for the authorization
-    repeated string scope = 1;
-    // Redirect URI for the authorization response
-    string redirect_uri = 2;
-    // Client ID of the application
-    string client_id = 3;
-    // URL of the authorization server's authorization endpoint.
-    string authorization_endpoint = 4;
-    // Optional state parameter to prevent CSRF attacks. If not given, it will be generated for you
-    string state = 5;
-    // Optional code verifier for PKCE (Proof Key for Code Exchange)
-    string code_verifier = 6;
+// Request message for getting the OAuth2 authorization URL
+message GetOAuth2AuthorizationUrlRequest {
+    // The platform for which the authorization URL is requested
+    string platform = 1;
+    // Optional state parameter to prevent CSRF attacks
+    string state = 2; 
+    // Optional code verifier for PKCE
+    string code_verifier = 3; 
     // Flag to indicate if the code verifier should be auto-generated
-    bool autogenerate_code_verifier = 7;
-    // Optional access type parameter (online or offline)
-    string access_type = 8;
-    // Optional prompt parameter (none, consent, select_account)
-    string prompt = 9;
+    bool autogenerate_code_verifier = 4; 
 }
 
-// Response message for the GetAuthorizationUrl RPC
-message GetAuthorizationUrlResponse {
+// Response message for the OAuth2 GetAuthorizationUrl RPC
+message GetOAuth2AuthorizationUrlResponse {
     // The authorization URL
-    string authorization_url = 1;
+    string authorization_url = 1; 
     // The state parameter for preventing CSRF attacks
-    string state = 2;
+    string state = 2; 
     // The code verifier used for PKCE
-    string code_verifier = 3;
-    // Optional message providing additional information
-    string message = 4;
+    string code_verifier = 3; 
+    // A response message
+    string message = 4; 
 }
 
 // Request message for exchanging the OAuth2 authorization code for a token
-message ExchangeOAuth2CodeRequest {
+message ExchangeOAuth2CodeAndStoreRequest {
+    // The long-lived token of the authenticated entity.
+    string long_lived_token = 1; 
+    // The platform for which the token exchange is being performed
+    string platform = 2; 
     // The authorization code received from the authorization server
-    string authorization_code = 1;
-    // The redirect URI used in the authorization request
-    string redirect_uri = 2;
-    // Client ID of the application
-    string client_id = 3;
-    // Client secret of the application
-    string client_secret = 4;
-    // Optional code verifier for PKCE (Proof Key for Code Exchange)
-    string code_verifier = 5;
-    // URL of the authorization server's token endpoint.
-    string token_endpoint = 6;
-    // URL of the userinfo endpoint to fetch user information
-    string userinfo_endpoint = 7;
+    string authorization_code = 3; 
+    // Optional code verifier used for PKCE
+    string code_verifier = 4; 
 }
   
 // Response message for the ExchangeOAuth2Code RPC
-message ExchangeOAuth2CodeResponse {
-    // Token information (JSON string)
-    string token = 1;
-    // Profile information (JSON string)
-    string profile = 2;
-    // Optional message providing additional information
-    string message = 3;
+message ExchangeOAuth2CodeAndStoreResponse {
+    // Indicates if the token exchange and storage was successful
+    bool success = 1; 
+    // A response message
+    string message = 2; 
 }
 
 // Service definition for Publisher
 service Publisher {
-    // RPC for getting the authorization URL
-    rpc GetAuthorizationUrl(GetAuthorizationUrlRequest) returns (GetAuthorizationUrlResponse);
+    // RPC for getting the OAuth2 authorization URL
+    rpc GetOAuth2AuthorizationUrl(GetOAuth2AuthorizationUrlRequest) returns (GetOAuth2AuthorizationUrlResponse);
     // RPC for exchanging OAuth2 authorization code for a token
-    rpc ExchangeOAuth2Code(ExchangeOAuth2CodeRequest) returns (ExchangeOAuth2CodeResponse);
+    rpc ExchangeOAuth2CodeAndStore(ExchangeOAuth2CodeAndStoreRequest) returns (ExchangeOAuth2CodeAndStoreResponse);
 }
