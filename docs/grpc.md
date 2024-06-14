@@ -81,9 +81,9 @@ start the OAuth2 flow.
 > The table lists only the required fields for this step. Other fields will be
 > ignored.
 
-| Field    | Type   | Description                                                           |
-| -------- | ------ | --------------------------------------------------------------------- |
-| platform | string | The platform identifier for which the authorization URL is generated. |
+| Field    | Type   | Description                                                                              |
+| -------- | ------ | ---------------------------------------------------------------------------------------- |
+| platform | string | The platform identifier for which the authorization URL is generated. . (e.g., "gmail"). |
 
 Optional fields:
 
