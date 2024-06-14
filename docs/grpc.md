@@ -8,7 +8,7 @@
 - [Usage](#usage)
   - [OAuth2](#oauth2)
     - [Get Authorization URL](#get-authorization-url)
-    - [Exchange OAuth2 Code](#exchange-oauth2-code)
+    - [Exchange OAuth2 Code and Store Token](#exchange-oauth2-code-and-store-token-in-vault)
 
 ## Download Protocol Buffer File
 
@@ -74,35 +74,30 @@ start the OAuth2 flow.
 
 #### Request
 
-> `request` **GetAuthorizationUrlRequest**
+> `request` **GetOAuth2AuthorizationUrlRequest**
 
 > [!IMPORTANT]
 >
 > The table lists only the required fields for this step. Other fields will be
 > ignored.
 
-| Field                  | Type   | Description                                          |
-| ---------------------- | ------ | ---------------------------------------------------- |
-| redirect_uri           | string | The URI to redirect to after the user authorizes.    |
-| client_id              | string | The client ID for the OAuth2 application.            |
-| scope                  | array  | The requested scope(s) for the OAuth2 authorization. |
-| authorization_endpoint | string | The authorization endpoint of the OAuth2 provider.   |
+| Field    | Type   | Description                                                           |
+| -------- | ------ | --------------------------------------------------------------------- |
+| platform | string | The platform identifier for which the authorization URL is generated. |
 
 Optional fields:
 
-| Field                      | Type   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| -------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| state                      | string | An opaque value used to maintain state between the request and the callback.                                                                                                                                                                                                                                                                                                                                                                    |
-| prompt                     | string | This parameter is a space-delimited, case-sensitive list of prompts to present to the user, with possible values: `none` (no screens, cannot be combined), `consent` (prompts for consent), and `select_account` (prompts to select an account).                                                                                                                                                                                                |
-| code_verifier              | string | A cryptographic random string used in the PKCE flow.                                                                                                                                                                                                                                                                                                                                                                                            |
-| autogenerate_code_verifier | bool   | If true, a code verifier will be auto-generated if not provided.                                                                                                                                                                                                                                                                                                                                                                                |
-| access_type                | string | This parameter determines if your application can refresh access tokens when the user is not present at the browser. Valid values are `online` (default) and `offline`. Set it to `offline` if your application needs to refresh access tokens without user presence. This instructs the Google authorization server to return both a refresh token and an access token when your application first exchanges an authorization code for tokens. |
+| Field                      | Type   | Description                                                                  |
+| -------------------------- | ------ | ---------------------------------------------------------------------------- |
+| state                      | string | An opaque value used to maintain state between the request and the callback. |
+| code_verifier              | string | A cryptographic random string used in the PKCE flow.                         |
+| autogenerate_code_verifier | bool   | If true, a code verifier will be auto-generated if not provided.             |
 
 ---
 
 #### Response
 
-> `response` **GetAuthorizationUrlResponse**
+> `response` **GetOAuth2AuthorizationUrlResponse**
 
 > [!IMPORTANT]
 >
@@ -120,7 +115,7 @@ Optional fields:
 
 #### Method
 
-> `method` **GetAuthorizationUrl**
+> `method` **GetOAuth2AuthorizationUrl**
 
 > [!TIP]
 >
@@ -133,7 +128,7 @@ Optional fields:
 grpcurl -plaintext \
     -d @ \
     -proto protos/v1/publisher.proto \
-localhost:6000 publisher.v1.Publisher/GetAuthorizationUrl <payload.json
+localhost:6000 publisher.v1.Publisher/GetOAuth2AuthorizationUrl <payload.json
 ```
 
 ---
@@ -142,10 +137,10 @@ localhost:6000 publisher.v1.Publisher/GetAuthorizationUrl <payload.json
 
 ```json
 {
-	"redirect_uri": "https://example.com/callback",
-	"client_id": "your_client_id",
-	"scope": ["openid", "profile"],
-	"authorization_endpoint": "https://accounts.google.com/o/oauth2/auth"
+	"platform": "gmail",
+	"state": "",
+	"code_verifier": "",
+	"autogenerate_code_verifier": true
 }
 ```
 
@@ -162,28 +157,65 @@ localhost:6000 publisher.v1.Publisher/GetAuthorizationUrl <payload.json
 }
 ```
 
-### Exchange OAuth2 Code
+### Exchange OAuth2 Code and Store Token in Vault
 
 This method exchanges an OAuth2 authorization code for access and refresh
-tokens, and fetches the user's profile information.
+tokens, and fetches the user's profile information, and securely stores the
+tokens in the vault.
+
+---
+
+> [!NOTE]
+>
+> Ensure you have generated your authorization URL before using this function.
+> For Gmail and Twitter offline access, use the following recommended
+> parameters:
+>
+> #### Gmail:
+>
+> - **scope:**
+>   - `openid`
+>   - `https://www.googleapis.com/auth/gmail.send`
+>   - `https://www.googleapis.com/auth/userinfo.profile`
+>   - `https://www.googleapis.com/auth/userinfo.email`
+> - **access_type:** `offline`
+> - **prompt:** `consent`
+>
+> A well-generated Gmail authorization URL will look something like this:
+>
+> ```bash
+> https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=your_application_client_id&redirect_uri=your_application_redirect_uri&scope=openid+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.send+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile&state=random_state_string&prompt=consent&access_type=offline
+> ```
+>
+> Ensure to replace `your_application_client_id` and
+> `your_application_redirect_uri` with your actual client ID and redirect URI.
+>
+> #### Twitter:
+
+> [!TIP]
+>
+> - You can use the publisher's [Get Authorization URL](#get-authorization-url)
+>   function to help generate the URL for you, or utilize other tools that can
+>   construct the URL.
+> - The URL parameters should be Base64URL encoded. You can easily encode your
+>   parameters using [Base64URL Encoder](https://www.base64url.com/).
+
+---
 
 #### Request
 
-> `request` **ExchangeOAuth2CodeRequest**
+> `request` **ExchangeOAuth2CodeAndStoreRequest**
 
 > [!IMPORTANT]
 >
 > The table lists only the required fields for this step. Other fields will be
 > ignored.
 
-| Field              | Type   | Description                                               |
-| ------------------ | ------ | --------------------------------------------------------- |
-| authorization_code | string | The authorization code received from the OAuth2 provider. |
-| redirect_uri       | string | The URI to redirect to after the user authorizes.         |
-| client_id          | string | The client ID for the OAuth2 application.                 |
-| client_secret      | string | The client secret for the OAuth2 application.             |
-| token_endpoint     | string | The token endpoint of the OAuth2 provider.                |
-| userinfo_endpoint  | string | The userinfo endpoint of the OAuth2 provider.             |
+| Field              | Type   | Description                                           |
+| ------------------ | ------ | ----------------------------------------------------- |
+| long_lived_token   | string | Long-lived token for authentication.                  |
+| platform           | string | Platform identifier for which the code is exchanged.  |
+| authorization_code | string | OAuth2 authorization code received from the provider. |
 
 Optional fields:
 
@@ -195,24 +227,23 @@ Optional fields:
 
 #### Response
 
-> `response` **ExchangeOAuth2CodeResponse**
+> `response` **ExchangeOAuth2CodeAndStoreResponse**
 
 > [!IMPORTANT]
 >
 > The table lists only the fields that are populated for this step. Other fields
 > may be empty, omitted, or false.
 
-| Field   | Type   | Description                                              |
-| ------- | ------ | -------------------------------------------------------- |
-| token   | string | The retrieved access and refresh tokens, in JSON format. |
-| profile | string | The user's profile information, in JSON format.          |
-| message | string | A response message from the server.                      |
+| Field   | Type   | Description                                |
+| ------- | ------ | ------------------------------------------ |
+| success | bool   | Indicates if the operation was successful. |
+| message | string | A response message from the server.        |
 
 ---
 
 #### Method
 
-> `method` **ExchangeOAuth2Code**
+> `method` **ExchangeOAuth2CodeAndStore**
 
 > [!TIP]
 >
@@ -225,7 +256,7 @@ Optional fields:
 grpcurl -plaintext \
     -d @ \
     -proto protos/v1/publisher.proto \
-localhost:6000 publisher.v1.Publisher/ExchangeOAuth2Code <payload.json
+localhost:6000 publisher.v1.Publisher/ExchangeOAuth2CodeAndStore <payload.json
 ```
 
 ---
@@ -234,12 +265,10 @@ localhost:6000 publisher.v1.Publisher/ExchangeOAuth2Code <payload.json
 
 ```json
 {
+	"long_lived_token": "long_lived_token",
+	"platform": "gmail",
 	"authorization_code": "auth_code",
-	"redirect_uri": "https://example.com/callback",
-	"client_id": "your_client_id",
-	"client_secret": "your_client_secret",
-	"token_endpoint": "https://accounts.google.com/o/oauth2/token",
-	"userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo"
+	"code_verifier": "abcdef"
 }
 ```
 
@@ -249,8 +278,7 @@ localhost:6000 publisher.v1.Publisher/ExchangeOAuth2Code <payload.json
 
 ```json
 {
-	"token": "{\"access_token\":\"ya29.a0AfH6SMB...\",\"expires_in\":3599,\"refresh_token\":\"1//06uC...\",\"scope\":\"https://www.googleapis.com/auth/userinfo.profile openid\",\"token_type\":\"Bearer\"}",
-	"profile": "{\"sub\":\"1234567890\",\"name\":\"John Doe\",\"given_name\":\"John\",\"family_name\":\"Doe\",\"picture\":\"https://example.com/johndoe.jpg\",\"email\":\"johndoe@example.com\",\"email_verified\":true,\"locale\":\"en\"}",
-	"message": "Successfully fetched tokens"
+	"message": "Successfully fetched and stored tokens.",
+	"success": true
 }
 ```

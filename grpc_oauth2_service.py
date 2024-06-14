@@ -9,6 +9,9 @@ import publisher_pb2
 import publisher_pb2_grpc
 
 from oauth2 import OAuth2Client
+from grpc_vault_client import store_entity_token, list_entity_stored_tokens
+
+SUPPORTED_PLATFORMS = ("gmail",)
 
 logging.basicConfig(
     level=logging.INFO, format=("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -79,47 +82,40 @@ def validate_request_fields(context, request, response, required_fields):
 class OAuth2Service(publisher_pb2_grpc.PublisherServicer):
     """OAuth2 Service Descriptor"""
 
-    def GetAuthorizationUrl(self, request, context):
-        """Handles generating auth url"""
+    def GetOAuth2AuthorizationUrl(self, request, context):
+        """Handles generating OAuth2 authorization URL"""
 
-        response = publisher_pb2.GetAuthorizationUrlResponse
+        response = publisher_pb2.GetOAuth2AuthorizationUrlResponse
 
         try:
             invalid_fields_response = validate_request_fields(
                 context,
                 request,
                 response,
-                [
-                    "redirect_uri",
-                    "client_id",
-                    "scope",
-                    "authorization_endpoint",
-                ],
+                ["platform"],
             )
             if invalid_fields_response:
                 return invalid_fields_response
 
-            oauth2_client = OAuth2Client(
-                client_id=request.client_id,
-                redirect_uri=request.redirect_uri,
-            )
+            if request.platform.lower() not in SUPPORTED_PLATFORMS:
+                raise NotImplementedError(
+                    f"The protocol '{request.platform}' is currently not supported. "
+                    "Please contact the developers for more information on when "
+                    "this platform will be implemented."
+                )
+
+            oauth2_client = OAuth2Client(request.platform)
 
             extra_params = {
                 "state": getattr(request, "state") or None,
-                "prompt": getattr(request, "prompt") or None,
                 "code_verifier": getattr(request, "code_verifier") or None,
                 "autogenerate_code_verifier": getattr(
                     request, "autogenerate_code_verifier"
                 ),
-                "access_type": getattr(request, "access_type") or None,
             }
 
             authorization_url, state, code_verifier = (
-                oauth2_client.get_authorization_url(
-                    auth_uri=request.authorization_endpoint,
-                    scope=" ".join(request.scope),
-                    **extra_params,
-                )
+                oauth2_client.get_authorization_url(**extra_params)
             )
 
             return response(
@@ -127,6 +123,14 @@ class OAuth2Service(publisher_pb2_grpc.PublisherServicer):
                 state=state,
                 code_verifier=code_verifier,
                 message="Successfully generated authorization url",
+            )
+
+        except NotImplementedError as e:
+            return error_response(
+                context,
+                response,
+                str(e),
+                grpc.StatusCode.UNIMPLEMENTED,
             )
 
         except Exception as e:
@@ -139,10 +143,10 @@ class OAuth2Service(publisher_pb2_grpc.PublisherServicer):
                 _type="UNKNOWN",
             )
 
-    def ExchangeOAuth2Code(self, request, context):
-        """Handles exchanging oauth2 auth_code for tokens"""
+    def ExchangeOAuth2CodeAndStore(self, request, context):
+        """Handles exchanging OAuth2 authorization code for a token"""
 
-        response = publisher_pb2.ExchangeOAuth2CodeResponse
+        response = publisher_pb2.ExchangeOAuth2CodeAndStoreResponse
 
         try:
             invalid_fields_response = validate_request_fields(
@@ -150,38 +154,68 @@ class OAuth2Service(publisher_pb2_grpc.PublisherServicer):
                 request,
                 response,
                 [
+                    "long_lived_token",
+                    "platform",
                     "authorization_code",
-                    "redirect_uri",
-                    "client_id",
-                    "client_secret",
-                    "token_endpoint",
-                    "userinfo_endpoint",
                 ],
             )
             if invalid_fields_response:
                 return invalid_fields_response
 
-            oauth2_client = OAuth2Client(
-                client_id=request.client_id,
-                client_secret=request.client_secret,
-                redirect_uri=request.redirect_uri,
+            if request.platform.lower() not in SUPPORTED_PLATFORMS:
+                raise NotImplementedError(
+                    f"The protocol '{request.platform}' is currently not supported. "
+                    "Please contact the developers for more information on when "
+                    "this platform will be implemented."
+                )
+
+            _, list_token_error = list_entity_stored_tokens(
+                long_lived_token=request.long_lived_token
             )
+
+            if list_token_error:
+                return error_response(
+                    context,
+                    response,
+                    list_token_error.details(),
+                    list_token_error.code(),
+                    _type="UNKNOWN",
+                )
+
+            oauth2_client = OAuth2Client(request.platform)
 
             extra_params = {"code_verifier": getattr(request, "code_verifier") or None}
 
             token = oauth2_client.fetch_token(
-                token_uri=request.token_endpoint,
                 code=request.authorization_code,
                 **extra_params,
             )
-            profile = oauth2_client.fetch_userinfo(
-                userinfo_uri=request.userinfo_endpoint
+            profile = oauth2_client.fetch_userinfo()
+
+            store_response, store_error = store_entity_token(
+                long_lived_token=request.long_lived_token,
+                platform=request.platform,
+                account_identifier=profile.get("email") or profile.get("username"),
+                token=json.dumps(token),
             )
 
+            if store_error:
+                return error_response(
+                    context,
+                    response,
+                    store_error.details(),
+                    store_error.code(),
+                    _type="UNKNOWN",
+                )
+
+            if not store_response.success:
+                return response(
+                    message=store_response.message, success=store_response.success
+                )
+
             return response(
-                token=json.dumps(token),
-                profile=json.dumps(profile),
-                message="Successfully fetched tokens",
+                success=True,
+                message="Successfully fetched and stored token",
             )
 
         except OAuthError as e:
@@ -191,6 +225,14 @@ class OAuth2Service(publisher_pb2_grpc.PublisherServicer):
                 str(e),
                 grpc.StatusCode.INVALID_ARGUMENT,
                 _type="UNKNOWN",
+            )
+
+        except NotImplementedError as e:
+            return error_response(
+                context,
+                response,
+                str(e),
+                grpc.StatusCode.UNIMPLEMENTED,
             )
 
         except Exception as e:

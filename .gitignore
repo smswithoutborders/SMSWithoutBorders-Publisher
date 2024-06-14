@@ -150,3 +150,8 @@ dmypy.json
 *.sqlite3
 *.db
 
+# Ignore all .proto files
+*.proto
+
+# Except for publisher.proto
+!publisher.proto
