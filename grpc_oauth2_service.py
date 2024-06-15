@@ -9,7 +9,9 @@ import publisher_pb2
 import publisher_pb2_grpc
 
 from oauth2 import OAuth2Client
-from grpc_vault_client import store_entity_token, list_entity_stored_tokens
+from grpc_vault_entity_client import store_entity_token, list_entity_stored_tokens
+
+from utils import error_response, validate_request_fields
 
 SUPPORTED_PLATFORMS = ("gmail",)
 
@@ -17,66 +19,6 @@ logging.basicConfig(
     level=logging.INFO, format=("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 )
 logger = logging.getLogger("[gRPC OAuth2 Service]")
-
-
-def error_response(context, response, sys_msg, status_code, user_msg=None, _type=None):
-    """
-    Create an error response.
-
-    Args:
-        context: gRPC context.
-        response: gRPC response object.
-        sys_msg (str or tuple): System message.
-        status_code: gRPC status code.
-        user_msg (str or tuple): User-friendly message.
-        _type (str): Type of error.
-
-    Returns:
-        An instance of the specified response with the error set.
-    """
-    if not user_msg:
-        user_msg = sys_msg
-
-    if isinstance(user_msg, tuple):
-        user_msg = "".join(user_msg)
-    if isinstance(sys_msg, tuple):
-        sys_msg = "".join(sys_msg)
-
-    if _type == "UNKNOWN":
-        logger.exception(sys_msg, exc_info=True)
-    else:
-        logger.error(sys_msg)
-
-    context.set_details(user_msg)
-    context.set_code(status_code)
-
-    return response()
-
-
-def validate_request_fields(context, request, response, required_fields):
-    """
-    Validates the fields in the gRPC request.
-
-    Args:
-        context: gRPC context.
-        request: gRPC request object.
-        response: gRPC response object.
-        required_fields (list): List of required fields.
-
-    Returns:
-        None or response: None if no missing fields,
-            error response otherwise.
-    """
-    missing_fields = [field for field in required_fields if not getattr(request, field)]
-    if missing_fields:
-        return error_response(
-            context,
-            response,
-            f"Missing required fields: {', '.join(missing_fields)}",
-            grpc.StatusCode.INVALID_ARGUMENT,
-        )
-
-    return None
 
 
 class OAuth2Service(publisher_pb2_grpc.PublisherServicer):

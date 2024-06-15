@@ -102,4 +102,4 @@ def list_entity_stored_tokens(long_lived_token):
     except grpc.RpcError as e:
         return None, e
     except Exception as e:
-        return None, e
+        raise e
