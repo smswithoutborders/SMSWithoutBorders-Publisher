@@ -46,7 +46,9 @@ def store_entity_token(long_lived_token, token, platform, account_identifier):
         account_identifier (str): The account identifier.
 
     Returns:
-        tuple: A tuple containing the response and an error message, if any.
+        tuple: A tuple containing:
+            - server response (object): The vault server response.
+            - error (Exception): The error encountered if the request fails, otherwise None.
     """
     try:
         channel = get_channel()
@@ -71,13 +73,17 @@ def store_entity_token(long_lived_token, token, platform, account_identifier):
 
 
 def list_entity_stored_tokens(long_lived_token):
-    """Fetches and lists entity's stored tokens from the vault.
+    """Fetches and lists an entity's stored tokens from the vault.
 
     Args:
-        long_lived_token (str): The long-lived token.
+        long_lived_token (str): The long-lived token used to authenticate
+            the request.
 
     Returns:
-        list: A list of stored tokens
+        tuple: A tuple containing:
+            - list: A list of stored tokens if the request is successful.
+            - error (Exception): The error encountered if the request fails,
+                otherwise None.
     """
     try:
         channel = get_channel()
@@ -89,16 +95,86 @@ def list_entity_stored_tokens(long_lived_token):
             )
 
             logger.debug(
-                "Requesting stored tokens for long-lived token '%s'", long_lived_token
+                "Sending request to list stored tokens for long_lived_token: %s",
+                long_lived_token,
             )
             response = stub.ListEntityStoredTokens(request)
             tokens = response.stored_tokens
 
-            logger.info(
-                "Successfully retrieved tokens for long-lived token '%s'",
-                long_lived_token,
-            )
+            logger.info("Successfully retrieved stored tokens.")
             return tokens, None
+    except grpc.RpcError as e:
+        return None, e
+    except Exception as e:
+        raise e
+
+
+def get_entity_access_token_and_decrypt_payload(device_id, payload_ciphertext):
+    """
+    Retrieves an entity access token and decrypts a given payload.
+
+    Args:
+        device_id (str): The ID of the device requesting the token and decryption.
+        payload_ciphertext (bytes): The ciphertext of the payload to be decrypted.
+
+    Returns:
+        tuple: A tuple containing:
+            - server response (object): The vault server response.
+            - error (Exception): The error encountered if the request fails, otherwise None.
+    """
+    try:
+        channel = get_channel()
+
+        with channel as conn:
+            stub = vault_pb2_grpc.EntityStub(conn)
+            request = vault_pb2.GetEntityAccessTokenAndDecryptPayloadRequest(
+                device_id=device_id, payload_ciphertext=payload_ciphertext
+            )
+
+            logger.debug("Requesting access tokens for device_id '%s'...", device_id)
+            response = stub.GetEntityAccessTokenAndDecryptPayload(request)
+
+            logger.info(
+                "Successfully retrieved access token and decrypted payload for device id '%s'.",
+                device_id,
+            )
+            return response, None
+    except grpc.RpcError as e:
+        return None, e
+    except Exception as e:
+        raise e
+
+
+def encrypt_payload(device_id, payload_plaintext):
+    """
+    Encrypts the payload.
+
+    Args:
+        device_id (str): The ID of the device.
+        payload_plaintext (str): The plaintext of the payload to be encrypted.
+
+    Returns:
+        tuple: A tuple containing:
+            - server response (object): The vault server response.
+            - error (Exception): The error encountered if the request fails, otherwise None.
+    """
+    try:
+        channel = get_channel()
+
+        with channel as conn:
+            stub = vault_pb2_grpc.EntityStub(conn)
+            request = vault_pb2.EncryptPayloadRequest(
+                device_id=device_id, payload_plaintext=payload_plaintext
+            )
+
+            logger.debug(
+                "Sending request to encrypt payload for device_id: %s",
+                device_id,
+            )
+            response = stub.EncryptPayload(request)
+
+            logger.info("Successfully encrypted payload.")
+            return response, None
     except grpc.RpcError as e:
         return None, e
     except Exception as e:

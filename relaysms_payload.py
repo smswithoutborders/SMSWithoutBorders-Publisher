@@ -18,7 +18,6 @@ def decode_relay_sms_payload(content):
         ValueError: If the payload format is invalid or if decoding fails.
     """
     try:
-        # Decode the base64-encoded payload
         payload = base64.b64decode(content)
 
         # Unpack the length of the encrypted content (first 4 bytes)
