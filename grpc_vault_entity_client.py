@@ -109,13 +109,16 @@ def list_entity_stored_tokens(long_lived_token):
         raise e
 
 
-def get_entity_access_token_and_decrypt_payload(device_id, payload_ciphertext):
+def get_entity_access_token_and_decrypt_payload(
+    device_id, payload_ciphertext, platform
+):
     """
     Retrieves an entity access token and decrypts a given payload.
 
     Args:
         device_id (str): The ID of the device requesting the token and decryption.
         payload_ciphertext (bytes): The ciphertext of the payload to be decrypted.
+        platform (str): The platform name.
 
     Returns:
         tuple: A tuple containing:
@@ -128,7 +131,9 @@ def get_entity_access_token_and_decrypt_payload(device_id, payload_ciphertext):
         with channel as conn:
             stub = vault_pb2_grpc.EntityStub(conn)
             request = vault_pb2.GetEntityAccessTokenAndDecryptPayloadRequest(
-                device_id=device_id, payload_ciphertext=payload_ciphertext
+                device_id=device_id,
+                payload_ciphertext=payload_ciphertext,
+                platform=platform,
             )
 
             logger.debug("Requesting access tokens for device_id '%s'...", device_id)

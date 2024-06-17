@@ -8,8 +8,7 @@ import grpc
 import publisher_pb2_grpc
 
 from utils import get_configs
-from grpc_oauth2_service import OAuth2Service
-from grpc_publish_service import PublishService
+from grpc_publisher_service import PublisherService
 
 logging.basicConfig(
     level=logging.INFO, format=("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -39,8 +38,7 @@ def serve():
     logger.info("gRPC server max workers: %s", max_workers)
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
-    publisher_pb2_grpc.add_PublisherServicer_to_server(OAuth2Service(), server)
-    publisher_pb2_grpc.add_PublisherServicer_to_server(PublishService(), server)
+    publisher_pb2_grpc.add_PublisherServicer_to_server(PublisherService(), server)
 
     if mode == "production":
         try:

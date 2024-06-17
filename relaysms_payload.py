@@ -12,10 +12,11 @@ def decode_relay_sms_payload(content):
         content (str): The base64-encoded payload string.
 
     Returns:
-        tuple: A tuple containing the platform letter, encrypted content, and device ID.
-
-    Raises:
-        ValueError: If the payload format is invalid or if decoding fails.
+        tuple: A tuple containing:
+            - platform letter (str)
+            - encrypted content (bytes)
+            - device ID (bytes)
+            - error (Exception or None)
     """
     try:
         payload = base64.b64decode(content)
@@ -32,28 +33,7 @@ def decode_relay_sms_payload(content):
         # Extract the remaining payload as the device ID
         device_id = payload[5 + len_enc_content :]
 
-        return platform_letter, encrypted_content, device_id
+        return platform_letter, encrypted_content, device_id, None
 
     except (struct.error, IndexError, base64.binascii.Error) as e:
-        raise ValueError("Invalid payload format") from e
-
-
-if __name__ == "__main__":
-    platform_letter = b"g"
-    encrypted_content = b"encrypted_content"
-    device_id = b"device_id"
-
-    payload = (
-        struct.pack("<i", len(encrypted_content))
-        + platform_letter
-        + encrypted_content
-        + device_id
-    )
-    encoded_payload = base64.b64encode(payload)
-
-    result = decode_relay_sms_payload(encoded_payload)
-    if result:
-        platform_letter, encrypted_content, device_id = result
-        print(f"Platform letter: {platform_letter}")
-        print(f"Encrypted content: {encrypted_content}")
-        print(f"Device ID: {device_id}")
+        return None, None, None, e

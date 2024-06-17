@@ -210,8 +210,16 @@ class OAuth2Client:
         logger.debug("Sending message on behalf of user_id: %s", user_id)
         url = self.urls["send_message_uri"].format(user_id)
         response = self.session.post(url, json=message)
-        response.raise_for_status()
+
+        if response.status_code != 200:
+            response_data = response.json()
+            error_message = response_data["error"].get("message", "Unknown error")
+            logger.error(
+                "Failed to send message for %s: %s", self.platform, response_data
+            )
+            return error_message
+
         response_data = response.json()
-        logger.info("Message sent successfully: %s", response_data)
+        logger.info("Successfully send message for '%s'", self.platform)
 
         return response_data
