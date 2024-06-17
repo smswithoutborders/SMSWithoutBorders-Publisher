@@ -9,6 +9,7 @@
   - [OAuth2](#oauth2)
     - [Get Authorization URL](#get-authorization-url)
     - [Exchange OAuth2 Code and Store Token](#exchange-oauth2-code-and-store-token-in-vault)
+  - [Publish Content](#publish-content)
 
 ## Download Protocol Buffer File
 
@@ -65,14 +66,14 @@ python3 grpc_server.py
 
 ## Usage
 
-## OAuth2
+### OAuth2
 
-### Get Authorization URL
+#### Get Authorization URL
 
 This method generates an OAuth2 authorization URL that the client can use to
 start the OAuth2 flow.
 
-#### Request
+##### Request
 
 > `request` **GetOAuth2AuthorizationUrlRequest**
 
@@ -81,9 +82,9 @@ start the OAuth2 flow.
 > The table lists only the required fields for this step. Other fields will be
 > ignored.
 
-| Field    | Type   | Description                                                                              |
-| -------- | ------ | ---------------------------------------------------------------------------------------- |
-| platform | string | The platform identifier for which the authorization URL is generated. . (e.g., "gmail"). |
+| Field    | Type   | Description                                                                            |
+| -------- | ------ | -------------------------------------------------------------------------------------- |
+| platform | string | The platform identifier for which the authorization URL is generated. (e.g., "gmail"). |
 
 Optional fields:
 
@@ -95,7 +96,7 @@ Optional fields:
 
 ---
 
-#### Response
+##### Response
 
 > `response` **GetOAuth2AuthorizationUrlResponse**
 
@@ -113,7 +114,7 @@ Optional fields:
 
 ---
 
-#### Method
+##### Method
 
 > `method` **GetOAuth2AuthorizationUrl**
 
@@ -157,7 +158,7 @@ localhost:6000 publisher.v1.Publisher/GetOAuth2AuthorizationUrl <payload.json
 }
 ```
 
-### Exchange OAuth2 Code and Store Token in Vault
+#### Exchange OAuth2 Code and Store Token in Vault
 
 This method exchanges an OAuth2 authorization code for access and refresh
 tokens, and fetches the user's profile information, and securely stores the
@@ -171,7 +172,7 @@ tokens in the vault.
 > For Gmail and Twitter offline access, use the following recommended
 > parameters:
 >
-> #### Gmail:
+> ##### Gmail:
 >
 > - **scope:**
 >   - `openid`
@@ -190,7 +191,7 @@ tokens in the vault.
 > Ensure to replace `your_application_client_id` and
 > `your_application_redirect_uri` with your actual client ID and redirect URI.
 >
-> #### Twitter:
+> ##### Twitter:
 
 > [!TIP]
 >
@@ -202,7 +203,7 @@ tokens in the vault.
 
 ---
 
-#### Request
+##### Request
 
 > `request` **ExchangeOAuth2CodeAndStoreRequest**
 
@@ -225,7 +226,7 @@ Optional fields:
 
 ---
 
-#### Response
+##### Response
 
 > `response` **ExchangeOAuth2CodeAndStoreResponse**
 
@@ -241,7 +242,7 @@ Optional fields:
 
 ---
 
-#### Method
+##### Method
 
 > `method` **ExchangeOAuth2CodeAndStore**
 
@@ -279,6 +280,74 @@ localhost:6000 publisher.v1.Publisher/ExchangeOAuth2CodeAndStore <payload.json
 ```json
 {
 	"message": "Successfully fetched and stored tokens.",
+	"success": true
+}
+```
+
+### Publish Content
+
+This method handles publishing a relaysms payload.
+
+---
+
+##### Request
+
+> `request` **PublishContentRequest**
+
+> [!IMPORTANT]
+>
+> The table lists only the required fields for this step. Other fields will be
+> ignored.
+
+| Field   | Type   | Description                          |
+| ------- | ------ | ------------------------------------ |
+| content | string | The content payload to be published. |
+
+---
+
+##### Response
+
+> `response` **PublishContentResponse**
+
+> [!IMPORTANT]
+>
+> The table lists only the fields that are populated for this step. Other fields
+> may be empty, omitted, or false.
+
+| Field              | Type   | Description                                        |
+| ------------------ | ------ | -------------------------------------------------- |
+| message            | string | A response message from the server.                |
+| publisher_response | string | The encrypted response from the publisher, if any. |
+| success            | bool   | Indicates if the operation was successful.         |
+
+---
+
+##### Method
+
+> `method` **PublishContent**
+
+> [!TIP]
+>
+> The examples below use
+> [grpcurl](https://github.com/fullstorydev/grpcurl#grpcurl).
+
+**Sample request**
+
+```bash
+grpcurl -plaintext \
+    -d '{"content": "encoded_relay_sms_payload"}' \
+    -proto protos/v1/publisher.proto \
+localhost:6000 publisher.v1.Publisher/PublishContent
+```
+
+---
+
+**Sample response**
+
+```json
+{
+	"message": "Successfully published Gmail message",
+	"publisher_response": "encrypted_response_payload",
 	"success": true
 }
 ```

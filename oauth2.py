@@ -10,29 +10,29 @@ from authlib.integrations.requests_client import OAuth2Session
 
 from utils import get_configs
 
-PLATFORM_URLS = {
+OAUTH2_CONFIGURATIONS = {
     "gmail": {
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "userinfo_uri": "https://www.googleapis.com/oauth2/v3/userinfo",
-    },
-}
-
-PLATFORM_DEFAULT_PARAMS = {
-    "gmail": {
-        "scope": [
-            "openid",
-            "https://www.googleapis.com/auth/gmail.send",
-            "https://www.googleapis.com/auth/userinfo.profile",
-            "https://www.googleapis.com/auth/userinfo.email",
-        ],
-        "access_type": "offline",
-        "prompt": "consent",
+        "urls": {
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "userinfo_uri": "https://www.googleapis.com/oauth2/v3/userinfo",
+            "send_message_uri": "https://www.googleapis.com/gmail/v1/users/{}/messages/send",
+        },
+        "default_params": {
+            "scope": [
+                "openid",
+                "https://www.googleapis.com/auth/gmail.send",
+                "https://www.googleapis.com/auth/userinfo.profile",
+                "https://www.googleapis.com/auth/userinfo.email",
+            ],
+            "access_type": "offline",
+            "prompt": "consent",
+        },
     },
 }
 
 logging.basicConfig(
-    level=logging.INFO, format=("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("[OAuth2 Client]")
 
@@ -93,25 +93,34 @@ class OAuth2Client:
     OAuth2 client implementation using Authlib.
     """
 
-    def __init__(self, platform_name):
+    def __init__(self, platform_name, token=None, update_token=None):
         """
         Initialize the OAuth2Client.
 
         Args:
-            platform_name (str): The name of the platform (e.g., 'gmail').
+            platform_name (str): The name of the platform (e.g., 'gmail', 'twitter').
+            token (dict, optional): The OAuth 2.0 token containing 'access_token',
+                'refresh_token', 'expires_at', and other relevant token information.
+                Default is None.
+            update_token (callable, optional): A callable function that updates the
+                OAuth 2.0 token. Used when refreshing tokens. Default is None.
         """
-        urls = PLATFORM_URLS.get(platform_name.lower())
+        oauth2_config = OAUTH2_CONFIGURATIONS.get(platform_name.lower())
 
-        if not urls:
-            raise ValueError(f"URLs for platform '{platform_name}' not found.")
+        if not oauth2_config:
+            raise ValueError(f"Configuration for platform '{platform_name}' not found.")
 
-        self.creds = load_credentials(platform_name)
-        self.urls = PLATFORM_URLS.get(platform_name.lower())
-        self.default_params = PLATFORM_DEFAULT_PARAMS.get(platform_name, {})
+        self.platform = platform_name
+        self.creds = load_credentials(self.platform)
+        self.urls = oauth2_config["urls"]
+        self.default_params = oauth2_config["default_params"]
         self.session = OAuth2Session(
             client_id=self.creds["client_id"],
             client_secret=self.creds["client_secret"],
             redirect_uri=self.creds["redirect_uri"],
+            token_endpoint=self.urls["token_uri"],
+            token=token,
+            update_token=update_token,
         )
 
     @staticmethod
@@ -186,3 +195,32 @@ class OAuth2Client:
         userinfo = self.session.get(self.urls["userinfo_uri"]).json()
         logger.info("User information fetched successfully.")
         return userinfo
+
+    def send_message(self, user_id, message):
+        """
+        Send a message.
+
+        Args:
+            user_id (str): The ID of the user to send the message on behalf of.
+            message (dict): The message payload to be sent. The payload should be a
+                properly formatted dictionary according to the platform's specifications.
+
+        Returns:
+            dict: The response from the platform.
+        """
+        logger.debug("Sending message on behalf of user_id: %s", user_id)
+        url = self.urls["send_message_uri"].format(user_id)
+        response = self.session.post(url, json=message)
+
+        if response.status_code != 200:
+            response_data = response.json()
+            error_message = response_data["error"].get("message", "Unknown error")
+            logger.error(
+                "Failed to send message for %s: %s", self.platform, response_data
+            )
+            return error_message
+
+        response_data = response.json()
+        logger.info("Successfully sent message for '%s'", self.platform)
+
+        return f"Successfully sent message to '{self.platform}' on your behalf."
