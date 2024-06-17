@@ -177,8 +177,43 @@ def encrypt_payload(device_id, payload_plaintext):
                 device_id,
             )
             response = stub.EncryptPayload(request)
-
             logger.info("Successfully encrypted payload.")
+            return response, None
+    except grpc.RpcError as e:
+        return None, e
+    except Exception as e:
+        raise e
+
+
+def update_entity_token(device_id, token, platform, account_identifier):
+    """Update an entity's token in the vault.
+
+    Args:
+        device_id (str): The ID of the device.
+        token (str): The token to store.
+        platform (str): The platform name.
+        account_identifier (str): The account identifier.
+
+    Returns:
+        tuple: A tuple containing:
+            - server response (object): The vault server response.
+            - error (Exception): The error encountered if the request fails, otherwise None.
+    """
+    try:
+        channel = get_channel()
+
+        with channel as conn:
+            stub = vault_pb2_grpc.EntityStub(conn)
+            request = vault_pb2.UpdateEntityTokenRequest(
+                device_id=device_id,
+                token=token,
+                platform=platform,
+                account_identifier=account_identifier,
+            )
+
+            logger.debug("Updating token for platform '%s'", platform)
+            response = stub.UpdateEntityToken(request)
+            logger.info("Successfully updated token for platform '%s'", platform)
             return response, None
     except grpc.RpcError as e:
         return None, e

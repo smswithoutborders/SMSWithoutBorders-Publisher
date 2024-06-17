@@ -19,6 +19,7 @@ from grpc_vault_entity_client import (
     store_entity_token,
     get_entity_access_token_and_decrypt_payload,
     encrypt_payload,
+    update_entity_token,
 )
 
 PLATFORM_DETAILS = {
@@ -62,21 +63,21 @@ def parse_email_content(content):
     return from_email, to_email, cc_email, bcc_email, subject, body
 
 
-def create_email_message(content):
+def create_email_message(from_email, to_email, cc_email, bcc_email, subject, body):
     """
-    Create an encoded email message from a formatted content string.
+    Create an encoded email message from individual email components.
 
     Args:
-        content (str): The email content string in the format
-            'from:to:cc:bcc:subject:body'.
+        from_email (str): The sender's email address.
+        to_email (str): The recipient's email address.
+        cc_email (str): The CC (carbon copy) email addresses, separated by commas.
+        bcc_email (str): The BCC (blind carbon copy) email addresses, separated by commas.
+        subject (str): The subject of the email.
+        body (str): The body content of the email.
 
     Returns:
-        dict: A dictionary containing the raw encoded email message.
+        dict: A dictionary containing the raw encoded email message, with the key "raw".
     """
-    from_email, to_email, cc_email, bcc_email, subject, body = parse_email_content(
-        content
-    )
-
     message = EmailMessage()
     message.set_content(body)
 
@@ -93,6 +94,65 @@ def create_email_message(content):
     create_message = {"raw": encoded_message}
 
     return create_message
+
+
+def create_update_token_context(
+    device_id, account_identifier, platform_name, response, context
+):
+    """
+    Creates a context-specific token update function.
+
+    Args:
+        device_id (str): The unique identifier of the device.
+        account_identifier (str): The identifier for the account
+            (e.g., email or username).
+        platform_name (str): The name of the platform (e.g., 'gmail').
+        response (protobuf message class): The response class for the gRPC method.
+        context (grpc.ServicerContext): The gRPC context for the current method call.
+
+    Returns:
+        function: A function `update_token(token)` that updates the token information.
+    """
+
+    def update_token(token, **kwargs):
+        """
+        Updates the stored token for a specific entity.
+
+        Args:
+            token (dict or object): The token information
+                containing access and refresh tokens.
+        """
+        logger.info(
+            "Updating token for device_id: %s, account_identifier: %s, platform: %s",
+            device_id,
+            account_identifier,
+            platform_name,
+        )
+
+        update_entity_token_response, update_entity_token_error = update_entity_token(
+            device_id=device_id,
+            token=json.dumps(token),
+            account_identifier=account_identifier,
+            platform=platform_name,
+        )
+
+        if update_entity_token_error:
+            return error_response(
+                context,
+                response,
+                update_entity_token_error.details(),
+                update_entity_token_error.code(),
+            )
+
+        if not update_entity_token_response.success:
+            return response(
+                message=update_entity_token_response.message,
+                success=update_entity_token_response.success,
+            )
+
+        return True
+
+    return update_token
 
 
 class PublisherService(publisher_pb2_grpc.PublisherServicer):
@@ -327,13 +387,26 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
 
             if protocol == "oauth2":
                 if service_type == "email":
+                    from_email, to_email, cc_email, bcc_email, subject, body = (
+                        parse_email_content(get_access_token_response.payload_plaintext)
+                    )
                     email_message = create_email_message(
-                        get_access_token_response.payload_plaintext
+                        from_email, to_email, cc_email, bcc_email, subject, body
                     )
                     oauth2_client = OAuth2Client(
-                        platform_name, json.loads(get_access_token_response.token)
+                        platform_name,
+                        json.loads(get_access_token_response.token),
+                        create_update_token_context(
+                            device_id,
+                            from_email,
+                            platform_name,
+                            response,
+                            context,
+                        ),
                     )
-                    message_response = oauth2_client.send_message("me", email_message)
+                    message_response = oauth2_client.send_message(
+                        from_email, email_message
+                    )
 
             encrypt_payload_response, encrypt_payload_error = encrypt_payload(
                 device_id=device_id, payload_plaintext=message_response

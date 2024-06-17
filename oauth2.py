@@ -118,6 +118,7 @@ class OAuth2Client:
             client_id=self.creds["client_id"],
             client_secret=self.creds["client_secret"],
             redirect_uri=self.creds["redirect_uri"],
+            token_endpoint=self.urls["token_uri"],
             token=token,
             update_token=update_token,
         )
@@ -220,6 +221,6 @@ class OAuth2Client:
             return error_message
 
         response_data = response.json()
-        logger.info("Successfully send message for '%s'", self.platform)
+        logger.info("Successfully sent message for '%s'", self.platform)
 
-        return response_data
+        return f"Successfully sent message to '{self.platform}' on your behalf."
