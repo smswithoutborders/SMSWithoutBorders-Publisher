@@ -123,9 +123,8 @@ def create_update_token_context(
                 containing access and refresh tokens.
         """
         logger.info(
-            "Updating token for device_id: %s, account_identifier: %s, platform: %s",
+            "Updating token for device_id: %s, platform: %s",
             device_id,
-            account_identifier,
             platform_name,
         )
 
