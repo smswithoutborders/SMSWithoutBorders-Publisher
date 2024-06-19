@@ -157,6 +157,10 @@ class OAuth2Client:
             kwargs["code_verifier"] = code_verifier
             self.session.code_challenge_method = "S256"
 
+        if code_verifier:
+            kwargs["code_verifier"] = code_verifier
+            self.session.code_challenge_method = "S256"
+
         params = {**self.default_params, **kwargs}
 
         authorization_url, state = self.session.create_authorization_url(
