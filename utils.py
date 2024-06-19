@@ -1,7 +1,9 @@
 """Utitlies Module."""
 
 import os
+import base64
 import logging
+from email.message import EmailMessage
 
 import grpc
 
@@ -135,3 +137,63 @@ def validate_request_fields(context, request, response, required_fields):
         )
 
     return None
+
+
+def create_email_message(from_email, to_email, subject, body, **kwargs):
+    """
+    Create an encoded email message from individual email components.
+
+    Args:
+        from_email (str): The sender's email address.
+        to_email (str): The recipient's email address.
+        cc_email (str): The CC (carbon copy) email addresses, separated by commas.
+        bcc_email (str): The BCC (blind carbon copy) email addresses, separated by commas.
+        subject (str): The subject of the email.
+        body (str): The body content of the email.
+
+    Returns:
+        dict: A dictionary containing the raw encoded email message, with the key "raw".
+    """
+    cc_email = kwargs.get("cc_email")
+    bcc_email = kwargs.get("bcc_email")
+
+    message = EmailMessage()
+    message.set_content(body)
+
+    message["to"] = to_email
+    message["from"] = from_email
+    message["subject"] = subject
+
+    if cc_email:
+        message["cc"] = cc_email
+    if bcc_email:
+        message["bcc"] = bcc_email
+
+    encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
+    create_message = {"raw": encoded_message}
+
+    return create_message
+
+
+def parse_email_content(content):
+    """
+    Parse the email content string into its components.
+
+    Args:
+        content (str): The email content string in the format
+            'from:to:cc:bcc:subject:body'.
+
+    Returns:
+        tuple: A tuple containing the from_email, to_email,
+            cc_email, bcc_email, subject, and body.
+    """
+    parts = content.split(":")
+
+    from_email = parts[0]
+    to_email = parts[1]
+    cc_email = parts[2]
+    bcc_email = parts[3]
+    subject = parts[4]
+    body = parts[5]
+
+    return from_email, to_email, cc_email, bcc_email, subject, body
