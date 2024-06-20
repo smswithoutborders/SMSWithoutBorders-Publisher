@@ -109,16 +109,14 @@ def list_entity_stored_tokens(long_lived_token):
         raise e
 
 
-def get_entity_access_token_and_decrypt_payload(
-    device_id, payload_ciphertext, platform
-):
+def get_entity_access_token(device_id, platform, account_identifier):
     """
-    Retrieves an entity access token and decrypts a given payload.
+    Retrieves an entity access token.
 
     Args:
-        device_id (str): The ID of the device requesting the token and decryption.
-        payload_ciphertext (bytes): The ciphertext of the payload to be decrypted.
+        device_id (str): The ID of the device.
         platform (str): The platform name.
+        account_identifier (str): The account identifier.
 
     Returns:
         tuple: A tuple containing:
@@ -130,19 +128,54 @@ def get_entity_access_token_and_decrypt_payload(
 
         with channel as conn:
             stub = vault_pb2_grpc.EntityStub(conn)
-            request = vault_pb2.GetEntityAccessTokenAndDecryptPayloadRequest(
+            request = vault_pb2.GetEntityAccessTokenRequest(
                 device_id=device_id,
-                payload_ciphertext=payload_ciphertext,
                 platform=platform,
+                account_identifier=account_identifier,
             )
 
             logger.debug("Requesting access tokens for device_id '%s'...", device_id)
-            response = stub.GetEntityAccessTokenAndDecryptPayload(request)
+            response = stub.GetEntityAccessToken(request)
 
             logger.info(
-                "Successfully retrieved access token and decrypted payload for device id '%s'.",
+                "Successfully retrieved access token for device id '%s'.",
                 device_id,
             )
+            return response, None
+    except grpc.RpcError as e:
+        return None, e
+    except Exception as e:
+        raise e
+
+
+def decrypt_payload(device_id, payload_ciphertext):
+    """
+    Decrypts the payload.
+
+    Args:
+        device_id (str): The ID of the device.
+        payload_ciphertext (bytes): The ciphertext of the payload to be decrypted.
+
+    Returns:
+        tuple: A tuple containing:
+            - server response (object): The vault server response.
+            - error (Exception): The error encountered if the request fails, otherwise None.
+    """
+    try:
+        channel = get_channel()
+
+        with channel as conn:
+            stub = vault_pb2_grpc.EntityStub(conn)
+            request = vault_pb2.DecryptPayloadRequest(
+                device_id=device_id, payload_ciphertext=payload_ciphertext
+            )
+
+            logger.debug(
+                "Sending request to decrypt payload for device_id: %s",
+                device_id,
+            )
+            response = stub.DecryptPayload(request)
+            logger.info("Successfully decrypted payload.")
             return response, None
     except grpc.RpcError as e:
         return None, e

@@ -5,16 +5,6 @@ define log_message
 	@echo "[$(shell date +'%Y-%m-%d %H:%M:%S')] - $1"
 endef
 
-grpc-compile:
-	$(call log_message,INFO - Compiling gRPC protos ...)
-	@$(python) -m grpc_tools.protoc \
-		-I$(PROTO_DIR) \
-		--python_out=. \
-		--pyi_out=. \
-		--grpc_python_out=. \
-		$(PROTO_DIR)/*.proto
-	$(call log_message,INFO - gRPC Compilation complete!)
-
 define download-proto
 	$(call log_message,INFO - Downloading $(PROTO_URL) to $@ ...)
 	@mkdir -p $(dir $@) && \
@@ -26,5 +16,17 @@ $(PROTO_DIR)/%.proto:
 	$(eval PROTO_URL := $(PROTO_URL))
 	$(call download-proto)
 
-vault-proto: PROTO_URL=https://raw.githubusercontent.com/smswithoutborders/SMSwithoutborders-BE/feature/grpc_api/protos/v1/vault.proto
-vault-proto: $(PROTO_DIR)/vault.proto
+vault-proto: 
+	@rm -f "$(PROTO_DIR)/vault.proto"
+	@$(MAKE) PROTO_URL=https://raw.githubusercontent.com/smswithoutborders/SMSwithoutborders-BE/feature/grpc_api/protos/v1/vault.proto \
+	$(PROTO_DIR)/vault.proto
+
+grpc-compile: vault-proto
+	$(call log_message,INFO - Compiling gRPC protos ...)
+	@$(python) -m grpc_tools.protoc \
+		-I$(PROTO_DIR) \
+		--python_out=. \
+		--pyi_out=. \
+		--grpc_python_out=. \
+		$(PROTO_DIR)/*.proto
+	$(call log_message,INFO - gRPC Compilation complete!)
