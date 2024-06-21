@@ -1,24 +1,32 @@
 python=python3
-PROTO_URL=https://raw.githubusercontent.com/smswithoutborders/SMSwithoutborders-BE/feature/grpc_api/protos/v1/vault.proto
 PROTO_DIR=protos/v1
-PROTO_FILE=$(PROTO_DIR)/vault.proto
 
 define log_message
 	@echo "[$(shell date +'%Y-%m-%d %H:%M:%S')] - $1"
 endef
 
-grpc-compile:
+define download-proto
+	$(call log_message,INFO - Downloading $(PROTO_URL) to $@ ...)
+	@mkdir -p $(dir $@) && \
+	curl -o $@ -L $(PROTO_URL)
+	$(call log_message,INFO - $@ downloaded successfully!)
+endef
+
+$(PROTO_DIR)/%.proto:
+	$(eval PROTO_URL := $(PROTO_URL))
+	$(call download-proto)
+
+vault-proto: 
+	@rm -f "$(PROTO_DIR)/vault.proto"
+	@$(MAKE) PROTO_URL=https://raw.githubusercontent.com/smswithoutborders/SMSwithoutborders-BE/feature/grpc_api/protos/v1/vault.proto \
+	$(PROTO_DIR)/vault.proto
+
+grpc-compile: vault-proto
 	$(call log_message,INFO - Compiling gRPC protos ...)
 	@$(python) -m grpc_tools.protoc \
-		-I./protos/v1 \
+		-I$(PROTO_DIR) \
 		--python_out=. \
 		--pyi_out=. \
 		--grpc_python_out=. \
-		./protos/v1/*.proto
+		$(PROTO_DIR)/*.proto
 	$(call log_message,INFO - gRPC Compilation complete!)
-
-download-vault-proto:
-	$(call log_message,INFO - Downloading vault.proto ...)
-	@mkdir -p $(PROTO_DIR)
-	@curl -o $(PROTO_FILE) -L $(PROTO_URL)
-	$(call log_message,INFO - vault.proto downloaded successfully!)
