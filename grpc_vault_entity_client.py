@@ -109,12 +109,15 @@ def list_entity_stored_tokens(long_lived_token):
         raise e
 
 
-def get_entity_access_token(device_id, platform, account_identifier):
+def get_entity_access_token(
+    platform, account_identifier, device_id=None, long_lived_token=None
+):
     """
     Retrieves an entity access token.
 
     Args:
-        device_id (str): The ID of the device.
+        device_id (str, optional): The ID of the device.
+        long_lived_token (str, optional): The long-lived token used to authenticate
         platform (str): The platform name.
         account_identifier (str): The account identifier.
 
@@ -130,16 +133,23 @@ def get_entity_access_token(device_id, platform, account_identifier):
             stub = vault_pb2_grpc.EntityStub(conn)
             request = vault_pb2.GetEntityAccessTokenRequest(
                 device_id=device_id,
+                long_lived_token=long_lived_token,
                 platform=platform,
                 account_identifier=account_identifier,
             )
 
-            logger.debug("Requesting access tokens for device_id '%s'...", device_id)
+            identifier = device_id or long_lived_token
+            logger.debug(
+                "Requesting access tokens for %s '%s'...",
+                "device_id" if device_id else "long_lived_token",
+                identifier,
+            )
             response = stub.GetEntityAccessToken(request)
 
             logger.info(
-                "Successfully retrieved access token for device id '%s'.",
-                device_id,
+                "Successfully retrieved access token for %s '%s'.",
+                "device_id" if device_id else "long_lived_token",
+                identifier,
             )
             return response, None
     except grpc.RpcError as e:
@@ -247,6 +257,40 @@ def update_entity_token(device_id, token, platform, account_identifier):
             logger.debug("Updating token for platform '%s'", platform)
             response = stub.UpdateEntityToken(request)
             logger.info("Successfully updated token for platform '%s'", platform)
+            return response, None
+    except grpc.RpcError as e:
+        return None, e
+    except Exception as e:
+        raise e
+
+
+def delete_entity_token(long_lived_token, platform, account_identifier):
+    """Delete an entity's token in the vault.
+
+    Args:
+        long_lived_token (str): The long-lived token used to authenticate
+        platform (str): The platform name.
+        account_identifier (str): The account identifier.
+
+    Returns:
+        tuple: A tuple containing:
+            - server response (object): The vault server response.
+            - error (Exception): The error encountered if the request fails, otherwise None.
+    """
+    try:
+        channel = get_channel()
+
+        with channel as conn:
+            stub = vault_pb2_grpc.EntityStub(conn)
+            request = vault_pb2.DeleteEntityTokenRequest(
+                long_lived_token=long_lived_token,
+                platform=platform,
+                account_identifier=account_identifier,
+            )
+
+            logger.debug("Deleting token for platform '%s'", platform)
+            response = stub.DeleteEntityToken(request)
+            logger.info("Successfully deleted token for platform '%s'", platform)
             return response, None
     except grpc.RpcError as e:
         return None, e

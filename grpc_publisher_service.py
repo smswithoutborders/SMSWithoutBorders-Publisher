@@ -25,6 +25,7 @@ from grpc_vault_entity_client import (
     decrypt_payload,
     encrypt_payload,
     update_entity_token,
+    delete_entity_token,
 )
 
 SUPPORTED_PLATFORMS = {
@@ -324,6 +325,97 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 _type="UNKNOWN",
             )
 
+    def RevokeAndDeleteOAuth2Token(self, request, context):
+        """Handles revoking and deleting OAuth2 access tokens"""
+
+        response = publisher_pb2.RevokeAndDeleteOAuth2TokenResponse
+
+        def validate_fields():
+            return validate_request_fields(
+                context,
+                request,
+                response,
+                ["long_lived_token", "platform", "account_identifier"],
+            )
+
+        def get_access_token():
+            get_access_token_response, get_access_token_error = get_entity_access_token(
+                platform=request.platform,
+                account_identifier=request.account_identifier,
+                long_lived_token=request.long_lived_token,
+            )
+            if get_access_token_error:
+                return None, error_response(
+                    context,
+                    response,
+                    get_access_token_error.details(),
+                    get_access_token_error.code(),
+                )
+            if not get_access_token_response.success:
+                return None, response(
+                    message=get_access_token_response.message,
+                    success=get_access_token_response.success,
+                )
+            return get_access_token_response.token, None
+
+        def revoke_token(token):
+            oauth2_client = OAuth2Client(request.platform, json.loads(token))
+            revoke_response = oauth2_client.revoke_token()
+            return revoke_response
+
+        def delete_token():
+            delete_token_response, delete_token_error = delete_entity_token(
+                request.long_lived_token, request.platform, request.account_identifier
+            )
+
+            if delete_token_error:
+                return error_response(
+                    context,
+                    response,
+                    delete_token_error.details(),
+                    delete_token_error.code(),
+                )
+
+            if not delete_token_response.success:
+                return response(
+                    message=delete_token_response.message,
+                    success=delete_token_response.success,
+                )
+
+            return response(success=True, message="Successfully deleted token")
+
+        try:
+            invalid_fields_response = validate_fields()
+            if invalid_fields_response:
+                return invalid_fields_response
+
+            check_platform_supported(request.platform.lower(), "oauth2")
+
+            access_token, access_token_error = get_access_token()
+            if access_token_error:
+                return access_token_error
+
+            revoke_token(access_token)
+            return delete_token()
+
+        except NotImplementedError as e:
+            return error_response(
+                context,
+                response,
+                str(e),
+                grpc.StatusCode.UNIMPLEMENTED,
+            )
+
+        except Exception as exc:
+            return error_response(
+                context,
+                response,
+                exc,
+                grpc.StatusCode.INTERNAL,
+                user_msg="Oops! Something went wrong. Please try again later.",
+                _type="UNKNOWN",
+            )
+
     def PublishContent(self, request, context):
         """Handles publishing relaysms payload"""
 
@@ -362,7 +454,9 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
 
         def get_access_token(device_id, platform_name, account_identifier):
             get_access_token_response, get_access_token_error = get_entity_access_token(
-                device_id.hex(), platform_name, account_identifier
+                device_id=device_id.hex(),
+                platform=platform_name,
+                account_identifier=account_identifier,
             )
             if get_access_token_error:
                 return None, error_response(

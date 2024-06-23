@@ -7,6 +7,7 @@ import logging
 import base64
 import json
 from authlib.integrations.requests_client import OAuth2Session
+from authlib.integrations.base_client import OAuthError
 
 from utils import get_configs
 
@@ -17,6 +18,7 @@ OAUTH2_CONFIGURATIONS = {
             "token_uri": "https://oauth2.googleapis.com/token",
             "userinfo_uri": "https://www.googleapis.com/oauth2/v3/userinfo",
             "send_message_uri": "https://www.googleapis.com/gmail/v1/users/{}/messages/send",
+            "revoke_uri": "https://oauth2.googleapis.com/revoke",
         },
         "default_params": {
             "scope": [
@@ -199,6 +201,33 @@ class OAuth2Client:
         userinfo = self.session.get(self.urls["userinfo_uri"]).json()
         logger.info("User information fetched successfully.")
         return userinfo
+
+    def revoke_token(self):
+        """
+        Revoke the given OAuth2 token.
+
+        Returns:
+            dict: The response from the revocation endpoint.
+        """
+        try:
+            refreshed_tokens = self.session.refresh_token(self.urls.get("token_uri"))
+            self.session.token = refreshed_tokens
+            response = self.session.revoke_token(self.urls.get("revoke_uri"))
+
+            if response.status_code != 200:
+                response_data = response.json()
+                error_message = response_data["error"].get("message", "Unknown error")
+                logger.error(
+                    "Failed to revoke tokens for %s: %s", self.platform, response_data
+                )
+                return error_message
+
+            response_data = response.json()
+            logger.info("Token revoked successfully.")
+            return response_data
+        except OAuthError as e:
+            logger.error("Error revoking OAuth2 token: %s", e)
+            return e
 
     def send_message(self, user_id, message):
         """
