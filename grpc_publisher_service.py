@@ -11,10 +11,10 @@ import publisher_pb2
 import publisher_pb2_grpc
 
 from utils import (
-    error_response,
-    validate_request_fields,
     create_email_message,
     parse_email_content,
+    check_platform_supported,
+    get_platform_details_by_shortcode,
 )
 from oauth2 import OAuth2Client
 from relaysms_payload import decode_relay_sms_payload
@@ -27,14 +27,6 @@ from grpc_vault_entity_client import (
     update_entity_token,
     delete_entity_token,
 )
-
-SUPPORTED_PLATFORMS = {
-    "gmail": {
-        "shortcode": "g",
-        "service_type": "email",
-        "protocol": "oauth2",
-    }
-}
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -100,64 +92,64 @@ def create_update_token_context(
     return update_token
 
 
-def check_platform_supported(platform_name, protocol):
+def error_response(context, response, sys_msg, status_code, user_msg=None, _type=None):
     """
-    Check if the given platform is supported for the specified protocol.
+    Create an error response.
 
     Args:
-        platform_name (str): The platform name to check.
-        protocol (str): The protocol to check for the given platform.
-
-    Raises:
-        NotImplementedError: If the platform is not supported or the protocol
-            does not match the supported protocol.
-    """
-    platform_details = SUPPORTED_PLATFORMS.get(platform_name)
-
-    if not platform_details:
-        raise NotImplementedError(
-            f"The platform '{platform_name}' is currently not supported. "
-            "Please contact the developers for more information on when "
-            "this platform will be implemented."
-        )
-
-    expected_protocol = platform_details.get("protocol")
-
-    if protocol != expected_protocol:
-        raise NotImplementedError(
-            f"The protocol '{protocol}' for platform '{platform_name}' "
-            "is currently not supported. "
-            f"Expected protocol: '{expected_protocol}'."
-        )
-
-
-def get_platform_details_by_shortcode(shortcode):
-    """
-    Get the platform details corresponding to the given shortcode.
-
-    Args:
-        shortcode (str): The shortcode to look up.
+        context: gRPC context.
+        response: gRPC response object.
+        sys_msg (str or tuple): System message.
+        status_code: gRPC status code.
+        user_msg (str or tuple): User-friendly message.
+        _type (str): Type of error.
 
     Returns:
-        tuple: A tuple containing (platform_details, error_message).
-            - platform_details (dict): Details of the platform if found.
-            - error_message (str): Error message if platform is not found,
+        An instance of the specified response with the error set.
     """
-    for platform_name, details in SUPPORTED_PLATFORMS.items():
-        if details.get("shortcode") == shortcode:
-            details["name"] = platform_name
-            return details, None
+    if not user_msg:
+        user_msg = sys_msg
 
-    available_platforms = ", ".join(
-        f"'{details['shortcode']}' for {platform_name}"
-        for platform_name, details in SUPPORTED_PLATFORMS.items()
-    )
-    error_message = (
-        f"No platform found for shortcode '{shortcode}'. "
-        f"Available shortcodes: {available_platforms}"
-    )
+    if isinstance(user_msg, tuple):
+        user_msg = "".join(user_msg)
+    if isinstance(sys_msg, tuple):
+        sys_msg = "".join(sys_msg)
 
-    return None, error_message
+    if _type == "UNKNOWN":
+        logger.exception(sys_msg, exc_info=True)
+    else:
+        logger.error(sys_msg)
+
+    context.set_details(user_msg)
+    context.set_code(status_code)
+
+    return response()
+
+
+def validate_request_fields(context, request, response, required_fields):
+    """
+    Validates the fields in the gRPC request.
+
+    Args:
+        context: gRPC context.
+        request: gRPC request object.
+        response: gRPC response object.
+        required_fields (list): List of required fields.
+
+    Returns:
+        None or response: None if no missing fields,
+            error response otherwise.
+    """
+    missing_fields = [field for field in required_fields if not getattr(request, field)]
+    if missing_fields:
+        return error_response(
+            context,
+            response,
+            f"Missing required fields: {', '.join(missing_fields)}",
+            grpc.StatusCode.INVALID_ARGUMENT,
+        )
+
+    return None
 
 
 class PublisherService(publisher_pb2_grpc.PublisherServicer):

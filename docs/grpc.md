@@ -74,6 +74,19 @@ python3 grpc_server.py
 This method generates an OAuth2 authorization URL that the client can use to
 start the OAuth2 flow.
 
+> [!NOTE]
+>
+> #### Supported Platforms
+>
+> The list of supported platforms is available in
+> [supported_platforms.json](/supported_platforms.json).
+>
+> | Platform Name | Shortcode | Service Type | Protocol |
+> | ------------- | --------- | ------------ | -------- |
+> | Gmail         | g         | Email        | OAuth2   |
+
+---
+
 ##### Request
 
 > `request` **GetOAuth2AuthorizationUrlRequest**
@@ -170,8 +183,7 @@ tokens in the vault.
 > [!NOTE]
 >
 > Ensure you have generated your authorization URL before using this function.
-> For Gmail and Twitter offline access, use the following recommended
-> parameters:
+> Use the following recommended parameters:
 >
 > ##### Gmail:
 >
