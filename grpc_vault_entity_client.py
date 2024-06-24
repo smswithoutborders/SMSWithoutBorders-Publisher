@@ -14,16 +14,24 @@ logging.basicConfig(
 logger = logging.getLogger("[Vault gRPC Client]")
 
 
-def get_channel():
+def get_channel(internal=True):
     """Get the appropriate gRPC channel based on the mode.
+
+    Args:
+        internal (bool, optional): Flag indicating whether to use internal ports.
+            Defaults to True.
 
     Returns:
         grpc.Channel: The gRPC channel.
     """
     mode = get_configs("MODE", default_value="development")
     hostname = get_configs("VAULT_GRPC_HOST")
-    port = get_configs("VAULT_GRPC_PORT")
-    secure_port = get_configs("VAULT_GRPC_SSL_PORT")
+    if internal:
+        port = get_configs("VAULT_GRPC_INTERNAL_PORT")
+        secure_port = get_configs("VAULT_GRPC_INTERNAL_SSL_PORT")
+    else:
+        port = get_configs("VAULT_GRPC_PORT")
+        secure_port = get_configs("VAULT_GRPC_SSL_PORT")
 
     if mode == "production":
         logger.info("Connecting to vault gRPC server at %s:%s", hostname, secure_port)
@@ -54,7 +62,7 @@ def store_entity_token(long_lived_token, token, platform, account_identifier):
         channel = get_channel()
 
         with channel as conn:
-            stub = vault_pb2_grpc.EntityStub(conn)
+            stub = vault_pb2_grpc.EntityInternalStub(conn)
             request = vault_pb2.StoreEntityTokenRequest(
                 long_lived_token=long_lived_token,
                 token=token,
@@ -86,7 +94,7 @@ def list_entity_stored_tokens(long_lived_token):
                 otherwise None.
     """
     try:
-        channel = get_channel()
+        channel = get_channel(internal=False)
 
         with channel as conn:
             stub = vault_pb2_grpc.EntityStub(conn)
@@ -130,7 +138,7 @@ def get_entity_access_token(
         channel = get_channel()
 
         with channel as conn:
-            stub = vault_pb2_grpc.EntityStub(conn)
+            stub = vault_pb2_grpc.EntityInternalStub(conn)
             request = vault_pb2.GetEntityAccessTokenRequest(
                 device_id=device_id,
                 long_lived_token=long_lived_token,
@@ -175,7 +183,7 @@ def decrypt_payload(device_id, payload_ciphertext):
         channel = get_channel()
 
         with channel as conn:
-            stub = vault_pb2_grpc.EntityStub(conn)
+            stub = vault_pb2_grpc.EntityInternalStub(conn)
             request = vault_pb2.DecryptPayloadRequest(
                 device_id=device_id, payload_ciphertext=payload_ciphertext
             )
@@ -210,7 +218,7 @@ def encrypt_payload(device_id, payload_plaintext):
         channel = get_channel()
 
         with channel as conn:
-            stub = vault_pb2_grpc.EntityStub(conn)
+            stub = vault_pb2_grpc.EntityInternalStub(conn)
             request = vault_pb2.EncryptPayloadRequest(
                 device_id=device_id, payload_plaintext=payload_plaintext
             )
@@ -246,7 +254,7 @@ def update_entity_token(device_id, token, platform, account_identifier):
         channel = get_channel()
 
         with channel as conn:
-            stub = vault_pb2_grpc.EntityStub(conn)
+            stub = vault_pb2_grpc.EntityInternalStub(conn)
             request = vault_pb2.UpdateEntityTokenRequest(
                 device_id=device_id,
                 token=token,
@@ -281,7 +289,7 @@ def delete_entity_token(long_lived_token, platform, account_identifier):
         channel = get_channel()
 
         with channel as conn:
-            stub = vault_pb2_grpc.EntityStub(conn)
+            stub = vault_pb2_grpc.EntityInternalStub(conn)
             request = vault_pb2.DeleteEntityTokenRequest(
                 long_lived_token=long_lived_token,
                 platform=platform,
