@@ -9,6 +9,7 @@
   - [OAuth2](#oauth2)
     - [Get Authorization URL](#get-authorization-url)
     - [Exchange OAuth2 Code and Store Token](#exchange-oauth2-code-and-store-token-in-vault)
+    - [Revoke And Delete OAuth2 Token](#revoke-and-delete-oauth2-token)
   - [Publish Content](#publish-content)
 
 ## Download Protocol Buffer File
@@ -283,6 +284,90 @@ localhost:6000 publisher.v1.Publisher/ExchangeOAuth2CodeAndStore <payload.json
 	"success": true
 }
 ```
+
+---
+
+#### Revoke And Delete OAuth2 Token
+
+This method handles revoking and deleting an OAuth2 token from the vault.
+
+---
+
+##### Request
+
+> `request` **RevokeAndDeleteOAuth2TokenRequest**
+
+> [!IMPORTANT]
+>
+> The table lists only the required fields for this step. Other fields will be
+> ignored.
+
+| Field              | Type   | Description                                              |
+| ------------------ | ------ | -------------------------------------------------------- |
+| long_lived_token   | string | Long-lived token for authentication.                     |
+| platform           | string | Platform identifier for which the code is exchanged.     |
+| account_identifier | string | The identifier of the account associated with the token. |
+
+---
+
+##### Response
+
+> `response` **RevokeAndDeleteOAuth2TokenResponse**
+
+> [!IMPORTANT]
+>
+> The table lists only the fields that are populated for this step. Other fields
+> may be empty, omitted, or false.
+
+| Field   | Type   | Description                                |
+| ------- | ------ | ------------------------------------------ |
+| message | string | A response message from the server.        |
+| success | bool   | Indicates if the operation was successful. |
+
+---
+
+##### Method
+
+> `method` **RevokeAndDeleteOAuth2Token**
+
+> [!TIP]
+>
+> The examples below use
+> [grpcurl](https://github.com/fullstorydev/grpcurl#grpcurl).
+
+**Sample request**
+
+```bash
+grpcurl -plaintext \
+    -d @ \
+    -proto protos/v1/publisher.proto \
+localhost:6000 publisher.v1.Publisher/RevokeAndDeleteOAuth2Token <payload.json
+```
+
+---
+
+**Sample payload.json**
+
+```json
+{
+	"long_lived_token": "long_lived_token",
+	"platform": "gmail",
+	"account_identifier": "sample@mail.com"
+}
+```
+
+---
+
+**Sample response**
+
+```json
+{
+	"message": "Successfully deleted token",
+	"success": true
+}
+```
+
+---
 
 ### Publish Content
 
