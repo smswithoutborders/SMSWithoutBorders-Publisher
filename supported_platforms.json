@@ -1,0 +1,7 @@
+{
+    "gmail": {
+        "shortcode": "g",
+        "service_type": "email",
+        "protocol": "oauth2"
+    }
+}

@@ -3,9 +3,10 @@
 import os
 import base64
 import logging
+import json
 from email.message import EmailMessage
 
-import grpc
+SUPPORTED_PLATFORM_FILE_PATH = "supported_platforms.json"
 
 logging.basicConfig(
     level=logging.INFO, format=("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -79,64 +80,89 @@ def set_configs(config_name: str, config_value: str) -> None:
         raise
 
 
-def error_response(context, response, sys_msg, status_code, user_msg=None, _type=None):
+def load_platforms_from_file(file_path):
     """
-    Create an error response.
+    Load platform data from a JSON file.
 
     Args:
-        context: gRPC context.
-        response: gRPC response object.
-        sys_msg (str or tuple): System message.
-        status_code: gRPC status code.
-        user_msg (str or tuple): User-friendly message.
-        _type (str): Type of error.
+        file_path (str): The path to the JSON file containing platform data.
 
     Returns:
-        An instance of the specified response with the error set.
+        dict: A dictionary containing platform data.
     """
-    if not user_msg:
-        user_msg = sys_msg
-
-    if isinstance(user_msg, tuple):
-        user_msg = "".join(user_msg)
-    if isinstance(sys_msg, tuple):
-        sys_msg = "".join(sys_msg)
-
-    if _type == "UNKNOWN":
-        logger.exception(sys_msg, exc_info=True)
-    else:
-        logger.error(sys_msg)
-
-    context.set_details(user_msg)
-    context.set_code(status_code)
-
-    return response()
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            platforms_data = json.load(file)
+        return platforms_data
+    except FileNotFoundError:
+        logger.error("Error: File '%s' not found.", file_path)
+        return {}
+    except json.JSONDecodeError as e:
+        logger.error("Error decoding JSON from '%s': %s", file_path, e)
+        return {}
 
 
-def validate_request_fields(context, request, response, required_fields):
+def check_platform_supported(platform_name, protocol):
     """
-    Validates the fields in the gRPC request.
+    Check if the given platform is supported for the specified protocol.
 
     Args:
-        context: gRPC context.
-        request: gRPC request object.
-        response: gRPC response object.
-        required_fields (list): List of required fields.
+        platform_name (str): The platform name to check.
+        protocol (str): The protocol to check for the given platform.
 
-    Returns:
-        None or response: None if no missing fields,
-            error response otherwise.
+    Raises:
+        NotImplementedError: If the platform is not supported or the protocol
+            does not match the supported protocol.
     """
-    missing_fields = [field for field in required_fields if not getattr(request, field)]
-    if missing_fields:
-        return error_response(
-            context,
-            response,
-            f"Missing required fields: {', '.join(missing_fields)}",
-            grpc.StatusCode.INVALID_ARGUMENT,
+    platform_details = load_platforms_from_file(SUPPORTED_PLATFORM_FILE_PATH)
+    supported_platform = platform_details.get(platform_name)
+
+    if not supported_platform:
+        raise NotImplementedError(
+            f"The platform '{platform_name}' is currently not supported. "
+            "Please contact the developers for more information on when "
+            "this platform will be implemented."
         )
 
-    return None
+    expected_protocol = supported_platform.get("protocol")
+
+    if protocol != expected_protocol:
+        raise NotImplementedError(
+            f"The protocol '{protocol}' for platform '{platform_name}' "
+            "is currently not supported. "
+            f"Expected protocol: '{expected_protocol}'."
+        )
+
+
+def get_platform_details_by_shortcode(shortcode):
+    """
+    Get the platform details corresponding to the given shortcode.
+
+    Args:
+        shortcode (str): The shortcode to look up.
+
+    Returns:
+        tuple: A tuple containing (platform_details, error_message).
+            - platform_details (dict): Details of the platform if found.
+            - error_message (str): Error message if platform is not found,
+    """
+    platform_details = load_platforms_from_file(SUPPORTED_PLATFORM_FILE_PATH)
+
+    for platform_name, details in platform_details.items():
+        if details.get("shortcode") == shortcode:
+            details["name"] = platform_name
+            return details, None
+
+    available_platforms = ", ".join(
+        f"'{details['shortcode']}' for {platform_name}"
+        for platform_name, details in platform_details.items()
+    )
+    error_message = (
+        f"No platform found for shortcode '{shortcode}'. "
+        f"Available shortcodes: {available_platforms}"
+    )
+
+    return None, error_message
 
 
 def create_email_message(from_email, to_email, subject, body, **kwargs):
