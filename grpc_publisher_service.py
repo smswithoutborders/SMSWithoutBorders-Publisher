@@ -484,7 +484,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
 
         def encrypt_message(device_id, plaintext):
             encrypt_payload_response, encrypt_payload_error = encrypt_payload(
-                device_id, plaintext
+                device_id.hex(), plaintext
             )
             if encrypt_payload_error:
                 return None, error_response(
@@ -516,7 +516,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 platform_name,
                 json.loads(token),
                 create_update_token_context(
-                    device_id, from_email, platform_name, response, context
+                    device_id.hex(), from_email, platform_name, response, context
                 ),
             )
             return oauth2_client.send_message(from_email, email_message)
@@ -555,21 +555,21 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 and platform_info["service_type"] == "email"
             ):
                 message_response = handle_oauth2_email(
-                    device_id.hex(),
+                    device_id,
                     platform_info["name"],
                     decrypted_content,
                     access_token,
                 )
 
-            # payload_ciphertext, encrypt_payload_error = encrypt_message(
-            #     device_id, message_response
-            # )
-            # if encrypt_payload_error:
-            #     return encrypt_payload_error
+            payload_ciphertext, encrypt_payload_error = encrypt_message(
+                device_id, message_response
+            )
+            if encrypt_payload_error:
+                return encrypt_payload_error
 
             return response(
                 message=f"Successfully published {platform_info['name']} message",
-                publisher_response=message_response,
+                publisher_response=payload_ciphertext,
                 success=True,
             )
 
