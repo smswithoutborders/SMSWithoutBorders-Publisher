@@ -3,5 +3,10 @@
         "shortcode": "g",
         "service_type": "email",
         "protocol": "oauth2"
+    },
+    "twitter": {
+        "shortcode": "t",
+        "service_type": "text",
+        "protocol": "oauth2"
     }
 }

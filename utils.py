@@ -201,25 +201,50 @@ def create_email_message(from_email, to_email, subject, body, **kwargs):
     return create_message
 
 
-def parse_email_content(content):
+def parse_content(service_type, content):
     """
-    Parse the email content string into its components.
+    Parse the content string into its components based on the service_type.
 
     Args:
-        content (str): The email content string in the format
-            'from:to:cc:bcc:subject:body'.
+        service_type (str): The type of the platform (email, text, message).
+        content (str): The content string in the format specific to the platform.
 
     Returns:
-        tuple: A tuple containing the from_email, to_email,
-            cc_email, bcc_email, subject, and body.
+        tuple: A tuple containing:
+            - parts (tuple): A tuple with the parsed components based on the
+                service_type.
+            - error (str): An error message if parsing fails, otherwise None.
     """
-    parts = content.split(":")
+    if service_type == "email":
+        # Email format: 'from:to:cc:bcc:subject:body'
+        parts = content.split(":")
+        if len(parts) != 6:
+            return None, "Email content must have exactly 6 parts."
+        from_email = parts[0]
+        to_email = parts[1]
+        cc_email = parts[2]
+        bcc_email = parts[3]
+        subject = parts[4]
+        body = parts[5]
+        return (from_email, to_email, cc_email, bcc_email, subject, body), None
 
-    from_email = parts[0]
-    to_email = parts[1]
-    cc_email = parts[2]
-    bcc_email = parts[3]
-    subject = parts[4]
-    body = parts[5]
+    if service_type == "text":
+        # Text format: 'sender:text'
+        parts = content.split(":")
+        if len(parts) != 2:
+            return None, "Text content must have exactly 2 parts."
+        sender = parts[0]
+        text = parts[1]
+        return (sender, text), None
 
-    return from_email, to_email, cc_email, bcc_email, subject, body
+    if service_type == "message":
+        # Message format: 'sender:receiver:message'
+        parts = content.split(":")
+        if len(parts) != 3:
+            return None, "Message content must have exactly 3 parts."
+        sender = parts[0]
+        receiver = parts[1]
+        message = parts[2]
+        return (sender, receiver, message), None
+
+    return None, "Invalid service_type. Must be 'email', 'text', or 'message'."

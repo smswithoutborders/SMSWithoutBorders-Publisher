@@ -81,9 +81,10 @@ start the OAuth2 flow.
 > The list of supported platforms is available in
 > [supported_platforms.json](/supported_platforms.json).
 >
-> | Platform Name | Shortcode | Service Type | Protocol |
-> | ------------- | --------- | ------------ | -------- |
-> | Gmail         | g         | Email        | OAuth2   |
+> | Platform Name | Shortcode | Service Type | Protocol | PKCE     |
+> | ------------- | --------- | ------------ | -------- | -------- |
+> | Gmail         | g         | Email        | OAuth2   | Optional |
+> | Twitter       | t         | Text         | OAuth2   | Required |
 
 ---
 
@@ -205,6 +206,27 @@ tokens in the vault.
 > `your_application_redirect_uri` with your actual client ID and redirect URI.
 >
 > ##### Twitter:
+>
+> - **scope:**
+>   - `tweet.write`
+>   - `users.read`
+>   - `tweet.read`
+>   - `offline.access`
+> - **code_challenge:** `generated code challenge`
+> - **code_challenge_method:** `S256`
+>
+> A well-generated Gmail authorization URL will look something like this:
+>
+> ```bash
+> https://twitter.com/i/oauth2/authorize?response_type=code&client_id=your_application_client_id&redirect_uri=your_application_redirect_uri&scope=tweet.write+users.read+tweet.read+offline.access&state=kr5sa8LtHL1mkjq7oOtWlH06Rb0dQM&code_challenge=code_challenge&code_challenge_method=S256
+> ```
+>
+> Ensure to replace `your_application_client_id` and
+> `your_application_redirect_uri` with your actual client ID and redirect URI.
+> Replace `code_challenge` with the generated code challenge, or utilize the
+> `autogenerate_code_verifier` field in the publisher's
+> [Get Authorization URL](#get-authorization-url) function to assist in
+> generating it.
 
 > [!TIP]
 >

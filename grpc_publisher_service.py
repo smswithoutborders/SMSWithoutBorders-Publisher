@@ -12,7 +12,7 @@ import publisher_pb2_grpc
 
 from utils import (
     create_email_message,
-    parse_email_content,
+    parse_content,
     check_platform_supported,
     get_platform_details_by_shortcode,
 )
@@ -254,7 +254,9 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             store_response, store_error = store_entity_token(
                 long_lived_token=request.long_lived_token,
                 platform=request.platform,
-                account_identifier=profile.get("email") or profile.get("username"),
+                account_identifier=profile.get("email")
+                or profile.get("username")
+                or profile.get("data", {}).get("username"),
                 token=json.dumps(token),
             )
 
@@ -500,10 +502,18 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 )
             return encrypt_payload_response.payload_ciphertext, None
 
-        def handle_oauth2_email(device_id, platform_name, payload, token):
-            from_email, to_email, cc_email, bcc_email, subject, body = (
-                parse_email_content(payload)
-            )
+        def handle_oauth2_email(device_id, platform_name, service_type, payload, token):
+            content_parts, parse_error = parse_content(service_type, payload)
+
+            if parse_error:
+                return error_response(
+                    context,
+                    response,
+                    parse_error,
+                    grpc.StatusCode.INVALID_ARGUMENT,
+                )
+
+            from_email, to_email, cc_email, bcc_email, subject, body = content_parts
             email_message = create_email_message(
                 from_email,
                 to_email,
@@ -519,7 +529,28 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     device_id.hex(), from_email, platform_name, response, context
                 ),
             )
-            return oauth2_client.send_message(from_email, email_message)
+            return oauth2_client.send_message(email_message, from_email)
+
+        def handle_oauth2_text(device_id, platform_name, service_type, payload, token):
+            content_parts, parse_error = parse_content(service_type, payload)
+
+            if parse_error:
+                return error_response(
+                    context,
+                    response,
+                    parse_error,
+                    grpc.StatusCode.INVALID_ARGUMENT,
+                )
+
+            sender, text = content_parts
+            oauth2_client = OAuth2Client(
+                platform_name,
+                json.loads(token),
+                create_update_token_context(
+                    device_id.hex(), sender, platform_name, response, context
+                ),
+            )
+            return oauth2_client.send_message(text)
 
         try:
             invalid_fields_response = validate_fields()
@@ -550,13 +581,19 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 return access_token_error
 
             message_response = None
-            if (
-                platform_info["protocol"] == "oauth2"
-                and platform_info["service_type"] == "email"
-            ):
+            if platform_info["service_type"] == "email":
                 message_response = handle_oauth2_email(
                     device_id,
                     platform_info["name"],
+                    platform_info["service_type"],
+                    decrypted_content,
+                    access_token,
+                )
+            elif platform_info["service_type"] == "text":
+                message_response = handle_oauth2_text(
+                    device_id,
+                    platform_info["name"],
+                    platform_info["service_type"],
                     decrypted_content,
                     access_token,
                 )

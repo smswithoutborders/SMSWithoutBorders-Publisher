@@ -1,35 +1,127 @@
-# SMSWithoutBorders Publisher
+# SMSWithoutBorders Publisher Documentation
 
-### Documentation
+## Requirements
 
-1. [gRPC](docs/grpc.md)
+- **Python**: Version >=
+  [3.8.10](https://www.python.org/downloads/release/python-3810/)
+- **Python Virtual Environments**:
+  [Documentation](https://docs.python.org/3/tutorial/venv.html)
 
-### Function
+## Dependencies
 
-### Methodology
+### On Ubuntu
 
-#### Platform letters
+Install the necessary system packages:
 
-`Gmail = g`
-
-`Twitter = t`
-
-#### Messaging template
-
-Messages should be structured to the following format:
-
-```
-{platform letter}:{<message content = this varies with platforms>}
+```bash
+sudo apt install build-essential python3-dev
 ```
 
-##### Messaging template - Emails
+## Installation
 
+1. **Create a virtual environment:**
+
+   ```bash
+   python3 -m venv venv
+   ```
+
+2. **Activate the virtual environment:**
+
+   ```bash
+   . venv/bin/activate
+   ```
+
+3. **Install the required Python packages:**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Configuration
+
+### Gmail
+
+1. Obtain your credentials from the
+   [Google Cloud Console](https://console.cloud.google.com/).
+2. Set the `GMAIL_CREDENTIALS` environment variable to the path of your
+   credentials file:
+
+   ```bash
+   export GMAIL_CREDENTIALS=path/to/gmail_credentials.json
+   ```
+
+   **Sample `gmail_credentials.json`**
+
+   ```json
+   {
+   	"web": {
+   		"client_id": "",
+   		"project_id": "",
+   		"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+   		"token_uri": "https://oauth2.googleapis.com/token",
+   		"auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+   		"client_secret": "",
+   		"redirect_uris": ["http://localhost/callback/"],
+   		"javascript_origins": ["http://localhost"]
+   	}
+   }
+   ```
+
+   > Only the first item in the `redirect_uris` is used for the OAuth2 flow.
+
+### Twitter
+
+1. Obtain your credentials from the
+   [Twitter Developer Portal](https://developer.twitter.com/en/portal/).
+2. Set the `TWITTER_CREDENTIALS` environment variable to the path of your
+   credentials file:
+
+   ```bash
+   export TWITTER_CREDENTIALS=path/to/twitter_credentials.json
+   ```
+
+   **Sample `twitter_credentials.json`**
+
+   ```json
+   {
+   	"client_id": "",
+   	"client_secret": "",
+   	"redirect_uris": ["http://localhost/callback/"]
+   }
+   ```
+
+   > Only the first item in the `redirect_uris` is used for the OAuth2 flow.
+
+## Usage
+
+### Download and Compile Protocol Buffers
+
+```bash
+make grpc-compile
 ```
-{platform letter}:{to}:{cc}:{bcc}:{subject}:{body}
+
+### Start gRPC Server
+
+Set the environment variables and start the server in one command:
+
+```bash
+GMAIL_CREDENTIALS=path/to/gmail_credentials.json \
+TWITTER_CREDENTIALS=path/to/twitter_credentials.json \
+GRPC_HOST=localhost \
+GRPC_PORT=8000 \
+GRPC_SSL_PORT=8001 \
+VAULT_GRPC_HOST=localhost \
+VAULT_GRPC_PORT=6000 \
+VAULT_GRPC_SSL_PORT=6001 \
+VAULT_GRPC_INTERNAL_PORT=6099 \
+VAULT_GRPC_INTERNAL_SSL_PORT=6098 \
+SSL_CERTIFICATE=path/to/certificate \
+SSL_KEY=path/to/key \
+python3 grpc_server.py
 ```
 
-### Installation
+### References
 
-### Adding platforms
-
-#### Platform required template
+1. [gRPC Documentation](docs/grpc.md)
+2. [Specifications Documentation](/docs/specification.md)
+   - [Payload Format](/docs//specification.md#payload-format)
