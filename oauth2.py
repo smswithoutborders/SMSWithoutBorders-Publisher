@@ -5,7 +5,10 @@ OAuth2 Client Module.
 import os
 import logging
 import base64
+import math
+import textwrap
 import json
+import datetime
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.integrations.base_client import OAuthError
 
@@ -29,6 +32,18 @@ OAUTH2_CONFIGURATIONS = {
             ],
             "access_type": "offline",
             "prompt": "consent",
+        },
+    },
+    "twitter": {
+        "urls": {
+            "auth_uri": "https://twitter.com/i/oauth2/authorize",
+            "token_uri": "https://api.twitter.com/2/oauth2/token",
+            "userinfo_uri": "https://api.twitter.com/2/users/me",
+            "send_message_uri": "https://api.twitter.com/2/tweets",
+            "revoke_uri": "https://api.twitter.com/2/oauth2/revoke",
+        },
+        "default_params": {
+            "scope": ["tweet.write", "users.read", "tweet.read", "offline.access"]
         },
     },
 }
@@ -212,15 +227,16 @@ class OAuth2Client:
         try:
             refreshed_tokens = self.session.refresh_token(self.urls.get("token_uri"))
             self.session.token = refreshed_tokens
-            response = self.session.revoke_token(self.urls.get("revoke_uri"))
+            response = self.session.revoke_token(
+                self.urls.get("revoke_uri"), token_type_hint="refresh_token"
+            )
 
-            if response.status_code != 200:
-                response_data = response.json()
-                error_message = response_data["error"].get("message", "Unknown error")
+            if not response.ok:
+                response_data = response.text
                 logger.error(
                     "Failed to revoke tokens for %s: %s", self.platform, response_data
                 )
-                return error_message
+                return response_data
 
             response_data = response.json()
             logger.info("Token revoked successfully.")
@@ -229,31 +245,81 @@ class OAuth2Client:
             logger.error("Error revoking OAuth2 token: %s", e)
             return e
 
-    def send_message(self, user_id, message):
+    def send_message(self, message, user_id=None):
         """
         Send a message.
 
         Args:
-            user_id (str): The ID of the user to send the message on behalf of.
             message (dict): The message payload to be sent. The payload should be a
                 properly formatted dictionary according to the platform's specifications.
+            user_id (str, optional): The ID of the user to send the message on behalf of.
 
         Returns:
             dict: The response from the platform.
         """
-        logger.debug("Sending message on behalf of user_id: %s", user_id)
-        url = self.urls["send_message_uri"].format(user_id)
+        url = (
+            self.urls["send_message_uri"].format(user_id)
+            if user_id
+            else self.urls["send_message_uri"]
+        )
+
+        if self.platform == "twitter":
+            return self._send_twitter_message(message, url)
+
+        return self._send_generic_message(message, url)
+
+    def _send_twitter_message(self, message, url):
+        def chunk_tweet(tweet, max_length=280):
+            tweet_length = len(tweet)
+            if tweet_length <= max_length:
+                return [tweet]
+            tweet_threads_required = math.ceil(tweet_length / max_length)
+            tweet_per_thread = math.ceil(tweet_length / tweet_threads_required)
+            return textwrap.wrap(tweet, tweet_per_thread, break_long_words=False)
+
+        def create_tweet_payload(text, in_reply_to_tweet_id=None):
+            payload = {"text": text}
+            if in_reply_to_tweet_id is not None:
+                payload["reply"] = {"in_reply_to_tweet_id": str(in_reply_to_tweet_id)}
+            return payload
+
+        tweets = chunk_tweet(message)
+        tweet_id = None
+
+        for chunk in tweets:
+            payload = create_tweet_payload(chunk, tweet_id)
+            response = self.session.post(url, json=payload)
+
+            if not response.ok:
+                response_data = response.text
+                logger.error(
+                    "Failed to send message for %s: %s",
+                    self.platform,
+                    response_data,
+                )
+                return response_data
+
+            tweet_id = response.json()["data"]["id"]
+
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        logger.info(
+            "Successfully sent message for '%s' at %s", self.platform, timestamp
+        )
+        return f"Successfully sent message to '{self.platform}' on your behalf at {timestamp}."
+
+    def _send_generic_message(self, message, url):
         response = self.session.post(url, json=message)
 
-        if response.status_code != 200:
-            response_data = response.json()
-            error_message = response_data["error"].get("message", "Unknown error")
+        if not response.ok:
+            response_data = response.text
             logger.error(
                 "Failed to send message for %s: %s", self.platform, response_data
             )
-            return error_message
+            return response_data
 
         response_data = response.json()
-        logger.info("Successfully sent message for '%s'", self.platform)
-
-        return f"Successfully sent message to '{self.platform}' on your behalf."
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        logger.info(
+            "Successfully sent message for '%s' at %s", self.platform, timestamp
+        )
+        return f"Successfully sent message to '{self.platform}' on your behalf at {timestamp}."
