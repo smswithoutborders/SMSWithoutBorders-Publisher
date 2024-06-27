@@ -254,7 +254,9 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             store_response, store_error = store_entity_token(
                 long_lived_token=request.long_lived_token,
                 platform=request.platform,
-                account_identifier=profile.get("email") or profile.get("username"),
+                account_identifier=profile.get("email")
+                or profile.get("username")
+                or profile.get("data", {}).get("username"),
                 token=json.dumps(token),
             )
 
