@@ -124,4 +124,5 @@ python3 grpc_server.py
 
 1. [gRPC Documentation](docs/grpc.md)
 2. [Specifications Documentation](/docs/specification.md)
+   - [Content Format](/docs/specification.md#content-format)
    - [Payload Format](/docs//specification.md#payload-format)
