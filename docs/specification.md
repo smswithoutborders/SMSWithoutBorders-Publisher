@@ -1,5 +1,25 @@
 # Publisher Specifications Documentation
 
+## Table of Contents
+
+- [Content Format](#content-format)
+- [Payload Format](#payload-format)
+
+## Content Format
+
+The Publisher supports three formats of content:
+
+1. **Email format**: `from:to:cc:bcc:subject:body`
+
+   - Example: Gmail
+
+2. **Text format**: `sender:text`
+
+   - Example: Twitter
+
+3. **Message format**: `sender:receiver:message`
+   - Example: Telegram
+
 ## Payload Format
 
 The payload consists of three parts:
