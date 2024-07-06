@@ -6,7 +6,7 @@ import logging
 import json
 from email.message import EmailMessage
 
-SUPPORTED_PLATFORM_FILE_PATH = "supported_platforms.json"
+SUPPORTED_PLATFORM_FILE_PATH = "platforms.json"
 
 logging.basicConfig(
     level=logging.INFO, format=("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -115,7 +115,14 @@ def check_platform_supported(platform_name, protocol):
             does not match the supported protocol.
     """
     platform_details = load_platforms_from_file(SUPPORTED_PLATFORM_FILE_PATH)
-    supported_platform = platform_details.get(platform_name)
+    supported_platform = next(
+        (
+            platform
+            for platform in platform_details
+            if platform["name"] == platform_name
+        ),
+        None,
+    )
 
     if not supported_platform:
         raise NotImplementedError(
@@ -148,14 +155,13 @@ def get_platform_details_by_shortcode(shortcode):
     """
     platform_details = load_platforms_from_file(SUPPORTED_PLATFORM_FILE_PATH)
 
-    for platform_name, details in platform_details.items():
-        if details.get("shortcode") == shortcode:
-            details["name"] = platform_name
-            return details, None
+    for platform in platform_details:
+        if platform.get("shortcode") == shortcode:
+            return platform, None
 
     available_platforms = ", ".join(
-        f"'{details['shortcode']}' for {platform_name}"
-        for platform_name, details in platform_details.items()
+        f"'{platform['shortcode']}' for {platform['name']}"
+        for platform in platform_details
     )
     error_message = (
         f"No platform found for shortcode '{shortcode}'. "
