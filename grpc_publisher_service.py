@@ -185,7 +185,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 ),
             }
 
-            authorization_url, state, code_verifier = (
+            authorization_url, state, code_verifier, client_id, scope, redirect_uri = (
                 oauth2_client.get_authorization_url(**extra_params)
             )
 
@@ -193,6 +193,9 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 authorization_url=authorization_url,
                 state=state,
                 code_verifier=code_verifier,
+                client_id=client_id,
+                scope=scope,
+                redirect_url=redirect_uri,
                 message="Successfully generated authorization url",
             )
 
@@ -244,11 +247,32 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
         def fetch_token_and_profile():
             oauth2_client = OAuth2Client(request.platform)
             extra_params = {"code_verifier": getattr(request, "code_verifier") or None}
-            token = oauth2_client.fetch_token(
+            token, scope = oauth2_client.fetch_token(
                 code=request.authorization_code, **extra_params
             )
+
+            if not token.get("refresh_token"):
+                return None, error_response(
+                    context,
+                    response,
+                    "invalid token: No refresh token present.",
+                    grpc.StatusCode.INVALID_ARGUMENT,
+                )
+
+            fetched_scopes = set(token.get("scope", "").split())
+            expected_scopes = set(scope)
+
+            if not expected_scopes.issubset(fetched_scopes):
+                return None, error_response(
+                    context,
+                    response,
+                    "invalid token: Scopes do not match. Expected: "
+                    f"{expected_scopes}, Received: {fetched_scopes}",
+                    grpc.StatusCode.INVALID_ARGUMENT,
+                )
+
             profile = oauth2_client.fetch_userinfo()
-            return token, profile
+            return (token, profile), None
 
         def store_token(token, profile):
             store_response, store_error = store_entity_token(
@@ -289,8 +313,12 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             if token_list_error:
                 return token_list_error
 
-            token, profile = fetch_token_and_profile()
-            return store_token(token, profile)
+            fetched_data, fetch_token_error = fetch_token_and_profile()
+
+            if fetch_token_error:
+                return fetch_token_error
+
+            return store_token(*fetched_data)
 
         except OAuthError as e:
             return error_response(

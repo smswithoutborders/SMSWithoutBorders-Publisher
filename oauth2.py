@@ -164,8 +164,15 @@ class OAuth2Client:
             **kwargs: Additional parameters to include in the authorization URL.
 
         Returns:
-            tuple: A tuple containing the authorization URL (str), state (str), and
-                optionally generated code verifier (str).
+            tuple: A tuple containing:
+                - authorization_url (str): The generated authorization URL.
+                - state (str): The state parameter for CSRF protection.
+                - code_verifier (str or None): The generated code verifier for PKCE if
+                applicable, otherwise None.
+                - client_id (str): The client ID for the OAuth2 application.
+                - scope (str): The scope of the authorization request, as a
+                    comma-separated string.
+                - redirect_uri (str): The redirect URI for the OAuth2 application.
         """
         code_verifier = kwargs.get("code_verifier")
 
@@ -185,7 +192,14 @@ class OAuth2Client:
         )
 
         logger.info("Authorization URL generated: %s", authorization_url)
-        return authorization_url, state, code_verifier
+        return (
+            authorization_url,
+            state,
+            code_verifier,
+            self.creds["client_id"],
+            ",".join(self.default_params["scope"]),
+            self.creds["redirect_uri"],
+        )
 
     def fetch_token(self, code, **kwargs):
         """
@@ -196,14 +210,16 @@ class OAuth2Client:
             **kwargs: Additional parameters for fetching the token.
 
         Returns:
-            dict: The token response.
+            tuple: A tuple containing:
+                - The token response.
+                - scope (list): The scope of the authorization request.
         """
         logger.debug("Fetching access token...")
         token_response = self.session.fetch_token(
             self.urls["token_uri"], code=code, **kwargs
         )
         logger.info("Access token fetched successfully.")
-        return token_response
+        return token_response, self.default_params["scope"]
 
     def fetch_userinfo(self):
         """

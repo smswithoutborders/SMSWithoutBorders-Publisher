@@ -78,9 +78,6 @@ start the OAuth2 flow.
 >
 > #### Supported Platforms
 >
-> The list of supported platforms is available in
-> [supported_platforms.json](/supported_platforms.json).
->
 > | Platform Name | Shortcode | Service Type | Protocol | PKCE     |
 > | ------------- | --------- | ------------ | -------- | -------- |
 > | Gmail         | g         | Email        | OAuth2   | Optional |
@@ -120,12 +117,15 @@ Optional fields:
 > The table lists only the fields that are populated for this step. Other fields
 > may be empty, omitted, or false.
 
-| Field             | Type   | Description                                                     |
-| ----------------- | ------ | --------------------------------------------------------------- |
-| authorization_url | string | The generated authorization URL.                                |
-| state             | string | The state parameter sent in the request, if provided.           |
-| code_verifier     | string | The code verifier used in the PKCE flow, if provided/generated. |
-| message           | string | A response message from the server.                             |
+| Field             | Type   | Description                                                          |
+| ----------------- | ------ | -------------------------------------------------------------------- |
+| authorization_url | string | The generated authorization URL.                                     |
+| state             | string | The state parameter sent in the request, if provided.                |
+| code_verifier     | string | The code verifier used in the PKCE flow, if provided/generated.      |
+| message           | string | A response message from the server.                                  |
+| scope             | string | The scope of the authorization request, as a comma-separated string. |
+| client_id         | string | The client ID for the OAuth2 application.                            |
+| redirect_url      | string | The redirect URL for the OAuth2 application.                         |
 
 ---
 
@@ -153,10 +153,10 @@ localhost:6000 publisher.v1.Publisher/GetOAuth2AuthorizationUrl <payload.json
 
 ```json
 {
-	"platform": "gmail",
-	"state": "",
-	"code_verifier": "",
-	"autogenerate_code_verifier": true
+  "platform": "gmail",
+  "state": "",
+  "code_verifier": "",
+  "autogenerate_code_verifier": true
 }
 ```
 
@@ -166,10 +166,13 @@ localhost:6000 publisher.v1.Publisher/GetOAuth2AuthorizationUrl <payload.json
 
 ```json
 {
-	"authorization_url": "https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=your_client_id&redirect_uri=https://example.com/callback&scope=openid%20profile&state=xyz&code_challenge=abcdef&code_challenge_method=S256",
-	"state": "xyz",
-	"code_verifier": "abcdef",
-	"message": "Successfully generated authorization url"
+  "authorization_url": "https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=your_client_id&redirect_uri=https://example.com/callback&scope=openid%20profile&state=xyz&code_challenge=abcdef&code_challenge_method=S256",
+  "state": "xyz",
+  "code_verifier": "abcdef",
+  "client_id": "your_client_id",
+  "scope": "openid,https://www.googleapis.com/auth/gmail.send",
+  "redirect_url": "https://example.com/callback",
+  "message": "Successfully generated authorization url"
 }
 ```
 
@@ -301,10 +304,10 @@ localhost:6000 publisher.v1.Publisher/ExchangeOAuth2CodeAndStore <payload.json
 
 ```json
 {
-	"long_lived_token": "long_lived_token",
-	"platform": "gmail",
-	"authorization_code": "auth_code",
-	"code_verifier": "abcdef"
+  "long_lived_token": "long_lived_token",
+  "platform": "gmail",
+  "authorization_code": "auth_code",
+  "code_verifier": "abcdef"
 }
 ```
 
@@ -314,8 +317,8 @@ localhost:6000 publisher.v1.Publisher/ExchangeOAuth2CodeAndStore <payload.json
 
 ```json
 {
-	"message": "Successfully fetched and stored tokens.",
-	"success": true
+  "message": "Successfully fetched and stored tokens.",
+  "success": true
 }
 ```
 
@@ -384,9 +387,9 @@ localhost:6000 publisher.v1.Publisher/RevokeAndDeleteOAuth2Token <payload.json
 
 ```json
 {
-	"long_lived_token": "long_lived_token",
-	"platform": "gmail",
-	"account_identifier": "sample@mail.com"
+  "long_lived_token": "long_lived_token",
+  "platform": "gmail",
+  "account_identifier": "sample@mail.com"
 }
 ```
 
@@ -396,8 +399,8 @@ localhost:6000 publisher.v1.Publisher/RevokeAndDeleteOAuth2Token <payload.json
 
 ```json
 {
-	"message": "Successfully deleted token",
-	"success": true
+  "message": "Successfully deleted token",
+  "success": true
 }
 ```
 
@@ -465,8 +468,8 @@ localhost:6000 publisher.v1.Publisher/PublishContent
 
 ```json
 {
-	"message": "Successfully published Gmail message",
-	"publisher_response": "encrypted_response_payload",
-	"success": true
+  "message": "Successfully published Gmail message",
+  "publisher_response": "encrypted_response_payload",
+  "success": true
 }
 ```
