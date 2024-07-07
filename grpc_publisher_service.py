@@ -185,7 +185,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 ),
             }
 
-            authorization_url, state, code_verifier = (
+            authorization_url, state, code_verifier, client_id, scope, redirect_uri = (
                 oauth2_client.get_authorization_url(**extra_params)
             )
 
@@ -193,6 +193,9 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 authorization_url=authorization_url,
                 state=state,
                 code_verifier=code_verifier,
+                client_id=client_id,
+                scope=scope,
+                redirect_url=redirect_uri,
                 message="Successfully generated authorization url",
             )
 
