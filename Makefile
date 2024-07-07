@@ -21,7 +21,7 @@ vault-proto:
 	@$(MAKE) PROTO_URL=https://raw.githubusercontent.com/smswithoutborders/SMSwithoutborders-BE/feature/grpc_api/protos/v1/vault.proto \
 	$(PROTO_DIR)/vault.proto
 
-grpc-compile: vault-proto
+grpc-compile:
 	$(call log_message,INFO - Compiling gRPC protos ...)
 	@$(python) -m grpc_tools.protoc \
 		-I$(PROTO_DIR) \
@@ -30,3 +30,11 @@ grpc-compile: vault-proto
 		--grpc_python_out=. \
 		$(PROTO_DIR)/*.proto
 	$(call log_message,INFO - gRPC Compilation complete!)
+
+grpc-server-start:
+	$(call log_message,INFO - Starting gRPC server ...)
+	@$(python) -u grpc_server.py
+	$(call log_message,INFO - gRPC server started successfully.)
+
+grpc-server-setup: vault-proto grpc-compile grpc-server-start
+	$(call log_message,INFO - gRPC server setup completed.)

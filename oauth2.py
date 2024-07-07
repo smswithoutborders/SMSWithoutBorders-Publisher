@@ -210,14 +210,16 @@ class OAuth2Client:
             **kwargs: Additional parameters for fetching the token.
 
         Returns:
-            dict: The token response.
+            tuple: A tuple containing:
+                - The token response.
+                - scope (list): The scope of the authorization request.
         """
         logger.debug("Fetching access token...")
         token_response = self.session.fetch_token(
             self.urls["token_uri"], code=code, **kwargs
         )
         logger.info("Access token fetched successfully.")
-        return token_response
+        return token_response, self.default_params["scope"]
 
     def fetch_userinfo(self):
         """
