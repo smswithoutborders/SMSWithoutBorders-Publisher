@@ -98,7 +98,7 @@ def list_entity_stored_tokens(long_lived_token):
 
         with channel as conn:
             stub = vault_pb2_grpc.EntityStub(conn)
-            request = vault_pb2.ListEntityStoredTokenRequest(
+            request = vault_pb2.ListEntityStoredTokensRequest(
                 long_lived_token=long_lived_token
             )
 
