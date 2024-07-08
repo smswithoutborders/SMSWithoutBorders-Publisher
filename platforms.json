@@ -1,16 +1,16 @@
 [
-    {
-        "name": "gmail",
-        "shortcode": "g",
-        "service_type": "email",
-        "protocol": "oauth2",
-        "icon": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/icons/gmail.svg"
-    },
-    {
-        "name": "twitter",
-        "shortcode": "t",
-        "service_type": "text",
-        "protocol": "oauth2",
-        "icon": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/icons/twitter.svg"
-    }
+  {
+    "name": "gmail",
+    "shortcode": "g",
+    "service_type": "email",
+    "protocol_type": "oauth2",
+    "icon": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/icons/gmail.svg"
+  },
+  {
+    "name": "twitter",
+    "shortcode": "t",
+    "service_type": "text",
+    "protocol_type": "oauth2",
+    "icon": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/icons/twitter.svg"
+  }
 ]

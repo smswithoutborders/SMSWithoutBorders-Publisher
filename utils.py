@@ -131,7 +131,7 @@ def check_platform_supported(platform_name, protocol):
             "this platform will be implemented."
         )
 
-    expected_protocol = supported_platform.get("protocol")
+    expected_protocol = supported_platform.get("protocol_type")
 
     if protocol != expected_protocol:
         raise NotImplementedError(
