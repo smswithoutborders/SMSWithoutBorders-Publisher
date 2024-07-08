@@ -6,7 +6,7 @@ import logging
 import json
 from email.message import EmailMessage
 
-SUPPORTED_PLATFORM_FILE_PATH = "platforms.json"
+SUPPORTED_PLATFORM_FILE_PATH = os.path.join("resources", "platforms.json")
 
 logging.basicConfig(
     level=logging.INFO, format=("%(asctime)s - %(name)s - %(levelname)s - %(message)s")

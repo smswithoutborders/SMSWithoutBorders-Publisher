@@ -3,7 +3,7 @@
 ## Supported Platforms
 
 The list of supported platforms is available in
-[platforms.json](/platforms.json).
+[platforms.json](resources/platforms.json).
 
 ## Requirements
 

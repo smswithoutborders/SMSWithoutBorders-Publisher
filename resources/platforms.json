@@ -1,0 +1,16 @@
+[
+  {
+    "name": "gmail",
+    "shortcode": "g",
+    "service_type": "email",
+    "protocol_type": "oauth2",
+    "icon": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/gmail.svg"
+  },
+  {
+    "name": "twitter",
+    "shortcode": "t",
+    "service_type": "text",
+    "protocol_type": "oauth2",
+    "icon": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.svg"
+  }
+]
