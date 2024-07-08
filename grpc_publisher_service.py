@@ -638,6 +638,15 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 success=True,
             )
 
+        except OAuthError as e:
+            return error_response(
+                context,
+                response,
+                str(e),
+                grpc.StatusCode.INVALID_ARGUMENT,
+                _type="UNKNOWN",
+            )
+
         except Exception as exc:
             return error_response(
                 context,
