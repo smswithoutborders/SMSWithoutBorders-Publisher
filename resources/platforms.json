@@ -4,15 +4,15 @@
     "shortcode": "g",
     "service_type": "email",
     "protocol_type": "oauth2",
-    "icon-svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/gmail.svg",
-    "icon-png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/gmail.png"
+    "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/gmail.svg",
+    "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/gmail.png"
   },
   {
     "name": "twitter",
     "shortcode": "t",
     "service_type": "text",
     "protocol_type": "oauth2",
-    "icon-svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.svg",
-    "icon-png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.png"
+    "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.svg",
+    "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.png"
   }
 ]
