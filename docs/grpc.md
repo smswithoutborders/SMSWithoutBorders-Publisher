@@ -106,6 +106,12 @@ Optional fields:
 | code_verifier              | string | A cryptographic random string used in the PKCE flow.                         |
 | autogenerate_code_verifier | bool   | If true, a code verifier will be auto-generated if not provided.             |
 
+Optional fields:
+
+| Field        | Type   | Description                                  |
+| ------------ | ------ | -------------------------------------------- |
+| redirect_url | string | The redirect URL for the OAuth2 application. |
+
 ---
 
 ##### Response
@@ -261,6 +267,7 @@ Optional fields:
 | Field         | Type   | Description                                          |
 | ------------- | ------ | ---------------------------------------------------- |
 | code_verifier | string | A cryptographic random string used in the PKCE flow. |
+| redirect_url  | string | The redirect URL for the OAuth2 application.         |
 
 ---
 

@@ -198,7 +198,7 @@ class OAuth2Client:
             code_verifier,
             self.creds["client_id"],
             ",".join(self.default_params["scope"]),
-            self.creds["redirect_uri"],
+            self.session.redirect_uri,
         )
 
     def fetch_token(self, code, **kwargs):
