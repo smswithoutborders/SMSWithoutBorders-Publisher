@@ -178,7 +178,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             oauth2_client = OAuth2Client(request.platform)
 
             if request.redirect_url:
-                oauth2_client.creds["redirect_uri"] = request.redirect_uri
+                oauth2_client.session.redirect_uri = request.redirect_url
 
             extra_params = {
                 "state": getattr(request, "state") or None,
@@ -251,7 +251,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             oauth2_client = OAuth2Client(request.platform)
 
             if request.redirect_url:
-                oauth2_client.creds["redirect_uri"] = request.redirect_uri
+                oauth2_client.session.redirect_uri = request.redirect_url
 
             extra_params = {"code_verifier": getattr(request, "code_verifier") or None}
             token, scope = oauth2_client.fetch_token(
