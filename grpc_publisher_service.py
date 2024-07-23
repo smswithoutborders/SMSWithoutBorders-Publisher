@@ -34,126 +34,127 @@ logging.basicConfig(
 logger = logging.getLogger("[gRPC Publisher Service]")
 
 
-def create_update_token_context(
-    device_id, account_identifier, platform_name, response, context
-):
-    """
-    Creates a context-specific token update function.
-
-    Args:
-        device_id (str): The unique identifier of the device.
-        account_identifier (str): The identifier for the account
-            (e.g., email or username).
-        platform_name (str): The name of the platform (e.g., 'gmail').
-        response (protobuf message class): The response class for the gRPC method.
-        context (grpc.ServicerContext): The gRPC context for the current method call.
-
-    Returns:
-        function: A function `update_token(token)` that updates the token information.
-    """
-
-    def update_token(token, **kwargs):
-        """
-        Updates the stored token for a specific entity.
-
-        Args:
-            token (dict or object): The token information
-                containing access and refresh tokens.
-        """
-        logger.info(
-            "Updating token for device_id: %s, platform: %s",
-            device_id,
-            platform_name,
-        )
-
-        update_entity_token_response, update_entity_token_error = update_entity_token(
-            device_id=device_id,
-            token=json.dumps(token),
-            account_identifier=account_identifier,
-            platform=platform_name,
-        )
-
-        if update_entity_token_error:
-            return error_response(
-                context,
-                response,
-                update_entity_token_error.details(),
-                update_entity_token_error.code(),
-            )
-
-        if not update_entity_token_response.success:
-            return response(
-                message=update_entity_token_response.message,
-                success=update_entity_token_response.success,
-            )
-
-        return True
-
-    return update_token
-
-
-def error_response(context, response, sys_msg, status_code, user_msg=None, _type=None):
-    """
-    Create an error response.
-
-    Args:
-        context: gRPC context.
-        response: gRPC response object.
-        sys_msg (str or tuple): System message.
-        status_code: gRPC status code.
-        user_msg (str or tuple): User-friendly message.
-        _type (str): Type of error.
-
-    Returns:
-        An instance of the specified response with the error set.
-    """
-    if not user_msg:
-        user_msg = sys_msg
-
-    if isinstance(user_msg, tuple):
-        user_msg = "".join(user_msg)
-    if isinstance(sys_msg, tuple):
-        sys_msg = "".join(sys_msg)
-
-    if _type == "UNKNOWN":
-        logger.exception(sys_msg, exc_info=True)
-    else:
-        logger.error(sys_msg)
-
-    context.set_details(user_msg)
-    context.set_code(status_code)
-
-    return response()
-
-
-def validate_request_fields(context, request, response, required_fields):
-    """
-    Validates the fields in the gRPC request.
-
-    Args:
-        context: gRPC context.
-        request: gRPC request object.
-        response: gRPC response object.
-        required_fields (list): List of required fields.
-
-    Returns:
-        None or response: None if no missing fields,
-            error response otherwise.
-    """
-    missing_fields = [field for field in required_fields if not getattr(request, field)]
-    if missing_fields:
-        return error_response(
-            context,
-            response,
-            f"Missing required fields: {', '.join(missing_fields)}",
-            grpc.StatusCode.INVALID_ARGUMENT,
-        )
-
-    return None
-
-
 class PublisherService(publisher_pb2_grpc.PublisherServicer):
     """Publisher Service Descriptor"""
+
+    def handle_create_grpc_error_response(
+        self, context, response, sys_msg, status_code, **kwargs
+    ):
+        """
+        Handles the creation of a gRPC error response.
+
+        Args:
+            context: gRPC context.
+            response: gRPC response object.
+            sys_msg (str or tuple): System message.
+            status_code: gRPC status code.
+            user_msg (str or tuple): User-friendly message.
+            error_type (str): Type of error.
+
+        Returns:
+            An instance of the specified response with the error set.
+        """
+        user_msg = kwargs.get("user_msg")
+        error_type = kwargs.get("error_type")
+
+        if not user_msg:
+            user_msg = sys_msg
+
+        if error_type == "UNKNOWN":
+            logger.exception(sys_msg, exc_info=True)
+        else:
+            logger.error(sys_msg)
+
+        context.set_details(user_msg)
+        context.set_code(status_code)
+
+        return response()
+
+    def handle_request_field_validation(
+        self, context, request, response, required_fields
+    ):
+        """
+        Validates the fields in the gRPC request.
+
+        Args:
+            context: gRPC context.
+            request: gRPC request object.
+            response: gRPC response object.
+            required_fields (list): List of required fields, can include tuples.
+
+        Returns:
+            None or response: None if no missing fields,
+                error response otherwise.
+        """
+
+        def validate_field(field):
+            if not getattr(request, field, None):
+                return self.handle_create_grpc_error_response(
+                    context,
+                    response,
+                    f"Missing required field: {field}",
+                    grpc.StatusCode.INVALID_ARGUMENT,
+                )
+
+            return None
+
+        for field in required_fields:
+            validation_error = validate_field(field)
+            if validation_error:
+                return validation_error
+
+        return None
+
+    def create_token_update_handler(self, response_cls, grpc_context, **kwargs):
+        """
+        Creates a function to handle updating the token for a specific device and account.
+
+        Args:
+            device_id (str): The unique identifier of the device.
+            account_id (str): The identifier for the account (e.g., email or username).
+            platform (str): The name of the platform (e.g., 'gmail').
+            response_cls (protobuf message class): The response class for the gRPC method.
+            grpc_context (grpc.ServicerContext): The gRPC context for the current method call.
+
+        Returns:
+            function: A function `handle_token_update(token)` that updates the token information.
+        """
+        device_id = kwargs["device_id"]
+        account_id = kwargs["account_id"]
+        platform = kwargs["platform"]
+
+        def handle_token_update(token, **kwargs):
+            """
+            Handles updating the stored token for the specified device and account.
+
+            Args:
+                token (dict or object): The token information containing access and refresh tokens.
+            """
+
+            update_response, update_error = update_entity_token(
+                device_id=device_id,
+                token=json.dumps(token),
+                account_identifier=account_id,
+                platform=platform,
+            )
+
+            if update_error:
+                return self.handle_create_grpc_error_response(
+                    grpc_context,
+                    response_cls,
+                    update_error.details(),
+                    update_error.code(),
+                )
+
+            if not update_response.success:
+                return response_cls(
+                    message=update_response.message,
+                    success=update_response.success,
+                )
+
+            return True
+
+        return handle_token_update
 
     def GetOAuth2AuthorizationUrl(self, request, context):
         """Handles generating OAuth2 authorization URL"""
@@ -161,25 +162,14 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
         response = publisher_pb2.GetOAuth2AuthorizationUrlResponse
 
         def validate_fields():
-            return validate_request_fields(
+            return self.handle_request_field_validation(
                 context,
                 request,
                 response,
                 ["platform"],
             )
 
-        try:
-            invalid_fields_response = validate_fields()
-            if invalid_fields_response:
-                return invalid_fields_response
-
-            check_platform_supported(request.platform.lower(), "oauth2")
-
-            oauth2_client = OAuth2Client(request.platform)
-
-            if request.redirect_url:
-                oauth2_client.session.redirect_uri = request.redirect_url
-
+        def handle_authorization(oauth2_client):
             extra_params = {
                 "state": getattr(request, "state") or None,
                 "code_verifier": getattr(request, "code_verifier") or None,
@@ -202,8 +192,22 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 message="Successfully generated authorization url",
             )
 
+        try:
+            invalid_fields_response = validate_fields()
+            if invalid_fields_response:
+                return invalid_fields_response
+
+            check_platform_supported(request.platform.lower(), "oauth2")
+
+            oauth2_client = OAuth2Client(request.platform)
+
+            if request.redirect_url:
+                oauth2_client.session.redirect_uri = request.redirect_url
+
+            return handle_authorization(oauth2_client)
+
         except NotImplementedError as e:
-            return error_response(
+            return self.handle_create_grpc_error_response(
                 context,
                 response,
                 str(e),
@@ -211,7 +215,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
 
         except Exception as exc:
-            return error_response(
+            return self.handle_create_grpc_error_response(
                 context,
                 response,
                 exc,
@@ -226,7 +230,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
         response = publisher_pb2.ExchangeOAuth2CodeAndStoreResponse
 
         def validate_fields():
-            return validate_request_fields(
+            return self.handle_request_field_validation(
                 context,
                 request,
                 response,
@@ -238,7 +242,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 long_lived_token=request.long_lived_token
             )
             if list_error:
-                return None, error_response(
+                return None, self.handle_create_grpc_error_response(
                     context,
                     response,
                     list_error.details(),
@@ -259,7 +263,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
 
             if not token.get("refresh_token"):
-                return None, error_response(
+                return None, self.handle_create_grpc_error_response(
                     context,
                     response,
                     "invalid token: No refresh token present.",
@@ -270,7 +274,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             expected_scopes = set(scope)
 
             if not expected_scopes.issubset(fetched_scopes):
-                return None, error_response(
+                return None, self.handle_create_grpc_error_response(
                     context,
                     response,
                     "invalid token: Scopes do not match. Expected: "
@@ -292,7 +296,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
 
             if store_error:
-                return error_response(
+                return self.handle_create_grpc_error_response(
                     context,
                     response,
                     store_error.details(),
@@ -328,7 +332,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             return store_token(*fetched_data)
 
         except OAuthError as e:
-            return error_response(
+            return self.handle_create_grpc_error_response(
                 context,
                 response,
                 str(e),
@@ -337,7 +341,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
 
         except NotImplementedError as e:
-            return error_response(
+            return self.handle_create_grpc_error_response(
                 context,
                 response,
                 str(e),
@@ -345,7 +349,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
 
         except Exception as exc:
-            return error_response(
+            return self.handle_create_grpc_error_response(
                 context,
                 response,
                 exc,
@@ -360,7 +364,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
         response = publisher_pb2.RevokeAndDeleteOAuth2TokenResponse
 
         def validate_fields():
-            return validate_request_fields(
+            return self.handle_request_field_validation(
                 context,
                 request,
                 response,
@@ -374,7 +378,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 long_lived_token=request.long_lived_token,
             )
             if get_access_token_error:
-                return None, error_response(
+                return None, self.handle_create_grpc_error_response(
                     context,
                     response,
                     get_access_token_error.details(),
@@ -398,7 +402,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
 
             if delete_token_error:
-                return error_response(
+                return self.handle_create_grpc_error_response(
                     context,
                     response,
                     delete_token_error.details(),
@@ -428,7 +432,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             return delete_token()
 
         except NotImplementedError as e:
-            return error_response(
+            return self.handle_create_grpc_error_response(
                 context,
                 response,
                 str(e),
@@ -436,7 +440,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
 
         except Exception as exc:
-            return error_response(
+            return self.handle_create_grpc_error_response(
                 context,
                 response,
                 exc,
@@ -451,14 +455,16 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
         response = publisher_pb2.PublishContentResponse
 
         def validate_fields():
-            return validate_request_fields(context, request, response, ["content"])
+            return self.handle_request_field_validation(
+                context, request, response, ["content"]
+            )
 
         def decode_payload():
             platform_letter, encrypted_content, device_id, decode_error = (
                 decode_relay_sms_payload(request.content)
             )
             if decode_error:
-                return None, error_response(
+                return None, self.handle_create_grpc_error_response(
                     context,
                     response,
                     decode_error,
@@ -473,7 +479,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 platform_letter
             )
             if platform_info is None:
-                return None, error_response(
+                return None, self.handle_create_grpc_error_response(
                     context,
                     response,
                     platform_err,
@@ -488,7 +494,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 account_identifier=account_identifier,
             )
             if get_access_token_error:
-                return None, error_response(
+                return None, self.handle_create_grpc_error_response(
                     context,
                     response,
                     get_access_token_error.details(),
@@ -506,7 +512,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 device_id.hex(), base64.b64encode(encrypted_content).decode("utf-8")
             )
             if decrypt_payload_error:
-                return None, error_response(
+                return None, self.handle_create_grpc_error_response(
                     context,
                     response,
                     decrypt_payload_error.details(),
@@ -524,7 +530,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 device_id.hex(), plaintext
             )
             if encrypt_payload_error:
-                return None, error_response(
+                return None, self.handle_create_grpc_error_response(
                     context,
                     response,
                     encrypt_payload_error.details(),
@@ -541,7 +547,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             content_parts, parse_error = parse_content(service_type, payload)
 
             if parse_error:
-                return error_response(
+                return self.handle_create_grpc_error_response(
                     context,
                     response,
                     parse_error,
@@ -560,8 +566,12 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             oauth2_client = OAuth2Client(
                 platform_name,
                 json.loads(token),
-                create_update_token_context(
-                    device_id.hex(), from_email, platform_name, response, context
+                self.create_token_update_handler(
+                    device_id=device_id.hex(),
+                    account_id=from_email,
+                    platform=platform_name,
+                    response_cls=response,
+                    grpc_context=context,
                 ),
             )
             return oauth2_client.send_message(email_message, from_email)
@@ -570,7 +580,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             content_parts, parse_error = parse_content(service_type, payload)
 
             if parse_error:
-                return error_response(
+                return self.handle_create_grpc_error_response(
                     context,
                     response,
                     parse_error,
@@ -581,8 +591,12 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             oauth2_client = OAuth2Client(
                 platform_name,
                 json.loads(token),
-                create_update_token_context(
-                    device_id.hex(), sender, platform_name, response, context
+                self.create_token_update_handler(
+                    device_id=device_id.hex(),
+                    account_id=sender,
+                    platform=platform_name,
+                    response_cls=response,
+                    grpc_context=context,
                 ),
             )
             return oauth2_client.send_message(text)
@@ -646,7 +660,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
 
         except OAuthError as e:
-            return error_response(
+            return self.handle_create_grpc_error_response(
                 context,
                 response,
                 str(e),
@@ -655,7 +669,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
 
         except Exception as exc:
-            return error_response(
+            return self.handle_create_grpc_error_response(
                 context,
                 response,
                 exc,
