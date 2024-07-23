@@ -1,6 +1,7 @@
 """Vault gRPC Client"""
 
 import logging
+import functools
 import grpc
 
 import vault_pb2
@@ -44,7 +45,34 @@ def get_channel(internal=True):
     return grpc.insecure_channel(f"{hostname}:{port}")
 
 
-def store_entity_token(long_lived_token, token, platform, account_identifier):
+def grpc_call(internal=True):
+    """Decorator to handle gRPC calls."""
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                channel = get_channel(internal)
+
+                with channel as conn:
+                    kwargs["stub"] = (
+                        vault_pb2_grpc.EntityInternalStub(conn)
+                        if internal
+                        else vault_pb2_grpc.EntityStub(conn)
+                    )
+                    return func(*args, **kwargs)
+            except grpc.RpcError as e:
+                return None, e
+            except Exception as e:
+                raise e
+
+        return wrapper
+
+    return decorator
+
+
+@grpc_call()
+def store_entity_token(long_lived_token, token, platform, account_identifier, **kwargs):
     """Store an entity token in the vault.
 
     Args:
@@ -58,29 +86,23 @@ def store_entity_token(long_lived_token, token, platform, account_identifier):
             - server response (object): The vault server response.
             - error (Exception): The error encountered if the request fails, otherwise None.
     """
-    try:
-        channel = get_channel()
+    stub = kwargs["stub"]
 
-        with channel as conn:
-            stub = vault_pb2_grpc.EntityInternalStub(conn)
-            request = vault_pb2.StoreEntityTokenRequest(
-                long_lived_token=long_lived_token,
-                token=token,
-                platform=platform,
-                account_identifier=account_identifier,
-            )
+    request = vault_pb2.StoreEntityTokenRequest(
+        long_lived_token=long_lived_token,
+        token=token,
+        platform=platform,
+        account_identifier=account_identifier,
+    )
 
-            logger.debug("Storing token for platform '%s'", platform)
-            response = stub.StoreEntityToken(request)
-            logger.info("Successfully stored token for platform '%s'", platform)
-            return response, None
-    except grpc.RpcError as e:
-        return None, e
-    except Exception as e:
-        raise e
+    logger.debug("Storing token for platform '%s'", platform)
+    response = stub.StoreEntityToken(request)
+    logger.info("Successfully stored token for platform '%s'", platform)
+    return response, None
 
 
-def list_entity_stored_tokens(long_lived_token):
+@grpc_call(False)
+def list_entity_stored_tokens(long_lived_token, **kwargs):
     """Fetches and lists an entity's stored tokens from the vault.
 
     Args:
@@ -93,33 +115,22 @@ def list_entity_stored_tokens(long_lived_token):
             - error (Exception): The error encountered if the request fails,
                 otherwise None.
     """
-    try:
-        channel = get_channel(internal=False)
+    stub = kwargs["stub"]
+    request = vault_pb2.ListEntityStoredTokensRequest(long_lived_token=long_lived_token)
 
-        with channel as conn:
-            stub = vault_pb2_grpc.EntityStub(conn)
-            request = vault_pb2.ListEntityStoredTokensRequest(
-                long_lived_token=long_lived_token
-            )
+    logger.debug(
+        "Sending request to list stored tokens for long_lived_token: %s",
+        long_lived_token,
+    )
+    response = stub.ListEntityStoredTokens(request)
+    tokens = response.stored_tokens
 
-            logger.debug(
-                "Sending request to list stored tokens for long_lived_token: %s",
-                long_lived_token,
-            )
-            response = stub.ListEntityStoredTokens(request)
-            tokens = response.stored_tokens
-
-            logger.info("Successfully retrieved stored tokens.")
-            return tokens, None
-    except grpc.RpcError as e:
-        return None, e
-    except Exception as e:
-        raise e
+    logger.info("Successfully retrieved stored tokens.")
+    return tokens, None
 
 
-def get_entity_access_token(
-    platform, account_identifier, device_id=None, long_lived_token=None
-):
+@grpc_call()
+def get_entity_access_token(platform, account_identifier, **kwargs):
     """
     Retrieves an entity access token.
 
@@ -134,39 +145,35 @@ def get_entity_access_token(
             - server response (object): The vault server response.
             - error (Exception): The error encountered if the request fails, otherwise None.
     """
-    try:
-        channel = get_channel()
+    stub = kwargs["stub"]
+    device_id = kwargs.get("device_id")
+    long_lived_token = kwargs.get("long_lived_token")
 
-        with channel as conn:
-            stub = vault_pb2_grpc.EntityInternalStub(conn)
-            request = vault_pb2.GetEntityAccessTokenRequest(
-                device_id=device_id,
-                long_lived_token=long_lived_token,
-                platform=platform,
-                account_identifier=account_identifier,
-            )
+    request = vault_pb2.GetEntityAccessTokenRequest(
+        device_id=device_id,
+        long_lived_token=long_lived_token,
+        platform=platform,
+        account_identifier=account_identifier,
+    )
 
-            identifier = device_id or long_lived_token
-            logger.debug(
-                "Requesting access tokens for %s '%s'...",
-                "device_id" if device_id else "long_lived_token",
-                identifier,
-            )
-            response = stub.GetEntityAccessToken(request)
+    identifier = device_id or long_lived_token
+    logger.debug(
+        "Requesting access tokens for %s '%s'...",
+        "device_id" if device_id else "long_lived_token",
+        identifier,
+    )
+    response = stub.GetEntityAccessToken(request)
 
-            logger.info(
-                "Successfully retrieved access token for %s '%s'.",
-                "device_id" if device_id else "long_lived_token",
-                identifier,
-            )
-            return response, None
-    except grpc.RpcError as e:
-        return None, e
-    except Exception as e:
-        raise e
+    logger.info(
+        "Successfully retrieved access token for %s '%s'.",
+        "device_id" if device_id else "long_lived_token",
+        identifier,
+    )
+    return response, None
 
 
-def decrypt_payload(device_id, payload_ciphertext):
+@grpc_call()
+def decrypt_payload(device_id, payload_ciphertext, **kwargs):
     """
     Decrypts the payload.
 
@@ -179,29 +186,22 @@ def decrypt_payload(device_id, payload_ciphertext):
             - server response (object): The vault server response.
             - error (Exception): The error encountered if the request fails, otherwise None.
     """
-    try:
-        channel = get_channel()
+    stub = kwargs["stub"]
+    request = vault_pb2.DecryptPayloadRequest(
+        device_id=device_id, payload_ciphertext=payload_ciphertext
+    )
 
-        with channel as conn:
-            stub = vault_pb2_grpc.EntityInternalStub(conn)
-            request = vault_pb2.DecryptPayloadRequest(
-                device_id=device_id, payload_ciphertext=payload_ciphertext
-            )
-
-            logger.debug(
-                "Sending request to decrypt payload for device_id: %s",
-                device_id,
-            )
-            response = stub.DecryptPayload(request)
-            logger.info("Successfully decrypted payload.")
-            return response, None
-    except grpc.RpcError as e:
-        return None, e
-    except Exception as e:
-        raise e
+    logger.debug(
+        "Sending request to decrypt payload for device_id: %s",
+        device_id,
+    )
+    response = stub.DecryptPayload(request)
+    logger.info("Successfully decrypted payload.")
+    return response, None
 
 
-def encrypt_payload(device_id, payload_plaintext):
+@grpc_call()
+def encrypt_payload(device_id, payload_plaintext, **kwargs):
     """
     Encrypts the payload.
 
@@ -214,29 +214,22 @@ def encrypt_payload(device_id, payload_plaintext):
             - server response (object): The vault server response.
             - error (Exception): The error encountered if the request fails, otherwise None.
     """
-    try:
-        channel = get_channel()
+    stub = kwargs["stub"]
+    request = vault_pb2.EncryptPayloadRequest(
+        device_id=device_id, payload_plaintext=payload_plaintext
+    )
 
-        with channel as conn:
-            stub = vault_pb2_grpc.EntityInternalStub(conn)
-            request = vault_pb2.EncryptPayloadRequest(
-                device_id=device_id, payload_plaintext=payload_plaintext
-            )
-
-            logger.debug(
-                "Sending request to encrypt payload for device_id: %s",
-                device_id,
-            )
-            response = stub.EncryptPayload(request)
-            logger.info("Successfully encrypted payload.")
-            return response, None
-    except grpc.RpcError as e:
-        return None, e
-    except Exception as e:
-        raise e
+    logger.debug(
+        "Sending request to encrypt payload for device_id: %s",
+        device_id,
+    )
+    response = stub.EncryptPayload(request)
+    logger.info("Successfully encrypted payload.")
+    return response, None
 
 
-def update_entity_token(device_id, token, platform, account_identifier):
+@grpc_call()
+def update_entity_token(device_id, token, platform, account_identifier, **kwargs):
     """Update an entity's token in the vault.
 
     Args:
@@ -250,29 +243,22 @@ def update_entity_token(device_id, token, platform, account_identifier):
             - server response (object): The vault server response.
             - error (Exception): The error encountered if the request fails, otherwise None.
     """
-    try:
-        channel = get_channel()
+    stub = kwargs["stub"]
+    request = vault_pb2.UpdateEntityTokenRequest(
+        device_id=device_id,
+        token=token,
+        platform=platform,
+        account_identifier=account_identifier,
+    )
 
-        with channel as conn:
-            stub = vault_pb2_grpc.EntityInternalStub(conn)
-            request = vault_pb2.UpdateEntityTokenRequest(
-                device_id=device_id,
-                token=token,
-                platform=platform,
-                account_identifier=account_identifier,
-            )
-
-            logger.debug("Updating token for platform '%s'", platform)
-            response = stub.UpdateEntityToken(request)
-            logger.info("Successfully updated token for platform '%s'", platform)
-            return response, None
-    except grpc.RpcError as e:
-        return None, e
-    except Exception as e:
-        raise e
+    logger.debug("Updating token for platform '%s'", platform)
+    response = stub.UpdateEntityToken(request)
+    logger.info("Successfully updated token for platform '%s'", platform)
+    return response, None
 
 
-def delete_entity_token(long_lived_token, platform, account_identifier):
+@grpc_call()
+def delete_entity_token(long_lived_token, platform, account_identifier, **kwargs):
     """Delete an entity's token in the vault.
 
     Args:
@@ -285,22 +271,14 @@ def delete_entity_token(long_lived_token, platform, account_identifier):
             - server response (object): The vault server response.
             - error (Exception): The error encountered if the request fails, otherwise None.
     """
-    try:
-        channel = get_channel()
+    stub = kwargs["stub"]
+    request = vault_pb2.DeleteEntityTokenRequest(
+        long_lived_token=long_lived_token,
+        platform=platform,
+        account_identifier=account_identifier,
+    )
 
-        with channel as conn:
-            stub = vault_pb2_grpc.EntityInternalStub(conn)
-            request = vault_pb2.DeleteEntityTokenRequest(
-                long_lived_token=long_lived_token,
-                platform=platform,
-                account_identifier=account_identifier,
-            )
-
-            logger.debug("Deleting token for platform '%s'", platform)
-            response = stub.DeleteEntityToken(request)
-            logger.info("Successfully deleted token for platform '%s'", platform)
-            return response, None
-    except grpc.RpcError as e:
-        return None, e
-    except Exception as e:
-        raise e
+    logger.debug("Deleting token for platform '%s'", platform)
+    response = stub.DeleteEntityToken(request)
+    logger.info("Successfully deleted token for platform '%s'", platform)
+    return response, None
