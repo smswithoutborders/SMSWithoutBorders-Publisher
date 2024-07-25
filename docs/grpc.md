@@ -10,6 +10,9 @@
     - [Get Authorization URL](#get-authorization-url)
     - [Exchange OAuth2 Code and Store Token](#exchange-oauth2-code-and-store-token-in-vault)
     - [Revoke And Delete OAuth2 Token](#revoke-and-delete-oauth2-token)
+  - [Phone Number-Based Authentication (PNBA)](#phone-number-based-authentication-pnba)
+    - [Request PNBA Code](#request-pnba-code)
+    - [Exchange PNBA Code and Store Token](#exchange-pnba-code-and-store-token)
   - [Publish Content](#publish-content)
 
 ## Download Protocol Buffer File
@@ -408,6 +411,169 @@ localhost:6000 publisher.v1.Publisher/RevokeAndDeleteOAuth2Token <payload.json
 {
   "message": "Successfully deleted token",
   "success": true
+}
+```
+
+### Phone Number-Based Authentication (PNBA)
+
+#### Get PNBA Code
+
+This method sends a one-time passcode (OTP) to the user's phone number for authentication.
+
+---
+
+##### Request
+
+> `request` **GetPNBACodeRequest**
+
+> [!IMPORTANT]
+>
+> The table lists only the required fields for this step. Other fields will be ignored.
+
+| Field        | Type   | Description                                                                                |
+| ------------ | ------ | ------------------------------------------------------------------------------------------ |
+| phone_number | string | The phone number to which the OTP is sent.                                                 |
+| platform     | string | The platform identifier for which the authorization code is generated. (e.g., "telegram"). |
+
+---
+
+##### Response
+
+> `response` **GetPNBACodeResponse**
+
+> [!IMPORTANT]
+>
+> The table lists only the fields that are populated for this step. Other fields may be empty, omitted, or false.
+
+| Field   | Type   | Description                                |
+| ------- | ------ | ------------------------------------------ |
+| message | string | A response message from the server.        |
+| success | bool   | Indicates if the operation was successful. |
+
+---
+
+##### Method
+
+> `method` **GetPNBACode**
+
+> [!TIP]
+>
+> The examples below use [grpcurl](https://github.com/fullstorydev/grpcurl#grpcurl).
+
+**Sample request**
+
+```bash
+grpcurl -plaintext \
+    -d @ \
+    -proto protos/v1/publisher.proto \
+localhost:6000 publisher.v1.Publisher/GetPNBACode <payload.json
+```
+
+---
+
+**Sample payload.json**
+
+```json
+{
+  "phone_number": "+1234567890",
+  "platform": "telegram"
+}
+```
+
+---
+
+**Sample response**
+
+```json
+{
+  "message": "Successfully sent authorization to your telegram app.",
+  "success": true
+}
+```
+
+#### Exchange PNBA Code and Store Token
+
+This method exchanges the one-time passcode (OTP) for an access token and stores it securely in the vault.
+
+---
+
+##### Request
+
+> `request` **ExchangePNBACodeAndStoreRequest**
+
+> [!IMPORTANT]
+>
+> The table lists only the required fields for this step. Other fields will be ignored.
+
+| Field              | Type   | Description                                         |
+| ------------------ | ------ | --------------------------------------------------- |
+| long_lived_token   | string | Long-lived token for authentication.                |
+| platform           | string | Platform identifier for which the OTP is exchanged. |
+| phone_number       | string | The phone number to which the OTP was sent.         |
+| authorization_code | string | PNBA authorization code received from the provider. |
+
+Optional fields:
+
+| Field    | Type   | Description                             |
+| -------- | ------ | --------------------------------------- |
+| password | string | The password for two-step verification. |
+
+---
+
+##### Response
+
+> `response` **ExchangePNBACodeAndStoreResponse**
+
+> [!IMPORTANT]
+>
+> The table lists only the fields that are populated for this step. Other fields may be empty, omitted, or false.
+
+| Field   | Type   | Description                                |
+| ------- | ------ | ------------------------------------------ |
+| message | string | A response message from the server.        |
+| success | bool   | Indicates if the operation was successful. |
+
+---
+
+##### Method
+
+> `method` **ExchangePNBACodeAndStore**
+
+> [!TIP]
+>
+> The examples below use [grpcurl](https://github.com/fullstorydev/grpcurl#grpcurl).
+
+**Sample request**
+
+```bash
+grpcurl -plaintext \
+    -d @ \
+    -proto protos/v1/publisher.proto \
+localhost:6000 publisher.v1.Publisher/ExchangePNBACodeAndStore <payload.json
+```
+
+---
+
+**Sample payload.json**
+
+```json
+{
+  "authorization_code": "auth_code",
+  "long_lived_token": "long_lived_token",
+  "password": "",
+  "phone_number": "+1234567890",
+  "platform": "telegram"
+}
+```
+
+---
+
+**Sample response**
+
+```json
+{
+  "success": true,
+  "message": "Successfully fetched and stored token"
 }
 ```
 
