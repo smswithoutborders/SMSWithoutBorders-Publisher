@@ -28,6 +28,8 @@ class PNBAClient:
 
         self.platform = platform_name.lower()
         self.phone_number = re.sub(r"\s+", "", phone_number)
+        if not self.phone_number.startswith("+"):
+            self.phone_number = "+" + self.phone_number
         self.session = telegram_client if self.platform == "telegram" else None
 
     def authorization(self):

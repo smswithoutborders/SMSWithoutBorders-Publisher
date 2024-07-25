@@ -731,3 +731,114 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 user_msg="Oops! Something went wrong. Please try again later.",
                 _type="UNKNOWN",
             )
+
+    def ExchangePNBACodeAndStore(self, request, context):
+        """Handles Exchanging Phone number-based Authentication code for access."""
+
+        response = publisher_pb2.ExchangePNBACodeAndStoreResponse
+
+        def validate_fields():
+            return self.handle_request_field_validation(
+                context,
+                request,
+                response,
+                ["long_lived_token", "phone_number", "platform", "authorization_code"],
+            )
+
+        def list_tokens():
+            list_response, list_error = list_entity_stored_tokens(
+                long_lived_token=request.long_lived_token
+            )
+            if list_error:
+                return None, self.handle_create_grpc_error_response(
+                    context,
+                    response,
+                    list_error.details(),
+                    list_error.code(),
+                    _type="UNKNOWN",
+                )
+            return list_response, None
+
+        def fetch_token_and_profile():
+            pnba_client = PNBAClient(request.platform, request.phone_number)
+
+            if request.password:
+                pnba_response = pnba_client.password_validation(request.password)
+            else:
+                pnba_response = pnba_client.validation(request.authorization_code)
+
+            if pnba_response.get("error"):
+                return None, self.handle_create_grpc_error_response(
+                    context,
+                    response,
+                    pnba_response["error"],
+                    grpc.StatusCode.INVALID_ARGUMENT,
+                    _type="UNKNOWN",
+                )
+
+            token = pnba_response["response"]["token"]
+            profile = pnba_response["response"]["profile"]
+
+            return (token, profile), None
+
+        def store_token(token, profile):
+            store_response, store_error = store_entity_token(
+                long_lived_token=request.long_lived_token,
+                platform=request.platform,
+                account_identifier=profile.get("unique_id"),
+                token=json.dumps(token),
+            )
+
+            if store_error:
+                return self.handle_create_grpc_error_response(
+                    context,
+                    response,
+                    store_error.details(),
+                    store_error.code(),
+                    _type="UNKNOWN",
+                )
+
+            if not store_response.success:
+                return response(
+                    message=store_response.message, success=store_response.success
+                )
+
+            return response(
+                success=True, message="Successfully fetched and stored token"
+            )
+
+        try:
+            invalid_fields_response = validate_fields()
+            if invalid_fields_response:
+                return invalid_fields_response
+
+            check_platform_supported(request.platform.lower(), "pnba")
+
+            _, token_list_error = list_tokens()
+            if token_list_error:
+                return token_list_error
+
+            fetched_data, fetch_token_error = fetch_token_and_profile()
+
+            if fetch_token_error:
+                return fetch_token_error
+
+            return store_token(*fetched_data)
+
+        except NotImplementedError as e:
+            return self.handle_create_grpc_error_response(
+                context,
+                response,
+                str(e),
+                grpc.StatusCode.UNIMPLEMENTED,
+            )
+
+        except Exception as exc:
+            return self.handle_create_grpc_error_response(
+                context,
+                response,
+                exc,
+                grpc.StatusCode.INTERNAL,
+                user_msg="Oops! Something went wrong. Please try again later.",
+                _type="UNKNOWN",
+            )

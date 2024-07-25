@@ -107,14 +107,16 @@ message GetPNBACodeResponse {
 }
 
 message ExchangePNBACodeAndStoreRequest {
+  // The long-lived token of the authenticated entity.
+  string long_lived_token = 1;
   // The platform for which the authorization URL is requested
-  string platform = 1;
+  string platform = 2;
   // The identifier for the platform
-  string phone_number = 2;
+  string phone_number = 3;
   // The authorization code received from the authorization server
-  string authorization_code = 3;
+  string authorization_code = 4;
   // The password for two-step verification
-  string password = 4;
+  string password = 5;
 }
 message ExchangePNBACodeAndStoreResponse {
   // Indicates if the publishing was successful

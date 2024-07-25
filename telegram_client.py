@@ -262,7 +262,7 @@ class Methods:
             user_data = await client.get_me()
 
             return {
-                "token": json.dumps(self.phone_number),
+                "token": self.phone_number,
                 "profile": {
                     "name": user_data.first_name,
                     "unique_id": self.phone_number,
@@ -421,7 +421,7 @@ class Methods:
 
             # Return user profile info and token
             return {
-                "token": json.dumps(self.phone_number),
+                "token": self.phone_number,
                 "profile": {
                     "name": user_data.first_name,
                     "unique_id": self.phone_number,
