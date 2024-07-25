@@ -92,6 +92,37 @@ message PublishContentResponse {
   string publisher_response = 3;
 }
 
+message GetPNBACodeRequest {
+  // The platform for which the authorization URL is requested
+  string platform = 1;
+  // The identifier for the platform
+  string phone_number = 2;
+}
+
+message GetPNBACodeResponse {
+  // Indicates if the publishing was successful
+  bool success = 1;
+  // A response message
+  string message = 2;
+}
+
+message ExchangePNBACodeAndStoreRequest {
+  // The platform for which the authorization URL is requested
+  string platform = 1;
+  // The identifier for the platform
+  string phone_number = 2;
+  // The authorization code received from the authorization server
+  string authorization_code = 3;
+  // The password for two-step verification
+  string password = 4;
+}
+message ExchangePNBACodeAndStoreResponse {
+  // Indicates if the publishing was successful
+  bool success = 1;
+  // A response message
+  string message = 2;
+}
+
 // Service definition for Publisher
 service Publisher {
   // RPC for getting the OAuth2 authorization URL
@@ -102,4 +133,8 @@ service Publisher {
   rpc PublishContent(PublishContentRequest) returns (PublishContentResponse);
   // Revokes and deletes an OAuth2 access token
   rpc RevokeAndDeleteOAuth2Token(RevokeAndDeleteOAuth2TokenRequest) returns (RevokeAndDeleteOAuth2TokenResponse);
+  // Gets PNBA code
+  rpc GetPNBACode(GetPNBACodeRequest) returns (GetPNBACodeResponse);
+  // Exchanges PNBA code for acesss
+  rpc ExchangePNBACodeAndStore(ExchangePNBACodeAndStoreRequest) returns (ExchangePNBACodeAndStoreResponse);
 }

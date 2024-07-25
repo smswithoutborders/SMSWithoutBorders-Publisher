@@ -14,5 +14,13 @@
     "protocol_type": "oauth2",
     "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.svg",
     "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.png"
+  },
+  {
+    "name": "telegram",
+    "shortcode": "T",
+    "service_type": "message",
+    "protocol_type": "pnba",
+    "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.svg",
+    "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.png"
   }
 ]
