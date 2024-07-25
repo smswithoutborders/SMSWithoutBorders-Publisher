@@ -20,7 +20,7 @@
     "shortcode": "T",
     "service_type": "message",
     "protocol_type": "pnba",
-    "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.svg",
-    "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.png"
+    "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/telegram.svg",
+    "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/telegram.png"
   }
 ]
