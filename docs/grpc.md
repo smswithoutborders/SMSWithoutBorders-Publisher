@@ -13,6 +13,7 @@
   - [Phone Number-Based Authentication (PNBA)](#phone-number-based-authentication-pnba)
     - [Request PNBA Code](#request-pnba-code)
     - [Exchange PNBA Code and Store Token](#exchange-pnba-code-and-store-token)
+    - [Revoke And Delete PNBA Token](#revoke-and-delete-pnba-token)
   - [Publish Content](#publish-content)
 
 ## Download Protocol Buffer File
@@ -349,11 +350,11 @@ This method handles revoking and deleting an OAuth2 token from the vault.
 > The table lists only the required fields for this step. Other fields will be
 > ignored.
 
-| Field              | Type   | Description                                              |
-| ------------------ | ------ | -------------------------------------------------------- |
-| long_lived_token   | string | Long-lived token for authentication.                     |
-| platform           | string | Platform identifier for which the code is exchanged.     |
-| account_identifier | string | The identifier of the account associated with the token. |
+| Field              | Type   | Description                                                |
+| ------------------ | ------ | ---------------------------------------------------------- |
+| long_lived_token   | string | Long-lived token for authentication.                       |
+| platform           | string | Platform identifier for which the token should be revoked. |
+| account_identifier | string | The identifier of the account associated with the token.   |
 
 ---
 
@@ -578,6 +579,86 @@ localhost:6000 publisher.v1.Publisher/ExchangePNBACodeAndStore <payload.json
 ```
 
 ---
+
+#### Revoke And Delete PNBA Token
+
+This method handles revoking and deleting an PNBA token from the vault.
+
+---
+
+##### Request
+
+> `request` **RevokeAndDeletePNBATokenRequest**
+
+> [!IMPORTANT]
+>
+> The table lists only the required fields for this step. Other fields will be
+> ignored.
+
+| Field              | Type   | Description                                                |
+| ------------------ | ------ | ---------------------------------------------------------- |
+| long_lived_token   | string | Long-lived token for authentication.                       |
+| platform           | string | Platform identifier for which the token should be revoked. |
+| account_identifier | string | The identifier of the account associated with the token.   |
+
+---
+
+##### Response
+
+> `response` **RevokeAndDeletePNBATokenResponse**
+
+> [!IMPORTANT]
+>
+> The table lists only the fields that are populated for this step. Other fields
+> may be empty, omitted, or false.
+
+| Field   | Type   | Description                                |
+| ------- | ------ | ------------------------------------------ |
+| message | string | A response message from the server.        |
+| success | bool   | Indicates if the operation was successful. |
+
+---
+
+##### Method
+
+> `method` **RevokeAndDeletePNBAToken**
+
+> [!TIP]
+>
+> The examples below use
+> [grpcurl](https://github.com/fullstorydev/grpcurl#grpcurl).
+
+**Sample request**
+
+```bash
+grpcurl -plaintext \
+    -d @ \
+    -proto protos/v1/publisher.proto \
+localhost:6000 publisher.v1.Publisher/RevokeAndDeletePNBAToken <payload.json
+```
+
+---
+
+**Sample payload.json**
+
+```json
+{
+  "long_lived_token": "long_lived_token",
+  "platform": "telegram",
+  "account_identifier": "+1234567890"
+}
+```
+
+---
+
+**Sample response**
+
+```json
+{
+  "message": "Successfully deleted token",
+  "success": true
+}
+```
 
 ### Publish Content
 
