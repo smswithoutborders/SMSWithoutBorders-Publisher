@@ -842,3 +842,94 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 user_msg="Oops! Something went wrong. Please try again later.",
                 _type="UNKNOWN",
             )
+
+    def RevokeAndDeletePNBAToken(self, request, context):
+        """Handles revoking and deleting PNBA access tokens"""
+
+        response = publisher_pb2.RevokeAndDeletePNBATokenResponse
+
+        def validate_fields():
+            return self.handle_request_field_validation(
+                context,
+                request,
+                response,
+                ["long_lived_token", "platform", "account_identifier"],
+            )
+
+        def get_access_token():
+            get_access_token_response, get_access_token_error = get_entity_access_token(
+                platform=request.platform,
+                account_identifier=request.account_identifier,
+                long_lived_token=request.long_lived_token,
+            )
+            if get_access_token_error:
+                return None, self.handle_create_grpc_error_response(
+                    context,
+                    response,
+                    get_access_token_error.details(),
+                    get_access_token_error.code(),
+                )
+            if not get_access_token_response.success:
+                return None, response(
+                    message=get_access_token_response.message,
+                    success=get_access_token_response.success,
+                )
+            return get_access_token_response.token, None
+
+        def revoke_token(token):
+            pnba_client = PNBAClient(request.platform, json.loads(token))
+            revoke_response = pnba_client.invalidation()
+            return revoke_response
+
+        def delete_token():
+            delete_token_response, delete_token_error = delete_entity_token(
+                request.long_lived_token, request.platform, request.account_identifier
+            )
+
+            if delete_token_error:
+                return self.handle_create_grpc_error_response(
+                    context,
+                    response,
+                    delete_token_error.details(),
+                    delete_token_error.code(),
+                )
+
+            if not delete_token_response.success:
+                return response(
+                    message=delete_token_response.message,
+                    success=delete_token_response.success,
+                )
+
+            return response(success=True, message="Successfully deleted token")
+
+        try:
+            invalid_fields_response = validate_fields()
+            if invalid_fields_response:
+                return invalid_fields_response
+
+            check_platform_supported(request.platform.lower(), "pnba")
+
+            access_token, access_token_error = get_access_token()
+            if access_token_error:
+                return access_token_error
+
+            revoke_token(access_token)
+            return delete_token()
+
+        except NotImplementedError as e:
+            return self.handle_create_grpc_error_response(
+                context,
+                response,
+                str(e),
+                grpc.StatusCode.UNIMPLEMENTED,
+            )
+
+        except Exception as exc:
+            return self.handle_create_grpc_error_response(
+                context,
+                response,
+                exc,
+                grpc.StatusCode.INTERNAL,
+                user_msg="Oops! Something went wrong. Please try again later.",
+                _type="UNKNOWN",
+            )
