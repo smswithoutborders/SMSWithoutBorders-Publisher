@@ -526,23 +526,23 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 )
             return decrypt_payload_response.payload_plaintext, None
 
-        def encrypt_message(device_id, plaintext):
-            encrypt_payload_response, encrypt_payload_error = encrypt_payload(
-                device_id.hex(), plaintext
-            )
-            if encrypt_payload_error:
-                return None, self.handle_create_grpc_error_response(
-                    context,
-                    response,
-                    encrypt_payload_error.details(),
-                    encrypt_payload_error.code(),
-                )
-            if not encrypt_payload_response.success:
-                return None, response(
-                    message=encrypt_payload_response.message,
-                    success=encrypt_payload_response.success,
-                )
-            return encrypt_payload_response.payload_ciphertext, None
+        # def encrypt_message(device_id, plaintext):
+        #     encrypt_payload_response, encrypt_payload_error = encrypt_payload(
+        #         device_id.hex(), plaintext
+        #     )
+        #     if encrypt_payload_error:
+        #         return None, self.handle_create_grpc_error_response(
+        #             context,
+        #             response,
+        #             encrypt_payload_error.details(),
+        #             encrypt_payload_error.code(),
+        #         )
+        #     if not encrypt_payload_response.success:
+        #         return None, response(
+        #             message=encrypt_payload_response.message,
+        #             success=encrypt_payload_response.success,
+        #         )
+        #     return encrypt_payload_response.payload_ciphertext, None
 
         def handle_oauth2_email(device_id, platform_name, service_type, payload, token):
             content_parts, parse_error = parse_content(service_type, payload)
@@ -648,15 +648,15 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     access_token,
                 )
 
-            payload_ciphertext, encrypt_payload_error = encrypt_message(
-                device_id, message_response
-            )
-            if encrypt_payload_error:
-                return encrypt_payload_error
+            # payload_ciphertext, encrypt_payload_error = encrypt_message(
+            #     device_id, message_response
+            # )
+            # if encrypt_payload_error:
+            #     return encrypt_payload_error
 
             return response(
                 message=f"Successfully published {platform_info['name']} message",
-                publisher_response=payload_ciphertext,
+                publisher_response=message_response,
                 success=True,
             )
 
