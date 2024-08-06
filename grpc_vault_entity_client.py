@@ -261,8 +261,6 @@ def update_entity_token(token, platform, account_identifier, **kwargs):
     device_id = kwargs.get("device_id")
     phone_number = kwargs.get("phone_number")
 
-    print(phone_number, device_id)
-
     request = vault_pb2.UpdateEntityTokenRequest(
         device_id=device_id,
         token=token,
