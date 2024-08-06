@@ -148,37 +148,46 @@ def get_entity_access_token(platform, account_identifier, **kwargs):
     stub = kwargs["stub"]
     device_id = kwargs.get("device_id")
     long_lived_token = kwargs.get("long_lived_token")
+    phone_number = kwargs.get("phone_number")
 
     request = vault_pb2.GetEntityAccessTokenRequest(
         device_id=device_id,
         long_lived_token=long_lived_token,
         platform=platform,
         account_identifier=account_identifier,
+        phone_number=phone_number,
     )
 
-    identifier = device_id or long_lived_token
+    identifier = device_id or long_lived_token or phone_number
     logger.debug(
         "Requesting access tokens for %s '%s'...",
-        "device_id" if device_id else "long_lived_token",
+        (
+            "device_id"
+            if device_id
+            else "long_lived_token" if long_lived_token else "phone_number"
+        ),
         identifier,
     )
     response = stub.GetEntityAccessToken(request)
 
     logger.info(
         "Successfully retrieved access token for %s '%s'.",
-        "device_id" if device_id else "long_lived_token",
+        (
+            "device_id"
+            if device_id
+            else "long_lived_token" if long_lived_token else "phone_number"
+        ),
         identifier,
     )
     return response, None
 
 
 @grpc_call()
-def decrypt_payload(device_id, payload_ciphertext, **kwargs):
+def decrypt_payload(payload_ciphertext, **kwargs):
     """
     Decrypts the payload.
 
     Args:
-        device_id (str): The ID of the device.
         payload_ciphertext (bytes): The ciphertext of the payload to be decrypted.
 
     Returns:
@@ -187,8 +196,13 @@ def decrypt_payload(device_id, payload_ciphertext, **kwargs):
             - error (Exception): The error encountered if the request fails, otherwise None.
     """
     stub = kwargs["stub"]
+    device_id = kwargs.get("device_id")
+    phone_number = kwargs.get("phone_number")
+
     request = vault_pb2.DecryptPayloadRequest(
-        device_id=device_id, payload_ciphertext=payload_ciphertext
+        device_id=device_id,
+        payload_ciphertext=payload_ciphertext,
+        phone_number=phone_number,
     )
 
     logger.debug(
@@ -229,7 +243,7 @@ def encrypt_payload(device_id, payload_plaintext, **kwargs):
 
 
 @grpc_call()
-def update_entity_token(device_id, token, platform, account_identifier, **kwargs):
+def update_entity_token(token, platform, account_identifier, **kwargs):
     """Update an entity's token in the vault.
 
     Args:
@@ -244,11 +258,17 @@ def update_entity_token(device_id, token, platform, account_identifier, **kwargs
             - error (Exception): The error encountered if the request fails, otherwise None.
     """
     stub = kwargs["stub"]
+    device_id = kwargs.get("device_id")
+    phone_number = kwargs.get("phone_number")
+
+    print(phone_number, device_id)
+
     request = vault_pb2.UpdateEntityTokenRequest(
         device_id=device_id,
         token=token,
         platform=platform,
         account_identifier=account_identifier,
+        phone_number=phone_number,
     )
 
     logger.debug("Updating token for platform '%s'", platform)
