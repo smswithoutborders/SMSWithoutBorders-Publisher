@@ -675,9 +675,10 @@ This method handles publishing a relaysms payload.
 > The table lists only the required fields for this step. Other fields will be
 > ignored.
 
-| Field   | Type   | Description                          |
-| ------- | ------ | ------------------------------------ |
-| content | string | The content payload to be published. |
+| Field    | Type                | Description                          |
+| -------- | ------------------- | ------------------------------------ |
+| content  | string              | The content payload to be published. |
+| metadata | map<string, string> | Metadata about the content.          |
 
 ---
 
@@ -711,9 +712,22 @@ This method handles publishing a relaysms payload.
 
 ```bash
 grpcurl -plaintext \
-    -d '{"content": "encoded_relay_sms_payload"}' \
+    -d @ \
     -proto protos/v1/publisher.proto \
-localhost:6000 publisher.v1.Publisher/PublishContent
+localhost:6000 publisher.v1.Publisher/PublishContent <payload.json
+```
+
+---
+
+**Sample payload.json**
+
+```json
+{
+  "content": "encoded_relay_sms_payload",
+  "metadata": {
+    "From": "+1234567890"
+  }
+}
 ```
 
 ---
