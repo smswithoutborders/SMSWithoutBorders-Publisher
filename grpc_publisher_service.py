@@ -120,7 +120,8 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
         Returns:
             function: A function `handle_token_update(token)` that updates the token information.
         """
-        device_id = kwargs["device_id"]
+        device_id = kwargs.get("device_id")
+        phone_number = kwargs.get("phone_number")
         account_id = kwargs["account_id"]
         platform = kwargs["platform"]
 
@@ -131,9 +132,11 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             Args:
                 token (dict or object): The token information containing access and refresh tokens.
             """
+            logger.debug(kwargs)
 
             update_response, update_error = update_entity_token(
                 device_id=device_id,
+                phone_number=phone_number,
                 token=json.dumps(token),
                 account_identifier=account_id,
                 platform=platform,
@@ -488,9 +491,12 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 )
             return platform_info, None
 
-        def get_access_token(device_id, platform_name, account_identifier):
+        def get_access_token(
+            device_id, phone_number, platform_name, account_identifier
+        ):
             get_access_token_response, get_access_token_error = get_entity_access_token(
-                device_id=device_id.hex(),
+                device_id=device_id,
+                phone_number=phone_number,
                 platform=platform_name,
                 account_identifier=account_identifier,
             )
@@ -508,9 +514,11 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 )
             return get_access_token_response.token, None
 
-        def decrypt_message(device_id, encrypted_content):
+        def decrypt_message(device_id, phone_number, encrypted_content):
             decrypt_payload_response, decrypt_payload_error = decrypt_payload(
-                device_id.hex(), base64.b64encode(encrypted_content).decode("utf-8")
+                device_id=device_id,
+                phone_number=phone_number,
+                payload_ciphertext=base64.b64encode(encrypted_content).decode("utf-8"),
             )
             if decrypt_payload_error:
                 return None, self.handle_create_grpc_error_response(
@@ -544,7 +552,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
         #         )
         #     return encrypt_payload_response.payload_ciphertext, None
 
-        def handle_oauth2_email(device_id, platform_name, service_type, payload, token):
+        def handle_oauth2_email(platform_name, service_type, payload, token, **kwargs):
             content_parts, parse_error = parse_content(service_type, payload)
 
             if parse_error:
@@ -568,7 +576,8 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 platform_name,
                 json.loads(token),
                 self.create_token_update_handler(
-                    device_id=device_id.hex(),
+                    device_id=kwargs.get("device_id"),
+                    phone_number=kwargs.get("phone_number"),
                     account_id=from_email,
                     platform=platform_name,
                     response_cls=response,
@@ -577,7 +586,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
             return oauth2_client.send_message(email_message, from_email)
 
-        def handle_oauth2_text(device_id, platform_name, service_type, payload, token):
+        def handle_oauth2_text(platform_name, service_type, payload, token, **kwargs):
             content_parts, parse_error = parse_content(service_type, payload)
 
             if parse_error:
@@ -593,7 +602,8 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 platform_name,
                 json.loads(token),
                 self.create_token_update_handler(
-                    device_id=device_id.hex(),
+                    device_id=kwargs.get("device_id"),
+                    phone_number=kwargs.get("phone_number"),
                     account_id=sender,
                     platform=platform_name,
                     response_cls=response,
@@ -617,15 +627,21 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             if platform_info_error:
                 return platform_info_error
 
+            device_id_hex = device_id.hex() if device_id else None
             decrypted_content, decrypt_error = decrypt_message(
-                device_id, encrypted_content
+                device_id=device_id_hex,
+                phone_number=request.metadata["From"],
+                encrypted_content=encrypted_content,
             )
 
             if decrypt_error:
                 return decrypt_error
 
             access_token, access_token_error = get_access_token(
-                device_id, platform_info["name"], decrypted_content.split(":")[0]
+                device_id=device_id_hex,
+                phone_number=request.metadata["From"],
+                platform_name=platform_info["name"],
+                account_identifier=decrypted_content.split(":")[0],
             )
             if access_token_error:
                 return access_token_error
@@ -633,19 +649,21 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             message_response = None
             if platform_info["service_type"] == "email":
                 message_response = handle_oauth2_email(
-                    device_id,
-                    platform_info["name"],
-                    platform_info["service_type"],
-                    decrypted_content,
-                    access_token,
+                    device_id=device_id_hex,
+                    phone_number=request.metadata["From"],
+                    platform_name=platform_info["name"],
+                    service_type=platform_info["service_type"],
+                    payload=decrypted_content,
+                    token=access_token,
                 )
             elif platform_info["service_type"] == "text":
                 message_response = handle_oauth2_text(
-                    device_id,
-                    platform_info["name"],
-                    platform_info["service_type"],
-                    decrypted_content,
-                    access_token,
+                    device_id=device_id_hex,
+                    phone_number=request.metadata["From"],
+                    platform_name=platform_info["name"],
+                    service_type=platform_info["service_type"],
+                    payload=decrypted_content,
+                    token=access_token,
                 )
 
             # payload_ciphertext, encrypt_payload_error = encrypt_message(
