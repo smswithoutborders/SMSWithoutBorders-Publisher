@@ -326,9 +326,6 @@ class Methods:
             # open telethon connection
             await client.connect()
 
-            # fetch dialogs
-            await self.dialogs()
-
             # sent message
             logging.debug("sending message to: %s...", recipient)
             await client.send_message(recipient, text)
@@ -494,63 +491,6 @@ class Methods:
 
         except Exception as error:
             logging.error("An error occurred while fetching contacts.")
-            raise error
-
-        finally:
-            # close telethon connection
-            await client.disconnect()
-
-    async def dialogs(self) -> list:
-        """Fetches all Telegram dialogs.
-
-        Returns:
-            A list of dictionaries containing the following keys:
-            - name (str): The name of the dialog
-            - id (int): The unique identifier of the dialog entity
-            - message (dict): A dictionary containing the following keys:
-                - id (int): The unique identifier of the message
-                - text (str): The text of the message
-                - date (datetime.datetime): The date and time the message was sent
-            - date (datetime.datetime): The date and time the dialog was created
-            - type (str): The type of the dialog, which can be either "chat" or "channel"
-        """
-        # Initialize Telethon client and connect to API
-        client = TelegramClient(
-            self.record_db_filepath, api_id=self.api_id, api_hash=self.api_hash
-        )
-
-        try:
-            # open telethon connection
-            await client.connect()
-
-            # fetch all active dialogs
-            dialogs = []
-
-            logging.debug("Fetching all active dialogs for %s ...", self.phone_number)
-            result = await client.get_dialogs()
-            for dialog in result:
-                dialogs.append(
-                    {
-                        "name": dialog.name,
-                        "id": dialog.entity.id,
-                        "message": {
-                            "id": dialog.message.id,
-                            "text": dialog.message.message,
-                            "date": dialog.message.date,
-                        },
-                        "date": dialog.date,
-                        "type": (
-                            "chat" if not hasattr(dialog.entity, "title") else "channel"
-                        ),
-                    }
-                )
-
-            logging.info("- Successfully fetched all active dialogs")
-
-            return dialogs
-
-        except Exception as error:
-            logging.error("An error occurred while fetching dialogs.")
             raise error
 
         finally:

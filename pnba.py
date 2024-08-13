@@ -4,6 +4,7 @@ Phone number-based Authentication Client Module.
 
 import logging
 import re
+import datetime
 import asyncio
 import telegram_client
 
@@ -112,6 +113,28 @@ class PNBAClient:
             asyncio.run(client.invalidate(token=self.phone_number))
 
             return {"response": f"Successfully revoked access for {self.platform}."}
+
+        except Exception as error:
+            logger.exception(error)
+            return {"error": str(error)}
+
+    def send_message(self, recipient, message):
+        """Send a message.
+
+        Args:
+            message (dict): The message payload to be sent. The payload should be a
+                properly formatted dictionary according to the platform's specifications.
+        """
+        try:
+            client = self.session.Methods(self.phone_number)
+            recipient = re.sub(r"\s+", "", recipient)
+            if not recipient.startswith("+"):
+                recipient = "+" + recipient
+
+            asyncio.run(client.message(recipient=recipient, text=message))
+
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            return f"Successfully sent message to '{self.platform}' on your behalf at {timestamp}."
 
         except Exception as error:
             logger.exception(error)

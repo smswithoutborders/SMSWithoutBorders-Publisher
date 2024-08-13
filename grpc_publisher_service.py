@@ -612,6 +612,21 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
             return oauth2_client.send_message(text)
 
+        def handle_pnba_message(platform_name, service_type, payload, token):
+            content_parts, parse_error = parse_content(service_type, payload)
+
+            if parse_error:
+                return self.handle_create_grpc_error_response(
+                    context,
+                    response,
+                    parse_error,
+                    grpc.StatusCode.INVALID_ARGUMENT,
+                )
+
+            _, receiver, message = content_parts
+            pnba_client = PNBAClient(platform_name, json.loads(token))
+            return pnba_client.send_message(message=message, recipient=receiver)
+
         try:
             invalid_fields_response = validate_fields()
             if invalid_fields_response:
@@ -660,6 +675,13 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 message_response = handle_oauth2_text(
                     device_id=device_id_hex,
                     phone_number=request.metadata["From"],
+                    platform_name=platform_info["name"],
+                    service_type=platform_info["service_type"],
+                    payload=decrypted_content,
+                    token=access_token,
+                )
+            elif platform_info["service_type"] == "message":
+                message_response = handle_pnba_message(
                     platform_name=platform_info["name"],
                     service_type=platform_info["service_type"],
                     payload=decrypted_content,
