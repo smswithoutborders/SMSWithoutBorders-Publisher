@@ -127,6 +127,10 @@ class OAuth2Client:
         if not oauth2_config:
             raise ValueError(f"Configuration for platform '{platform_name}' not found.")
 
+        if token and not self._is_token_format_correct(token):
+            logger.info("Token format is incorrect. Converting token format...")
+            token = self._convert_token_format(token)
+
         self.platform = platform_name
         self.creds = load_credentials(self.platform)
         self.urls = oauth2_config["urls"]
@@ -139,6 +143,54 @@ class OAuth2Client:
             token=token,
             update_token=update_token,
         )
+
+    def _is_token_format_correct(self, token):
+        """
+        Check if the token is already in the correct format.
+
+        Args:
+            token (dict): The token credentials.
+
+        Returns:
+            bool: True if the token is in the correct format, False otherwise.
+        """
+        required_keys = {"access_token", "token_type", "expires_at", "refresh_token"}
+        return required_keys.issubset(token.keys())
+
+    def _convert_token_format(self, old_format_token):
+        """
+        Convert token credentials from one format to another.
+
+        Args:
+            old_format_token (dict): The original token credentials.
+
+        Returns:
+            dict: The converted token credentials in the new format.
+        """
+        access_token = old_format_token.get("token")
+        refresh_token = old_format_token.get("refresh_token")
+        scope = " ".join(old_format_token.get("scopes", []))
+        expiry_time = old_format_token.get("expiry")
+
+        if expiry_time:
+            expiry_datetime = datetime.datetime.fromisoformat(
+                expiry_time.replace("Z", "+00:00")
+            )
+            expires_at = int(expiry_datetime.timestamp())
+        else:
+            expires_at = None
+
+        new_format_token = {
+            "access_token": access_token,
+            "expires_in": 3599,
+            "scope": scope,
+            "token_type": "Bearer",
+            "id_token": "",
+            "expires_at": expires_at,
+            "refresh_token": refresh_token,
+        }
+
+        return new_format_token
 
     @staticmethod
     def generate_code_verifier(length=128):
