@@ -550,17 +550,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
         #         )
         #     return encrypt_payload_response.payload_ciphertext, None
 
-        def handle_oauth2_email(platform_name, service_type, payload, token, **kwargs):
-            content_parts, parse_error = parse_content(service_type, payload)
-
-            if parse_error:
-                return self.handle_create_grpc_error_response(
-                    context,
-                    response,
-                    parse_error,
-                    grpc.StatusCode.INVALID_ARGUMENT,
-                )
-
+        def handle_oauth2_email(platform_name, content_parts, token, **kwargs):
             from_email, to_email, cc_email, bcc_email, subject, body = content_parts
             email_message = create_email_message(
                 from_email,
@@ -584,17 +574,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
             return oauth2_client.send_message(email_message, from_email)
 
-        def handle_oauth2_text(platform_name, service_type, payload, token, **kwargs):
-            content_parts, parse_error = parse_content(service_type, payload)
-
-            if parse_error:
-                return self.handle_create_grpc_error_response(
-                    context,
-                    response,
-                    parse_error,
-                    grpc.StatusCode.INVALID_ARGUMENT,
-                )
-
+        def handle_oauth2_text(platform_name, content_parts, token, **kwargs):
             sender, text = content_parts
             oauth2_client = OAuth2Client(
                 platform_name,
@@ -610,17 +590,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             )
             return oauth2_client.send_message(text)
 
-        def handle_pnba_message(platform_name, service_type, payload, token):
-            content_parts, parse_error = parse_content(service_type, payload)
-
-            if parse_error:
-                return self.handle_create_grpc_error_response(
-                    context,
-                    response,
-                    parse_error,
-                    grpc.StatusCode.INVALID_ARGUMENT,
-                )
-
+        def handle_pnba_message(platform_name, content_parts, token):
             _, receiver, message = content_parts
             pnba_client = PNBAClient(platform_name, json.loads(token))
             return pnba_client.send_message(message=message, recipient=receiver)
@@ -650,11 +620,23 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             if decrypt_error:
                 return decrypt_error
 
+            content_parts, parse_error = parse_content(
+                platform_info["service_type"], decrypted_content
+            )
+
+            if parse_error:
+                return self.handle_create_grpc_error_response(
+                    context,
+                    response,
+                    parse_error,
+                    grpc.StatusCode.INVALID_ARGUMENT,
+                )
+
             access_token, access_token_error = get_access_token(
                 device_id=device_id_hex,
                 phone_number=request.metadata["From"],
                 platform_name=platform_info["name"],
-                account_identifier=decrypted_content.split(":")[0],
+                account_identifier=decrypted_content.split(":", 1)[0],
             )
             if access_token_error:
                 return access_token_error
@@ -665,8 +647,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     device_id=device_id_hex,
                     phone_number=request.metadata["From"],
                     platform_name=platform_info["name"],
-                    service_type=platform_info["service_type"],
-                    payload=decrypted_content,
+                    content_parts=content_parts,
                     token=access_token,
                 )
             elif platform_info["service_type"] == "text":
@@ -674,15 +655,13 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     device_id=device_id_hex,
                     phone_number=request.metadata["From"],
                     platform_name=platform_info["name"],
-                    service_type=platform_info["service_type"],
-                    payload=decrypted_content,
+                    content_parts=content_parts,
                     token=access_token,
                 )
             elif platform_info["service_type"] == "message":
                 message_response = handle_pnba_message(
                     platform_name=platform_info["name"],
-                    service_type=platform_info["service_type"],
-                    payload=decrypted_content,
+                    content_parts=content_parts,
                     token=access_token,
                 )
 
