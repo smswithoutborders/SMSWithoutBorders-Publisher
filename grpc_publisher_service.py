@@ -62,9 +62,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
             user_msg = sys_msg
 
         if error_type == "UNKNOWN":
-            logger.exception(sys_msg, exc_info=True)
-        else:
-            logger.error(sys_msg)
+            logger.exception(sys_msg)
 
         context.set_details(user_msg)
         context.set_code(status_code)
@@ -225,7 +223,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 exc,
                 grpc.StatusCode.INTERNAL,
                 user_msg="Oops! Something went wrong. Please try again later.",
-                _type="UNKNOWN",
+                error_type="UNKNOWN",
             )
 
     def ExchangeOAuth2CodeAndStore(self, request, context):
@@ -251,7 +249,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     response,
                     list_error.details(),
                     list_error.code(),
-                    _type="UNKNOWN",
+                    error_type="UNKNOWN",
                 )
             return list_response, None
 
@@ -305,7 +303,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     response,
                     store_error.details(),
                     store_error.code(),
-                    _type="UNKNOWN",
+                    error_type="UNKNOWN",
                 )
 
             if not store_response.success:
@@ -341,7 +339,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 response,
                 str(e),
                 grpc.StatusCode.INVALID_ARGUMENT,
-                _type="UNKNOWN",
+                error_type="UNKNOWN",
             )
 
         except NotImplementedError as e:
@@ -359,7 +357,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 exc,
                 grpc.StatusCode.INTERNAL,
                 user_msg="Oops! Something went wrong. Please try again later.",
-                _type="UNKNOWN",
+                error_type="UNKNOWN",
             )
 
     def RevokeAndDeleteOAuth2Token(self, request, context):
@@ -450,7 +448,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 exc,
                 grpc.StatusCode.INTERNAL,
                 user_msg="Oops! Something went wrong. Please try again later.",
-                _type="UNKNOWN",
+                error_type="UNKNOWN",
             )
 
     def PublishContent(self, request, context):
@@ -474,7 +472,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     decode_error,
                     grpc.StatusCode.INVALID_ARGUMENT,
                     user_msg="Invalid content format.",
-                    _type="UNKNOWN",
+                    error_type="UNKNOWN",
                 )
             return (platform_letter, encrypted_content, device_id), None
 
@@ -706,7 +704,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 response,
                 str(e),
                 grpc.StatusCode.INVALID_ARGUMENT,
-                _type="UNKNOWN",
+                error_type="UNKNOWN",
             )
 
         except Exception as exc:
@@ -716,7 +714,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 exc,
                 grpc.StatusCode.INTERNAL,
                 user_msg="Oops! Something went wrong. Please try again later.",
-                _type="UNKNOWN",
+                error_type="UNKNOWN",
             )
 
     def GetPNBACode(self, request, context):
@@ -749,7 +747,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     response,
                     pnba_response["error"],
                     grpc.StatusCode.INVALID_ARGUMENT,
-                    _type="UNKNOWN",
+                    error_type="UNKNOWN",
                 )
 
             return response(success=True, message=pnba_response["response"])
@@ -769,7 +767,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 exc,
                 grpc.StatusCode.INTERNAL,
                 user_msg="Oops! Something went wrong. Please try again later.",
-                _type="UNKNOWN",
+                error_type="UNKNOWN",
             )
 
     def ExchangePNBACodeAndStore(self, request, context):
@@ -795,7 +793,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     response,
                     list_error.details(),
                     list_error.code(),
-                    _type="UNKNOWN",
+                    error_type="UNKNOWN",
                 )
             return list_response, None
 
@@ -813,7 +811,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     response,
                     pnba_response["error"],
                     grpc.StatusCode.INVALID_ARGUMENT,
-                    _type="UNKNOWN",
+                    error_type="UNKNOWN",
                 )
 
             token = pnba_response["response"]["token"]
@@ -835,7 +833,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     response,
                     store_error.details(),
                     store_error.code(),
-                    _type="UNKNOWN",
+                    error_type="UNKNOWN",
                 )
 
             if not store_response.success:
@@ -880,7 +878,7 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 exc,
                 grpc.StatusCode.INTERNAL,
                 user_msg="Oops! Something went wrong. Please try again later.",
-                _type="UNKNOWN",
+                error_type="UNKNOWN",
             )
 
     def RevokeAndDeletePNBAToken(self, request, context):
@@ -971,5 +969,5 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 exc,
                 grpc.StatusCode.INTERNAL,
                 user_msg="Oops! Something went wrong. Please try again later.",
-                _type="UNKNOWN",
+                error_type="UNKNOWN",
             )
