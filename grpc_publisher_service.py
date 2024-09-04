@@ -632,11 +632,13 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     grpc.StatusCode.INVALID_ARGUMENT,
                 )
 
+            content_parts[0] = content_parts[0].replace("\n", "")
+
             access_token, access_token_error = get_access_token(
                 device_id=device_id_hex,
                 phone_number=request.metadata["From"],
                 platform_name=platform_info["name"],
-                account_identifier=decrypted_content.split(":", 1)[0],
+                account_identifier=content_parts[0],
             )
             if access_token_error:
                 return access_token_error
