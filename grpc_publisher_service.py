@@ -632,7 +632,9 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                     grpc.StatusCode.INVALID_ARGUMENT,
                 )
 
+            content_parts = list(content_parts)
             content_parts[0] = content_parts[0].replace("\n", "")
+            content_parts = tuple(content_parts)
 
             access_token, access_token_error = get_access_token(
                 device_id=device_id_hex,
