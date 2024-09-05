@@ -254,3 +254,18 @@ def parse_content(service_type, content):
         return (sender, receiver, message), None
 
     return None, "Invalid service_type. Must be 'email', 'text', or 'message'."
+
+
+def mask_sensitive_info(value):
+    """
+    Masks all but the last three digits of the given value.
+
+    Args:
+        value (str): The string to be masked.
+
+    Returns:
+        str: The masked string with all but the last three digits replaced by '*'.
+    """
+    if not value:
+        return value
+    return "*" * (len(value) - 3) + value[-3:]

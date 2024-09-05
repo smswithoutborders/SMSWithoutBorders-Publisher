@@ -7,7 +7,7 @@ import grpc
 import vault_pb2
 import vault_pb2_grpc
 
-from utils import get_configs
+from utils import get_configs, mask_sensitive_info
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -158,27 +158,21 @@ def get_entity_access_token(platform, account_identifier, **kwargs):
         phone_number=phone_number,
     )
 
-    identifier = device_id or long_lived_token or phone_number
-    logger.debug(
-        "Requesting access tokens for %s '%s'...",
-        (
-            "device_id"
-            if device_id
-            else "long_lived_token" if long_lived_token else "phone_number"
-        ),
-        identifier,
+    identifier = mask_sensitive_info(long_lived_token or device_id or phone_number)
+    id_type = (
+        "long_lived_token"
+        if long_lived_token
+        else "device_id" if device_id else "phone_number"
     )
+
+    logger.debug("Requesting access tokens using %s='%s'...", id_type, identifier)
+
     response = stub.GetEntityAccessToken(request)
 
     logger.info(
-        "Successfully retrieved access token for %s '%s'.",
-        (
-            "device_id"
-            if device_id
-            else "long_lived_token" if long_lived_token else "phone_number"
-        ),
-        identifier,
+        "Successfully retrieved access token using %s='%s'.", id_type, identifier
     )
+
     return response, None
 
 
@@ -205,12 +199,21 @@ def decrypt_payload(payload_ciphertext, **kwargs):
         phone_number=phone_number,
     )
 
+    identifier = mask_sensitive_info(device_id or phone_number)
+
     logger.debug(
-        "Sending request to decrypt payload for device_id: %s",
-        device_id,
+        "Initiating decryption request: %s='%s'.",
+        "device_id" if device_id else "phone_number",
+        identifier,
     )
+
     response = stub.DecryptPayload(request)
-    logger.info("Successfully decrypted payload.")
+
+    logger.info(
+        "Decryption successful: %s='%s'.",
+        "device_id" if device_id else "phone_number",
+        identifier,
+    )
     return response, None
 
 
@@ -269,9 +272,24 @@ def update_entity_token(token, platform, account_identifier, **kwargs):
         phone_number=phone_number,
     )
 
-    logger.debug("Updating token for platform '%s'", platform)
+    identifier = mask_sensitive_info(device_id or phone_number)
+
+    logger.debug(
+        "Starting token update for platform '%s' using %s='%s'.",
+        platform,
+        "device_id" if device_id else "phone_number",
+        identifier,
+    )
+
     response = stub.UpdateEntityToken(request)
-    logger.info("Successfully updated token for platform '%s'", platform)
+
+    logger.info(
+        "Token update successful for platform '%s' using %s='%s'.",
+        platform,
+        "device_id" if device_id else "phone_number",
+        identifier,
+    )
+
     return response, None
 
 
