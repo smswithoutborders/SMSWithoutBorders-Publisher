@@ -223,34 +223,26 @@ def parse_content(service_type, content):
     """
     if service_type == "email":
         # Email format: 'from:to:cc:bcc:subject:body'
-        parts = content.split(":")
+        parts = content.split(":", 5)
         if len(parts) != 6:
             return None, "Email content must have exactly 6 parts."
-        from_email = parts[0]
-        to_email = parts[1]
-        cc_email = parts[2]
-        bcc_email = parts[3]
-        subject = parts[4]
-        body = parts[5]
+        from_email, to_email, cc_email, bcc_email, subject, body = parts
         return (from_email, to_email, cc_email, bcc_email, subject, body), None
 
     if service_type == "text":
         # Text format: 'sender:text'
-        parts = content.split(":")
+        parts = content.split(":", 1)
         if len(parts) != 2:
             return None, "Text content must have exactly 2 parts."
-        sender = parts[0]
-        text = parts[1]
+        sender, text = parts
         return (sender, text), None
 
     if service_type == "message":
         # Message format: 'sender:receiver:message'
-        parts = content.split(":")
+        parts = content.split(":", 2)
         if len(parts) != 3:
             return None, "Message content must have exactly 3 parts."
-        sender = parts[0]
-        receiver = parts[1]
-        message = parts[2]
+        sender, receiver, message = parts
         return (sender, receiver, message), None
 
     return None, "Invalid service_type. Must be 'email', 'text', or 'message'."
