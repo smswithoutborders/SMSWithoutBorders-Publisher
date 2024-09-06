@@ -169,9 +169,7 @@ def get_entity_access_token(platform, account_identifier, **kwargs):
 
     response = stub.GetEntityAccessToken(request)
 
-    logger.info(
-        "Successfully retrieved access token using %s='%s'.", id_type, identifier
-    )
+    logger.info("Successfully retrieved access token using %s.", id_type)
 
     return response, None
 
@@ -202,7 +200,7 @@ def decrypt_payload(payload_ciphertext, **kwargs):
     identifier = mask_sensitive_info(device_id or phone_number)
 
     logger.debug(
-        "Initiating decryption request: %s='%s'.",
+        "Initiating decryption request using %s='%s'.",
         "device_id" if device_id else "phone_number",
         identifier,
     )
@@ -210,9 +208,8 @@ def decrypt_payload(payload_ciphertext, **kwargs):
     response = stub.DecryptPayload(request)
 
     logger.info(
-        "Decryption successful: %s='%s'.",
+        "Decryption successful using %s.",
         "device_id" if device_id else "phone_number",
-        identifier,
     )
     return response, None
 
@@ -284,10 +281,9 @@ def update_entity_token(token, platform, account_identifier, **kwargs):
     response = stub.UpdateEntityToken(request)
 
     logger.info(
-        "Token update successful for platform '%s' using %s='%s'.",
+        "Token update successful for platform '%s' using %s.",
         platform,
         "device_id" if device_id else "phone_number",
-        identifier,
     )
 
     return response, None
