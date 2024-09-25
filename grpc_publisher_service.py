@@ -24,7 +24,6 @@ from grpc_vault_entity_client import (
     store_entity_token,
     get_entity_access_token,
     decrypt_payload,
-    encrypt_payload,
     update_entity_token,
     delete_entity_token,
 )
@@ -32,7 +31,7 @@ from grpc_vault_entity_client import (
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger("[gRPC Publisher Service]")
+logger = logging.getLogger(__name__)
 
 
 class PublisherService(publisher_pb2_grpc.PublisherServicer):
@@ -787,6 +786,13 @@ class PublisherService(publisher_pb2_grpc.PublisherServicer):
                 pnba_response = pnba_client.password_validation(request.password)
             else:
                 pnba_response = pnba_client.validation(request.authorization_code)
+
+            if pnba_response.get("two_step_verification_enabled"):
+                return None, response(
+                    success=True,
+                    two_step_verification_enabled=True,
+                    message="two-steps verification is enabled and a password is required",
+                )
 
             if pnba_response.get("error"):
                 return None, self.handle_create_grpc_error_response(

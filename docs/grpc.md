@@ -529,10 +529,11 @@ Optional fields:
 >
 > The table lists only the fields that are populated for this step. Other fields may be empty, omitted, or false.
 
-| Field   | Type   | Description                                |
-| ------- | ------ | ------------------------------------------ |
-| message | string | A response message from the server.        |
-| success | bool   | Indicates if the operation was successful. |
+| Field                         | Type   | Description                                    |
+| ----------------------------- | ------ | ---------------------------------------------- |
+| message                       | string | A response message from the server.            |
+| two_step_verification_enabled | bool   | Indicates if two step verification is enabled. |
+| success                       | bool   | Indicates if the operation was successful.     |
 
 ---
 
@@ -574,6 +575,7 @@ localhost:6000 publisher.v1.Publisher/ExchangePNBACodeAndStore <payload.json
 ```json
 {
   "success": true,
+  "two_step_verification_enabled": false,
   "message": "Successfully fetched and stored token"
 }
 ```

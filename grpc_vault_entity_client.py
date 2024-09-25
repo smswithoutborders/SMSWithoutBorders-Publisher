@@ -12,7 +12,7 @@ from utils import get_configs, mask_sensitive_info
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger("[Vault gRPC Client]")
+logger = logging.getLogger(__name__)
 
 
 def get_channel(internal=True):
