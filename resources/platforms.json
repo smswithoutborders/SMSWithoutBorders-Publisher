@@ -4,8 +4,8 @@
     "shortcode": "g",
     "service_type": "email",
     "protocol_type": "oauth2",
-    "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/gmail.svg",
-    "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/gmail.png",
+    "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/main/resources/icons/gmail.svg",
+    "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/main/resources/icons/gmail.png",
     "support_url_scheme": false
   },
   {
@@ -13,8 +13,8 @@
     "shortcode": "t",
     "service_type": "text",
     "protocol_type": "oauth2",
-    "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.svg",
-    "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/twitter.png",
+    "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/main/resources/icons/twitter.svg",
+    "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/main/resources/icons/twitter.png",
     "support_url_scheme": true
   },
   {
@@ -22,8 +22,8 @@
     "shortcode": "T",
     "service_type": "message",
     "protocol_type": "pnba",
-    "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/telegram.svg",
-    "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/staging/resources/icons/telegram.png",
+    "icon_svg": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/main/resources/icons/telegram.svg",
+    "icon_png": "https://raw.githubusercontent.com/smswithoutborders/SMSWithoutBorders-Publisher/main/resources/icons/telegram.png",
     "support_url_scheme": false
   }
 ]
