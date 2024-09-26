@@ -19,6 +19,12 @@ from telethon.errors import (
 )
 
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+
 class Errors:
     """
     Custom exceptions.
@@ -104,7 +110,7 @@ class Methods:
             raise KeyError("TELEGRAM_RECORDS environment variable not set.")
 
         if not os.path.exists(credentials_path):
-            logging.warning(
+            logger.warning(
                 "Telegram credentials file not found at %s", credentials_path
             )
 
@@ -148,7 +154,7 @@ class Methods:
             return True
 
         except Exception as error:
-            logging.error("An error occurred while writting registry file.")
+            logger.error("An error occurred while writting registry file.")
             raise error
 
     def __read_registry__(self) -> dict:
@@ -161,12 +167,12 @@ class Methods:
                 json_content = json.load(file_)
 
             os.remove(registry_filepath)
-            logging.debug("- removed user registry file: %s", registry_filepath)
+            logger.debug("- removed user registry file: %s", registry_filepath)
 
             return json_content
 
         except Exception as error:
-            logging.error("An error occurred while reading registry file.")
+            logger.error("An error occurred while reading registry file.")
             raise error
 
     async def authorize(self) -> None:
@@ -182,16 +188,16 @@ class Methods:
 
         # Check if user file already exists and create it if not
         if not os.path.exists(self.record_filepath):
-            logging.debug("- creating user file: %s", self.record_filepath)
+            logger.debug("- creating user file: %s", self.record_filepath)
             os.makedirs(self.record_filepath)
 
         else:
-            logging.debug(
+            logger.debug(
                 "deleting draft record '%s' and deps ...", self.record_filepath
             )
             shutil.rmtree(self.record_filepath)
 
-            logging.debug("- creating user file: %s", self.record_filepath)
+            logger.debug("- creating user file: %s", self.record_filepath)
             os.makedirs(self.record_filepath)
 
         # Initialize Telethon client and connect to API
@@ -205,19 +211,19 @@ class Methods:
 
             # Check if session already exists
             if await client.is_user_authorized():
-                logging.error("Session already exists")
+                logger.error("Session already exists")
                 raise Errors.SessionExistError()
 
             # Send authorization code request and write phone_code_hash to registry
             result = await client.send_code_request(phone=self.phone_number)
             self.__write_registry__(phone_code_hash=result.phone_code_hash)
-            logging.info("- authentication code sent to: %s", self.phone_number)
+            logger.info("- authentication code sent successfully.")
 
         except FloodWaitError as error:
             raise error
 
         except Exception as error:
-            logging.error("An error occurred while authorizing.")
+            logger.error("An error occurred while authorizing.")
             raise error
 
         finally:
@@ -235,7 +241,7 @@ class Methods:
         """
         # Check if user file already exists and create it if not
         if not os.path.exists(self.record_filepath):
-            logging.debug("- creating user file: %s", self.record_filepath)
+            logger.debug("- creating user file: %s", self.record_filepath)
             os.makedirs(self.record_filepath)
 
         # Initialize Telethon client and connect to API
@@ -255,10 +261,10 @@ class Methods:
                 code=code,
                 phone_code_hash=registry_data["phone_code_hash"],
             )
-            logging.info("- Code validation successful")
+            logger.info("- Code validation successful")
 
             # get user profile info
-            logging.debug("Fetching user's info ...")
+            logger.debug("Fetching user's info ...")
             user_data = await client.get_me()
 
             return {
@@ -270,22 +276,20 @@ class Methods:
             }
 
         except PhoneNumberUnoccupiedError as error:
-            logging.error("%s has no account", self.phone_number)
+            logger.error("%s has no account", self.phone_number)
             raise error
 
         except PhoneCodeInvalidError as error:
-            logging.error("The phone code entered was invalid")
+            logger.error("The phone code entered was invalid")
             self.__write_registry__(phone_code_hash=registry_data["phone_code_hash"])
             raise error
 
         except PhoneCodeExpiredError as error:
-            logging.error("The confirmation code has expired")
+            logger.error("The confirmation code has expired")
             raise error
 
         except SessionPasswordNeededError as error:
-            logging.error(
-                "two-steps verification is enabled and a password is required"
-            )
+            logger.error("two-steps verification is enabled and a password is required")
             self.__write_registry__(
                 code=code, phone_code_hash=registry_data["phone_code_hash"]
             )
@@ -293,13 +297,13 @@ class Methods:
 
         except FloodWaitError as error:
             wait_time = error.seconds
-            logging.error(
+            logger.error(
                 "Flood wait error occurred. Please try again in %s seconds.", wait_time
             )
             raise error
 
         except Exception as error:
-            logging.error("An error occurred while validating.")
+            logger.error("An error occurred while validating.")
             raise error
 
         finally:
@@ -327,13 +331,13 @@ class Methods:
             await client.connect()
 
             # sent message
-            logging.debug("sending message to: %s...", recipient)
+            logger.debug("sending message to: %s...", recipient)
             await client.send_message(recipient, text)
 
-            logging.info("- Successfully sent message")
+            logger.info("- Successfully sent message")
 
         except Exception as error:
-            logging.error("An error occurred while sending a message.")
+            logger.error("An error occurred while sending a message.")
             raise error
 
         finally:
@@ -366,18 +370,18 @@ class Methods:
             await client.connect()
 
             # revoke access
-            logging.debug("revoking %s access ...", self.phone_number)
+            logger.debug("revoking %s access ...", self.phone_number)
             await client.log_out()
 
             # delete files
-            logging.debug("deleting files ...")
+            logger.debug("deleting files ...")
             shutil.rmtree(self.record_filepath)
 
-            logging.info("- Successfully revoked access")
+            logger.info("- Successfully revoked access")
             return True
 
         except Exception as error:
-            logging.error("An error occurred while invalidating.\n\n%s", str(error))
+            logger.error("An error occurred while invalidating.\n\n%s", str(error))
             return False
 
         finally:
@@ -410,10 +414,10 @@ class Methods:
                 phone_code_hash=registry_data["phone_code_hash"],
             )
 
-            logging.info("- Code validation with password successful")
+            logger.info("- Code validation with password successful")
 
             # get user profile info
-            logging.debug("Fetching user's info ...")
+            logger.debug("Fetching user's info ...")
             user_data = await client.get_me()
 
             # Return user profile info and token
@@ -426,23 +430,23 @@ class Methods:
             }
 
         except PhoneNumberUnoccupiedError as error:
-            logging.error("%s has no account", self.phone_number)
+            logger.error("%s has no account", self.phone_number)
             raise error
 
         except PasswordHashInvalidError as error:
-            logging.error("The password (and thus its hash value) entered is invalid")
+            logger.error("The password (and thus its hash value) entered is invalid")
             self.__write_registry__(phone_code_hash=registry_data["phone_code_hash"])
             raise error
 
         except FloodWaitError as error:
             wait_time = error.seconds
-            logging.error(
+            logger.error(
                 "Flood wait error occurred. Please try again in %s seconds.", wait_time
             )
             raise error
 
         except Exception as error:
-            logging.error("An error occurred while validating with password")
+            logger.error("An error occurred while validating with password")
             raise error
 
         finally:
@@ -472,7 +476,7 @@ class Methods:
             # fetch telegram contacts
             contacts = []
 
-            logging.debug("Fetching telegram contacts for %s ...", self.phone_number)
+            logger.debug("Fetching telegram contacts for %s ...", self.phone_number)
             result = await client(functions.contacts.GetContactsRequest(hash=0))
             for user in result.users:
                 contacts.append(
@@ -485,12 +489,12 @@ class Methods:
                     }
                 )
 
-            logging.info("- Successfully fetched all telegram contacts")
+            logger.info("- Successfully fetched all telegram contacts")
 
             return contacts
 
         except Exception as error:
-            logging.error("An error occurred while fetching contacts.")
+            logger.error("An error occurred while fetching contacts.")
             raise error
 
         finally:

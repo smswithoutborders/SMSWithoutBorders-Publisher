@@ -18,7 +18,7 @@ $(PROTO_DIR)/%.proto:
 
 vault-proto: 
 	@rm -f "$(PROTO_DIR)/vault.proto"
-	@$(MAKE) PROTO_URL=https://raw.githubusercontent.com/smswithoutborders/SMSwithoutborders-BE/feature/grpc_api/protos/v1/vault.proto \
+	@$(MAKE) PROTO_URL=https://raw.githubusercontent.com/smswithoutborders/SMSwithoutborders-BE/main/protos/v1/vault.proto \
 	$(PROTO_DIR)/vault.proto
 
 grpc-compile:

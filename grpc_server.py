@@ -15,7 +15,7 @@ from grpc_publisher_service import PublisherService
 logging.basicConfig(
     level=logging.INFO, format=("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 )
-logger = logging.getLogger("[Publisher gRPC Server]")
+logger = logging.getLogger("publisher.grpc.server")
 
 
 class LoggingInterceptor(ServerInterceptor):

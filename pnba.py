@@ -11,7 +11,7 @@ import telegram_client
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger("[PNBA Client]")
+logger = logging.getLogger(__name__)
 
 
 class PNBAClient:
@@ -74,10 +74,12 @@ class PNBAClient:
         except (
             self.session.Errors.PhoneCodeInvalidError,
             self.session.Errors.PhoneCodeExpiredError,
-            self.session.Errors.SessionPasswordNeededError,
             self.session.Errors.FloodWaitError,
         ) as e:
             return {"error": str(e)}
+
+        except self.session.Errors.SessionPasswordNeededError:
+            return {"two_step_verification_enabled": True}
 
     def password_validation(self, password) -> dict:
         """
